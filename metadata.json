@@ -1,0 +1,7 @@
+{
+  "name": "Génesis Gestión Financiera",
+  "description": "Sistema integral de gestión financiera para la Junta Descentralizada del Centro Educativo Cristiano Génesis, automatizando procesos del MINERD.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
