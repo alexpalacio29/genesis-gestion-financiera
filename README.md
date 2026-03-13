@@ -18,3 +18,4 @@ View your app in AI Studio: https://ai.studio/apps/2dc62a67-95b8-44e6-92ac-1e9bf
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+# genesis-gestion-financiera
