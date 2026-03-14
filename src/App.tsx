@@ -233,7 +233,7 @@ const CenterSelector = ({ user, centers, onSelect, onAdd }: { user: any, centers
           <p className="text-slate-500 font-medium">Selecciona el centro que deseas gestionar hoy</p>
           {user?.email?.toLowerCase() === 'alexpalacio29@gmail.com' && (
             <div className="pt-4">
-              <button 
+              <button
                 onClick={() => onSelect({ id: 0, name: 'ADMINISTRACIÓN GLOBAL SAAS', rnc: 'SaaS-Global' })}
                 className="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-2 rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg"
               >
@@ -369,13 +369,13 @@ const CenterForm = ({ userId, onCancel, onSuccess }: { userId: number, onCancel:
 
           <div className="space-y-1">
             <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 font-bold">Código de Gestor (Requerido)</label>
-            <input 
-              type="text" 
-              required 
+            <input
+              type="text"
+              required
               placeholder="Ingresa el código proporcionado por el administrador"
-              className="w-full p-3 bg-emerald-50 border-2 border-emerald-100 rounded-xl outline-none focus:border-emerald-500 transition-colors font-mono uppercase" 
-              value={registrationCode} 
-              onChange={e => setRegistrationCode(e.target.value)} 
+              className="w-full p-3 bg-emerald-50 border-2 border-emerald-100 rounded-xl outline-none focus:border-emerald-500 transition-colors font-mono uppercase"
+              value={registrationCode}
+              onChange={e => setRegistrationCode(e.target.value)}
             />
             <p className="text-[9px] text-slate-400">Este código es único y le permite crear su institución en la plataforma.</p>
           </div>
@@ -1113,7 +1113,7 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
       const res = await apiFetch(`/api/quotes/${id}`);
       if (!res.ok) throw new Error('Error al cargar detalles de cotización');
       const data = await res.json();
-      
+
       // Map description to name for items as expected by PDF generators
       if (data.items && Array.isArray(data.items)) {
         data.items = data.items.map((item: any) => ({
@@ -1121,7 +1121,7 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
           name: item.description || item.name
         }));
       }
-      
+
       return data;
     } catch (error) {
       console.error(error);
@@ -1255,9 +1255,9 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
                     onClick={async () => {
                       const fullData = await fetchFullQuote(q.id);
                       if (!fullData) return;
-                      generatePurchaseOrderPDF(fullData.purchase_order, { 
-                        name: fullData.quote.supplier_name, 
-                        rnc: fullData.quote.rnc || '000-00000-0', 
+                      generatePurchaseOrderPDF(fullData.purchase_order, {
+                        name: fullData.quote.supplier_name,
+                        rnc: fullData.quote.rnc || '000-00000-0',
                         type: fullData.quote.supplier_type,
                         address: fullData.quote.address,
                         phone: fullData.quote.phone
@@ -4169,7 +4169,7 @@ const Configuration = ({ apiFetch, currentCenter, user }: { apiFetch: any, curre
             <div className="pt-8 border-t border-slate-100 space-y-4">
               <h3 className="text-lg font-bold text-rose-600">Restaurar Datos</h3>
               <p className="text-slate-500 text-sm">Selecciona un archivo de respaldo (.db) previamente descargado para restaurar el sistema. <span className="font-bold text-rose-600">Esta acción borrará los datos actuales.</span></p>
-              
+
               <div className="flex flex-col md:flex-row gap-4 items-start">
                 <div className="flex-1 w-full">
                   <input
@@ -4282,7 +4282,7 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
           <p className="text-slate-500 font-medium tracking-wide">Control total de la plataforma Génesis</p>
         </div>
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={fetchData}
             disabled={loading}
             className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all shadow-sm"
@@ -4290,7 +4290,7 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
           >
             <History className={cn("w-5 h-5 text-slate-500", loading && "animate-spin")} />
           </button>
-          <button 
+          <button
             onClick={handleGenerateCode}
             className="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 flex items-center gap-2"
           >
@@ -4308,13 +4308,13 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
       )}
 
       <div className="flex gap-6 border-b border-slate-200">
-        <button 
+        <button
           onClick={() => setActiveTab('centers')}
           className={cn("pb-2 font-bold text-sm transition-colors relative", activeTab === 'centers' ? "text-slate-900 border-b-2 border-slate-900" : "text-slate-400 hover:text-slate-600")}
         >
           Centros Educativos ({centers.length})
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('codes')}
           className={cn("pb-2 font-bold text-sm transition-colors relative", activeTab === 'codes' ? "text-slate-900 border-b-2 border-slate-900" : "text-slate-400 hover:text-slate-600")}
         >
@@ -4360,7 +4360,7 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
                     </span>
                   </td>
                   <td className="p-4 text-right">
-                    <button 
+                    <button
                       onClick={() => handleToggleStatus(c.id)}
                       className={cn(
                         "text-[11px] font-bold px-4 py-2 rounded-xl transition-all",
@@ -4400,7 +4400,7 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
                   <td className="p-4 text-[11px] text-slate-500">{new Date(c.created_at).toLocaleDateString()}</td>
                   <td className="p-4 text-right">
                     {!c.is_used && (
-                      <button 
+                      <button
                         onClick={() => {
                           navigator.clipboard.writeText(c.code);
                           alert('Código copiado al portapapeles');
@@ -4496,7 +4496,7 @@ export default function App() {
   // Global fetch wrapper with center context
   const apiFetch = useCallback(async (url: string, options: any = {}) => {
     if (!user) return null;
-    
+
     // Allow SaaS routes even without a center
     const isSaasRoute = url.startsWith('/api/saas');
     if (!currentCenter && !isSaasRoute) return null;
@@ -4601,7 +4601,7 @@ export default function App() {
           <h2 className="text-2xl font-black text-slate-900">INSTITUCIÓN SUSPENDIDA</h2>
           <p className="text-slate-500 font-medium">El acceso a los datos de esta institución ha sido suspendido temporalmente por el administrador de la plataforma.</p>
           <div className="pt-6 border-t border-slate-100">
-            <button 
+            <button
               onClick={handleLogout}
               className="w-full bg-slate-900 text-white p-4 rounded-2xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
             >
@@ -4702,7 +4702,7 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             {isSuperAdmin && (
-              <button 
+              <button
                 onClick={() => setActiveTab('saas-admin')}
                 className="hidden md:flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 transition-all shadow-lg"
               >
