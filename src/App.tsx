@@ -4503,9 +4503,11 @@ export default function App() {
 
     const headers: any = {
       ...options.headers,
-      'Content-Type': 'application/json',
       'x-user-id': user.id.toString()
     };
+    if (!(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
     if (currentCenter) {
       headers['x-center-id'] = currentCenter.id.toString();
     }
