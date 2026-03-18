@@ -380,34 +380,69 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
   doc.text("Lic. Tamaris Altagracia Calderón de De Peña", 30, 92);
 
   doc.text("Atención : Enerolisa Mejía R.", 20, 105);
-  doc.text(`Asunto : Solicitud de libramiento de cheque por concepto de ${check.description || 'adquisición de equipos tecnológico / materiales / servicios'}`, 20, 115, { maxWidth: 170 });
+  
+  // Dynamic Y positioning starts here
+  let currentY = 115;
+  const asuntoText = `Asunto : Solicitud de libramiento de cheque por concepto de ${check.description || 'adquisición de equipos tecnológico / materiales / servicios'}`;
+  const asuntoLines = doc.splitTextToSize(asuntoText, 170);
+  doc.text(asuntoLines, 20, currentY);
+  currentY += (asuntoLines.length * 7);
 
-  doc.text("Distinguido(a) Director(a):", 20, 135);
+  doc.text("Distinguido(a) Director(a):", 20, currentY + 10);
+  currentY += 20;
 
   doc.setFont("helvetica", "normal");
-  doc.text("Cortésmente, nos dirigimos a usted con el propósito de solicitar el libramiento de un cheque con cargo a los fondos de descentralización correspondientes a este centro educativo, amparados en la Ordenanza No. 02-2018.", 20, 145, { maxWidth: 170 });
+  const introText = "Cortésmente, nos dirigimos a usted con el propósito de solicitar el libramiento de un cheque con cargo a los fondos de descentralización correspondientes a este centro educativo, amparados en la Ordenanza No. 02-2018.";
+  const introLines = doc.splitTextToSize(introText, 170);
+  doc.text(introLines, 20, currentY);
+  currentY += (introLines.length * 7);
 
-  doc.text("Dicha solicitud se realiza para cubrir gastos necesarios para el buen funcionamiento del plantel, según el siguiente detalle:", 20, 160, { maxWidth: 170 });
+  const subText = "Dicha solicitud se realiza para cubrir gastos necesarios para el buen funcionamiento del plantel, según el siguiente detalle:";
+  const subLines = doc.splitTextToSize(subText, 170);
+  doc.text(subLines, 20, currentY + 5);
+  currentY += (subLines.length * 7) + 10;
 
   doc.setFont("helvetica", "bold");
-  doc.text(`Detalles del Pago: ${check.description || 'ADQUISICIÓN SEGÚN FACTURA'}`, 20, 175);
+  const detalleText = `Detalles del Pago: ${check.description || 'ADQUISICIÓN SEGÚN FACTURA'}`;
+  const detalleLines = doc.splitTextToSize(detalleText, 170);
+  doc.text(detalleLines, 20, currentY);
+  currentY += (detalleLines.length * 7) + 5;
 
-  doc.text(`• Beneficiario: ${supplier.name.toUpperCase()}`, 20, 185);
-  doc.text(`• RNC / Cédula: ${supplier.rnc}`, 20, 192);
+  doc.text(`• Beneficiario: ${supplier.name.toUpperCase()}`, 20, currentY);
+  currentY += 7;
+  doc.text(`• RNC / Cédula: ${supplier.rnc}`, 20, currentY);
+  currentY += 7;
+  
   const amountInWords = numberToWordsSpanish(check.amount_net);
-  doc.text(`• Monto Total: ${formatCurrency(check.amount_net)} (${amountInWords})`, 20, 199, { maxWidth: 170 });
-  doc.text(`• Concepto: ${check.description || 'PAGO DE BIENES/SERVICIOS'}`, 20, 206 + (amountInWords.length > 50 ? 5 : 0));
-  doc.text(`• Partida Presupuestaria: 100,000.00 Pesos Trimestral.`, 20, 213 + (amountInWords.length > 50 ? 5 : 0));
+  const montoText = `• Monto Total: ${formatCurrency(check.amount_net)} (${amountInWords})`;
+  const montoLines = doc.splitTextToSize(montoText, 170);
+  doc.text(montoLines, 20, currentY);
+  currentY += (montoLines.length * 7);
+
+  const conceptoDetail = `• Concepto: ${check.description || 'PAGO DE BIENES/SERVICIOS'}`;
+  const conceptoLines = doc.splitTextToSize(conceptoDetail, 170);
+  doc.text(conceptoLines, 20, currentY);
+  currentY += (conceptoLines.length * 7);
+
+  doc.text(`• Partida Presupuestaria: 100,000.00 Pesos Trimestral.`, 20, currentY);
+  currentY += 12;
 
   doc.setFont("helvetica", "normal");
-  doc.text("Se anexa a la presente la documentación soporte requerida (Factura con comprobante fiscal gubernamental, copia de cédula/RNC, cotizaciones previas y acta de la junta de centro que aprueba el gasto).", 20, 225, { maxWidth: 170 });
+  const anexoText = "Se anexa a la presente la documentación soporte requerida (Factura con comprobante fiscal gubernamental, copia de cédula/RNC, cotizaciones previas y acta de la junta de centro que aprueba el gasto).";
+  const anexoLines = doc.splitTextToSize(anexoText, 170);
+  doc.text(anexoLines, 20, currentY);
+  currentY += (anexoLines.length * 7) + 10;
 
-  doc.text("Agradecemos de antemano su gestión para que estos recursos sean entregados a la brevedad, permitiendo así la continuidad de los procesos pedagógicos y administrativos de nuestra institución.", 20, 245, { maxWidth: 170 });
+  const finalParaText = "Agradecemos de antemano su gestión para que estos recursos sean entregados a la brevedad, permitiendo así la continuidad de los procesos pedagógicos y administrativos de nuestra institución.";
+  const finalParaLines = doc.splitTextToSize(finalParaText, 170);
+  doc.text(finalParaLines, 20, currentY);
+  currentY += (finalParaLines.length * 7) + 20;
 
-  doc.text("Atentamente,", 20, 265);
+  doc.text("Atentamente,", 20, currentY);
+  currentY += 20;
 
-  doc.text("Miembro del Equipo de Gestión________________", 20, 285);
-  doc.text("Miembro del Equipo de Gestión________________", 110, 285);
+  doc.text("Miembro del Equipo de Gestión________________", 20, currentY);
+  doc.text("Miembro del Equipo de Gestión________________", 110, currentY);
 
   doc.save(`Carta_Solicitud_${check.check_number}.pdf`);
 };
@@ -438,9 +473,12 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
   doc.text(`POA: ${requisition.poa_year || '2026'}`, 20, 62);
 
   doc.setFont("helvetica", "bold");
-  doc.text(`CONCEPTO: ${quote.description || 'Materiales didácticos nivel inicial, primaria y secundaria'}`, 20, 72, { maxWidth: 170 });
+  const conceptText = `CONCEPCO: ${quote.description || 'Materiales didácticos nivel inicial, primaria y secundaria'}`;
+  const conceptLines = doc.splitTextToSize(conceptText, 170);
+  doc.text(conceptLines, 20, 72);
 
-  doc.text("DESCRIPCIÓN", 105, 85, { align: "center" });
+  const tableStartY = 72 + (conceptLines.length * 6) + 10;
+  doc.text("DESCRIPCIÓN", 105, tableStartY - 5, { align: "center" });
 
   const tableBody = items.length > 0
     ? items.map((item, index) => [
@@ -451,7 +489,7 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
     : [['1', quote.description || 'Materiales didácticos nivel inicial, primaria y secundaria', '1']];
 
   autoTable(doc, {
-    startY: 90,
+    startY: tableStartY,
     head: [['ITEM', 'DESCRIPCIÓN', 'CANTIDAD']],
     body: tableBody,
     theme: 'grid',
@@ -499,44 +537,50 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[] = 
   doc.setFont("helvetica", "bold");
   doc.text(`FECHA: ${formatDate(po.created_at)}`, 20, 55);
   
-  // Layout Fix: Prevent Proveedor and RNC from mixing by stacking or using dynamic positioning
   doc.text(`PROVEEDOR:`, 20, 62);
   doc.setFont("helvetica", "normal");
-  doc.text(`${supplier.name.toUpperCase()}`, 50, 62, { maxWidth: 140 });
+  const supplierLines = doc.splitTextToSize(supplier.name.toUpperCase(), 140);
+  doc.text(supplierLines, 50, 62);
   
-  const supplierLines = doc.splitTextToSize(supplier.name.toUpperCase(), 140).length;
-  const nextY = 62 + (supplierLines * 5);
+  let currentY = 62 + (supplierLines.length * 6);
 
   doc.setFont("helvetica", "bold");
-  doc.text(`RNC :`, 20, nextY);
+  doc.text(`RNC :`, 20, currentY);
   doc.setFont("helvetica", "normal");
-  doc.text(`${supplier.rnc}`, 50, nextY);
+  doc.text(`${supplier.rnc}`, 50, currentY);
 
+  currentY += 7;
   doc.setFont("helvetica", "bold");
-  doc.text(`DIRECCIÓN:`, 20, nextY + 7);
+  doc.text(`DIRECCIÓN:`, 20, currentY);
   doc.setFont("helvetica", "normal");
-  doc.text(`${supplier.address || 'AVE. LIBERTAD NO.100, Higüey, Rep. Dom.'}`, 50, nextY + 7, { maxWidth: 140 });
+  const addressLines = doc.splitTextToSize(supplier.address || 'AVE. LIBERTAD NO.100, Higüey, Rep. Dom.', 140);
+  doc.text(addressLines, 50, currentY);
 
-  const addressLines = doc.splitTextToSize(supplier.address || 'AVE. LIBERTAD NO.100, Higüey, Rep. Dom.', 140).length;
-  const phoneY = nextY + 7 + (addressLines * 5);
-
+  currentY += (addressLines.length * 6);
   doc.setFont("helvetica", "bold");
-  doc.text(`TELÉFONO:`, 20, phoneY);
+  doc.text(`TELÉFONO:`, 20, currentY);
   doc.setFont("helvetica", "normal");
-  doc.text(`${supplier.phone || '809-554-1863'}`, 50, phoneY);
+  doc.text(`${supplier.phone || '809-554-1863'}`, 50, currentY);
 
-  const poDetailsY = phoneY + 10;
+  currentY += 10;
   doc.setFont("helvetica", "bold");
-  doc.text(`Junta de Centro Educativo: ${centerName}`, 20, poDetailsY);
-  doc.text(`Código: ${centerCode}`, 120, poDetailsY);
+  doc.text(`Junta de Centro Educativo: ${centerName}`, 20, currentY);
+  doc.text(`Código: ${centerCode}`, 120, currentY);
 
+  currentY += 10;
   doc.setFont("helvetica", "normal");
-  doc.text("Solicitamos despachar por nuestra cuenta, los artículos y/o servicios que se detallan a continuación, según los precios convenidos y pactados entre usted/es y la Junta de este Centro Educativo.", 20, poDetailsY + 10, { maxWidth: 170 });
+  const subText = "Solicitamos despachar por nuestra cuenta, los artículos y/o servicios que se detallan a continuación, según los precios convenidos y pactados entre usted/es y la Junta de este Centro Educativo.";
+  const subLines = doc.splitTextToSize(subText, 170);
+  doc.text(subLines, 20, currentY);
 
+  currentY += (subLines.length * 6) + 5;
   doc.setFont("helvetica", "bold");
-  doc.text(`Concepto: ${po.description || 'Materiales didácticos nivel inicial, primaria y secundaria'}`, 20, poDetailsY + 25, { maxWidth: 170 });
+  const conceptoText = `Concepto: ${po.description || 'Materiales didácticos nivel inicial, primaria y secundaria'}`;
+  const conceptoLines = doc.splitTextToSize(conceptoText, 170);
+  doc.text(conceptoLines, 20, currentY);
 
-  doc.text("Valor en RD$", 160, poDetailsY + 35);
+  currentY += (conceptoLines.length * 6) + 10;
+  doc.text("Valor en RD$", 160, currentY - 5);
 
   const tableBody = items.length > 0
     ? items.map(item => [
@@ -547,7 +591,7 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[] = 
     : [['1', po.description || 'Materiales didácticos nivel inicial, primaria y secundaria', formatCurrency(po.total_amount)]];
 
   autoTable(doc, {
-    startY: poDetailsY + 40,
+    startY: currentY,
     head: [['CANTIDAD', 'DESCRIPCIÓN', 'PRECIO']],
     body: tableBody,
     foot: [['', 'TOTAL', formatCurrency(po.total_amount)]],
@@ -559,7 +603,7 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[] = 
   const amountInWords = numberToWordsSpanish(po.total_amount);
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(`VALOR EN LETRAS: ${amountInWords}`, 20, (doc as any).lastAutoTable.finalY + 10);
+  doc.text(`VALOR EN LETRAS: ${amountInWords}`, 20, (doc as any).lastAutoTable.finalY + 10, { maxWidth: 170 });
 
   const finalY = (doc as any).lastAutoTable.finalY + 35;
   doc.text("____________________", 40, finalY);
@@ -636,17 +680,22 @@ export const generateServiceRequestPDF = (quote: any, supplier: any, center?: an
   doc.text(`Proveedor sugerido: ${supplier.name}`, 20, 55);
 
   doc.text("Descripción del Servicio Requerido:", 20, 70);
-  doc.rect(20, 75, 170, 40);
-  doc.text("Servicios especializados de mantenimiento y/o reparación según", 25, 85);
-  doc.text("especificaciones técnicas adjuntas en cotización.", 25, 90);
+  const serviceText = quote.description || "Servicios especializados de mantenimiento y/o reparación según especificaciones técnicas adjuntas en cotización.";
+  const serviceLines = doc.splitTextToSize(serviceText, 160);
+  const serviceBoxHeight = Math.max(30, (serviceLines.length * 6) + 10);
+  
+  doc.rect(20, 75, 170, serviceBoxHeight);
+  doc.text(serviceLines, 25, 85);
 
-  doc.text("Justificación:", 20, 125);
-  doc.rect(20, 130, 170, 30);
-  doc.text("Necesario para el correcto funcionamiento de las instalaciones", 25, 140);
-  doc.text("del centro educativo.", 25, 145);
+  const justificationY = 75 + serviceBoxHeight + 10;
+  doc.text("Justificación:", 20, justificationY);
+  doc.rect(20, justificationY + 5, 170, 30);
+  doc.text("Necesario para el correcto funcionamiento de las instalaciones", 25, justificationY + 15);
+  doc.text("del centro educativo.", 25, justificationY + 20);
 
-  doc.text("Firma Solicitante: ____________________", 20, 180);
-  doc.text("Visto Bueno: ____________________", 120, 180);
+  const signatureY = justificationY + 50;
+  doc.text("Firma Solicitante: ____________________", 20, signatureY);
+  doc.text("Visto Bueno: ____________________", 120, signatureY);
 
   doc.save(`Solicitud_Servicio_${quote.id}.pdf`);
 };
@@ -682,11 +731,15 @@ export const generateLaborReceiptPDF = (check: any, supplier: any, center?: any,
   doc.setFont("helvetica", "bold");
   doc.text("POR CONCEPTO DE:", 20, 75);
   doc.setFont("helvetica", "normal");
-  doc.rect(20, 80, 170, 30);
-  doc.text(check.description || "PAGO MANO DE OBRA DE REPARACIÓN SEGÚN COTIZACIÓN", 25, 90, { maxWidth: 160 });
+  const conceptText = check.description || "PAGO MANO DE OBRA DE REPARACIÓN SEGÚN COTIZACIÓN";
+  const conceptLines = doc.splitTextToSize(conceptText, 160);
+  const conceptHeight = Math.max(30, (conceptLines.length * 6) + 10);
+  
+  doc.rect(20, 80, 170, conceptHeight);
+  doc.text(conceptLines, 25, 90);
 
   autoTable(doc, {
-    startY: 120,
+    startY: 80 + conceptHeight + 10,
     body: [
       ['Monto', formatCurrency(check.amount_gross)],
       ['ITEBIS', formatCurrency(check.retention_itbis)],
