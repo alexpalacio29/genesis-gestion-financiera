@@ -1161,7 +1161,7 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
       retention_itbis: itbis,
       amount_net: amount - isr - itbis,
       beneficiary: quote.supplier_name,
-      description: `PAGO SEGÚN COTIZACIÓN #${quote.id}` // Para recibos y descripciones
+      description: quote.description || `PAGO DE BIENES Y SERVICIOS` // Usar la descripción real de la cotización
     };
   };
 

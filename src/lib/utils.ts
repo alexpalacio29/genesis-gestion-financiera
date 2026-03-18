@@ -121,10 +121,13 @@ export const generateQuotePDF = (quote: any, supplier: any, items: any[] = [], c
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text(`Nombre del Centro: ${centerName}`, 20, 55);
+  const centerText = `Nombre del Centro: ${centerName}`;
+  const centerLines = doc.splitTextToSize(centerText, 170);
+  doc.text(centerLines, 20, 55);
 
-  doc.text("SERVICIOS COTIZADOS", 105, 65, { align: "center" });
+  doc.text("SERVICIOS COTIZADOS", 105, 65 + (centerLines.length > 1 ? (centerLines.length - 1) * 7 : 0), { align: "center" });
 
+  const tableStartY = 70 + (centerLines.length > 1 ? (centerLines.length - 1) * 7 : 0);
   const tableBody = items.length > 0
     ? items.map((item, index) => [
       (index + 1).toString(),
@@ -136,7 +139,7 @@ export const generateQuotePDF = (quote: any, supplier: any, items: any[] = [], c
     : [['1', quote.description || 'Reparación / Mantenimiento', '1', formatCurrency(quote.subtotal), formatCurrency(quote.subtotal)]];
 
   autoTable(doc, {
-    startY: 70,
+    startY: tableStartY,
     head: [['No.', 'Descripción', 'Cantidad', 'Precio Unidad', 'Total, RD$']],
     body: tableBody,
     foot: [
@@ -150,13 +153,17 @@ export const generateQuotePDF = (quote: any, supplier: any, items: any[] = [], c
   });
 
   const finalY = (doc as any).lastAutoTable.finalY + 20;
-  doc.text(`Nombre del Oferente: ${supplier.name}`, 20, finalY);
-  doc.text(`Cédula No. ${supplier.rnc}`, 20, finalY + 7);
-  doc.text(`Teléfono: ${supplier.phone || 'N/A'}`, 120, finalY + 7);
-  doc.text(`N. Cotización: ${quote.external_id || quote.id}`, 20, finalY + 14);
-  doc.text(`Fecha: ${formatDate(quote.created_at)}`, 120, finalY + 14);
+  const supplierText = `Nombre del Oferente: ${supplier.name}`;
+  const supplierLines = doc.splitTextToSize(supplierText, 170);
+  doc.text(supplierLines, 20, finalY);
+  
+  const nextY = finalY + (supplierLines.length * 7);
+  doc.text(`Cédula No. ${supplier.rnc}`, 20, nextY);
+  doc.text(`Teléfono: ${supplier.phone || 'N/A'}`, 120, nextY);
+  doc.text(`N. Cotización: ${quote.external_id || quote.id}`, 20, nextY + 7);
+  doc.text(`Fecha: ${formatDate(quote.created_at)}`, 120, nextY + 7);
 
-  doc.text("Firma del oferente__________________________", 60, finalY + 30);
+  doc.text("Firma del oferente__________________________", 60, nextY + 23);
 
   doc.save(`Cotizacion_${quote.external_id || quote.id}.pdf`);
 };
@@ -196,7 +203,7 @@ export const generateCheckPDF = (check: any, center?: any, logoBase64?: string) 
   doc.text(formatDateShort(check.date), 160, 40);
 
   doc.setFont("helvetica", "bold");
-  doc.text(check.beneficiary.toUpperCase(), 80, 50);
+  doc.text(check.beneficiary.toUpperCase(), 80, 50, { maxWidth: 120 });
   doc.text(formatCurrency(check.amount_net).replace('RD$', ''), 160, 50);
 
   doc.setFont("helvetica", "normal");
@@ -368,9 +375,13 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`${center?.address || "Eliseo Pérez Sánchez # 27, Sector Juan P. Duarte. Higüey, República Dominicana"}`, 105, 48, { align: "center" });
-  doc.text(`${center?.email || "Colegiocristianogenesis@hotmail.com"}`, 105, 53, { align: "center" });
-  doc.text(`Teléfono ${center?.phone || "809-554-0329"}`, 105, 58, { align: "center" });
+  const addressText = center?.address || "Eliseo Pérez Sánchez # 27, Sector Juan P. Duarte. Higüey, República Dominicana";
+  const addressLines = doc.splitTextToSize(addressText, 160);
+  doc.text(addressLines, 105, 48, { align: "center" });
+  
+  const emailY = 48 + (addressLines.length * 5);
+  doc.text(`${center?.email || "Colegiocristianogenesis@hotmail.com"}`, 105, emailY, { align: "center" });
+  doc.text(`Teléfono ${center?.phone || "809-554-0329"}`, 105, emailY + 5, { align: "center" });
 
   doc.setFontSize(11);
   doc.text(`Fecha: ${formatDate(new Date()).toUpperCase()}`, 140, 70);
