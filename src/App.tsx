@@ -38,6 +38,7 @@ import {
   Upload,
   Shield,
   Lock,
+  RefreshCw,
 } from 'lucide-react';
 import {
   cn,
@@ -4193,34 +4194,34 @@ const Configuration = ({ apiFetch, currentCenter, user }: { apiFetch: any, curre
             </div>
 
             <div className="pt-8 border-t border-slate-200">
-              <div className="bg-rose-50 p-6 rounded-2xl border border-rose-100 space-y-4">
-                <div className="flex items-center gap-3 text-rose-700">
-                  <Trash2 className="w-5 h-5" />
-                  <h4 className="font-black uppercase text-sm tracking-tight">Zona de Peligro: Reiniciar Centro</h4>
+              <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 space-y-4">
+                <div className="flex items-center gap-3 text-blue-700">
+                  <RefreshCw className="w-5 h-5" />
+                  <h4 className="font-black uppercase text-sm tracking-tight">Mantenimiento: Sincronizar Dashboard</h4>
                 </div>
-                <p className="text-xs text-rose-600 font-medium">Esta acción borrará todas las cotizaciones, cheques y movimientos bancarios de este centro para empezar de cero. <span className="font-bold underline">Esta acción no se puede deshacer.</span></p>
+                <p className="text-xs text-blue-600 font-medium">Esta acción alineará las estadísticas del Dashboard y la pestaña de Movimientos con lo que aparece actualmente en el <span className="font-bold underline">Libro de Caja</span>. Úsalo si ves datos viejos o discrepancias.</p>
                 <button
                   onClick={async () => {
-                    if (confirm('¿ESTÁ TOTALMENTE SEGURO? Esta acción borrará todas las cotizaciones, cheques y movimientos bancarios de este centro para empezar de cero. Esto no borrará sus suplidores ni inventario. ¿Deseas continuar?')) {
+                    if (confirm('¿Deseas sincronizar el Dashboard con el Libro de Caja? Esto limpiará cualquier movimiento bancario que no esté registrado en tu libro para que los totales coincidan exactamente.')) {
                       setLoading(true);
                       try {
-                        const res = await apiFetch('/api/reset-center', { method: 'POST' });
+                        const res = await apiFetch('/api/sync-dashboard', { method: 'POST' });
                         if (res.ok) {
-                          alert('Datos del centro limpiados correctamente. El sistema ahora está listo para un nuevo inicio.');
+                          alert('¡Dashboard sincronizado con éxito! Ahora los totales reflejan exactamente lo que tienes en el Libro de Caja.');
                           window.location.reload();
                         }
                       } catch (e) {
                         console.error(e);
-                        alert('Error al limpiar datos.');
+                        alert('Error al sincronizar datos.');
                       } finally {
                         setLoading(false);
                       }
                     }
                   }}
-                  className="bg-rose-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-100 flex items-center gap-2 text-sm"
+                  className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2 text-sm"
                 >
-                  <Trash2 className="w-4 h-4" />
-                  Borrar Todos los Datos del Centro
+                  <RefreshCw className="w-4 h-4" />
+                  Sincronizar Dashboard con el Libro
                 </button>
               </div>
             </div>

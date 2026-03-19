@@ -947,25 +947,32 @@ El JSON debe tener esta estructura exacta:
     res.json({ id: info.lastInsertRowid });
   });
 
-  app.post("/api/reset-center", (req, res) => {
+  app.post("/api/sync-dashboard", (req, res) => {
     const centerId = (req as any).centerId;
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
 
     try {
       db.transaction(() => {
-        // Delete all data for this center in order (due to potential FKs if any)
+        // Clear bank_transactions for this center
         db.prepare("DELETE FROM bank_transactions WHERE center_id = ?").run(centerId);
-        db.prepare("DELETE FROM cash_book WHERE center_id = ?").run(centerId);
-        db.prepare("DELETE FROM checks WHERE center_id = ?").run(centerId);
-        db.prepare("DELETE FROM purchase_orders WHERE center_id = ?").run(centerId);
-        db.prepare("DELETE FROM requisitions WHERE center_id = ?").run(centerId);
-        db.prepare("DELETE FROM quote_items WHERE center_id = ?").run(centerId);
-        db.prepare("DELETE FROM quote_evidences WHERE center_id = ?").run(centerId);
-        db.prepare("DELETE FROM quotes WHERE center_id = ?").run(centerId);
-        // We keep suppliers and inventory unless they are specifically garbage, 
-        // but typically users want to keep their product list.
+        
+        // Rebuild from cash_book
+        const entries = db.prepare("SELECT * FROM cash_book WHERE center_id = ?").all(centerId);
+        const insertTx = db.prepare(`
+          INSERT INTO bank_transactions (center_id, type, amount, description, date)
+          VALUES (?, ?, ?, ?, ?)
+        `);
+
+        for (const entry of (entries as any[])) {
+          if (entry.income > 0) {
+            insertTx.run(centerId, 'income', entry.income, entry.concept, entry.date);
+          }
+          if (entry.expense > 0) {
+            insertTx.run(centerId, 'expense', entry.expense, entry.concept, entry.date);
+          }
+        }
       })();
-      res.json({ success: true, message: "Datos del centro eliminados correctamente." });
+      res.json({ success: true, message: "Dashboard sincronizado con el libro de caja." });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
@@ -1435,8 +1442,8 @@ El JSON debe tener esta estructura exacta:
     const centerId = (req as any).centerId;
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
 
-    const income = db.prepare("SELECT SUM(amount) as total FROM bank_transactions WHERE center_id = ? AND type = 'income'").get(centerId).total || 0;
-    const expense = db.prepare("SELECT SUM(amount) as total FROM bank_transactions WHERE center_id = ? AND type = 'expense'").get(centerId).total || 0;
+    const income = db.prepare("SELECT SUM(income) as total FROM cash_book WHERE center_id = ?").get(centerId).total || 0;
+    const expense = db.prepare("SELECT SUM(expense) as total FROM cash_book WHERE center_id = ?").get(centerId).total || 0;
     const balance = income - expense;
 
     const inventoryValue = db.prepare("SELECT SUM(quantity * unit_price) as total FROM inventory WHERE center_id = ?").get(centerId).total || 0;
@@ -1456,9 +1463,9 @@ El JSON debe tener esta estructura exacta:
     const cashFlowRaw = db.prepare(`
       SELECT 
         strftime('%m', date) as month,
-        SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as ingresos,
-        SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as egresos
-      FROM bank_transactions
+        SUM(income) as ingresos,
+        SUM(expense) as egresos
+      FROM cash_book
       WHERE center_id = ? AND strftime('%Y', date) = ?
       GROUP BY month
       ORDER BY month ASC
