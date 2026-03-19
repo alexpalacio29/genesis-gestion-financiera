@@ -430,6 +430,28 @@ const Dashboard = ({ onNavigate, apiFetch, currentCenter }: { onNavigate: (tab: 
         </div>
         <div className="flex gap-2">
           <button
+            onClick={async () => {
+              if (confirm('¿ESTÁ SEGURO? Esta acción borrará todas las cotizaciones, cheques y movimientos bancarios de este centro para empezar de cero. Esta acción no se puede deshacer.')) {
+                try {
+                  const res = await apiFetch('/api/reset-center', { method: 'POST' });
+                  if (res.ok) {
+                    alert('Datos limpiados correctamente. El sistema ahora está listo para sus datos reales.');
+                    // Refresh stats
+                    apiFetch('/api/stats').then((res: any) => res.json()).then((data: any) => setStats(data));
+                    apiFetch(`/api/budget-execution?year=${currentYear}`).then((res: any) => res.json()).then((data: any) => setExecution(data));
+                  }
+                } catch (e) {
+                  console.error(e);
+                  alert('Error al limpiar datos.');
+                }
+              }
+            }}
+            className="flex items-center gap-2 bg-rose-50 text-rose-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-rose-100 transition-colors border border-rose-200"
+          >
+            <Trash2 className="w-4 h-4" />
+            Limpiar Datos de Prueba
+          </button>
+          <button
             onClick={() => {
               apiFetch('/api/stats').then((res: any) => res.json()).then((data: any) => setStats(data));
               apiFetch(`/api/budget-execution?year=${currentYear}`).then((res: any) => res.json()).then((data: any) => setExecution(data));

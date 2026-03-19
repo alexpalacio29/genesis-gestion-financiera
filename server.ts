@@ -302,13 +302,12 @@ try {
   if (orphanedCashBook.changes > 0) console.log(`Deleted ${orphanedCashBook.changes} orphaned cash_book entries.`);
 
   // 2. Remove orphaned entries from bank_transactions 
-  // We match transactions that look like they came from checks (description starting with 'Pago Cheque' or description matching a quote pattern)
+  // We match transactions that look like they came from checks (description starting with 'Pago a', 'Pago Cheque' or 'PAGO SEGÚN')
   // but whose amount/date doesn't exist in current checks.
-  // This is a bit aggressive but helps clean test data.
   const orphanedBankTx = db.prepare(`
     DELETE FROM bank_transactions 
     WHERE type = 'expense'
-    AND (description LIKE 'Pago Cheque%' OR description LIKE 'PAGO SEGÚN%')
+    AND (description LIKE 'Pago a%' OR description LIKE 'Pago Cheque%' OR description LIKE 'PAGO SEGÚN%')
     AND amount NOT IN (SELECT amount_gross FROM checks)
   `).run();
   if (orphanedBankTx.changes > 0) console.log(`Deleted ${orphanedBankTx.changes} orphaned bank_transactions.`);
@@ -946,6 +945,30 @@ El JSON debe tener esta estructura exacta:
     const { supplier_id, type, total_amount, subtotal, itbis } = req.body;
     const info = db.prepare("INSERT INTO quotes (center_id, supplier_id, type, total_amount, subtotal, itbis) VALUES (?, ?, ?, ?, ?, ?)").run(centerId, supplier_id, type, total_amount, subtotal, itbis);
     res.json({ id: info.lastInsertRowid });
+  });
+
+  app.post("/api/reset-center", (req, res) => {
+    const centerId = (req as any).centerId;
+    if (!centerId) return res.status(400).json({ error: "Center ID required" });
+
+    try {
+      db.transaction(() => {
+        // Delete all data for this center in order (due to potential FKs if any)
+        db.prepare("DELETE FROM bank_transactions WHERE center_id = ?").run(centerId);
+        db.prepare("DELETE FROM cash_book WHERE center_id = ?").run(centerId);
+        db.prepare("DELETE FROM checks WHERE center_id = ?").run(centerId);
+        db.prepare("DELETE FROM purchase_orders WHERE center_id = ?").run(centerId);
+        db.prepare("DELETE FROM requisitions WHERE center_id = ?").run(centerId);
+        db.prepare("DELETE FROM quote_items WHERE center_id = ?").run(centerId);
+        db.prepare("DELETE FROM quote_evidences WHERE center_id = ?").run(centerId);
+        db.prepare("DELETE FROM quotes WHERE center_id = ?").run(centerId);
+        // We keep suppliers and inventory unless they are specifically garbage, 
+        // but typically users want to keep their product list.
+      })();
+      res.json({ success: true, message: "Datos del centro eliminados correctamente." });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
   });
 
   app.delete("/api/quotes/:id", (req, res) => {
