@@ -287,6 +287,35 @@ migrations.forEach(m => {
   }
 });
 
+// --- Data Integrity Cleanup (One-time to fix orphaned records) ---
+try {
+  console.log("Running Data Integrity Cleanup...");
+  
+  // 1. Remove orphaned entries from cash_book (related to checks that no longer exist)
+  const orphanedCashBook = db.prepare(`
+    DELETE FROM cash_book 
+    WHERE related_type = 'check' 
+    AND related_id NOT IN (SELECT id FROM checks)
+  `).run();
+  if (orphanedCashBook.changes > 0) console.log(`Deleted ${orphanedCashBook.changes} orphaned cash_book entries.`);
+
+  // 2. Remove orphaned entries from bank_transactions 
+  // We match transactions that look like they came from checks (description starting with 'Pago Cheque' or description matching a quote pattern)
+  // but whose amount/date doesn't exist in current checks.
+  // This is a bit aggressive but helps clean test data.
+  const orphanedBankTx = db.prepare(`
+    DELETE FROM bank_transactions 
+    WHERE type = 'expense'
+    AND (description LIKE 'Pago Cheque%' OR description LIKE 'PAGO SEGÚN%')
+    AND amount NOT IN (SELECT amount_gross FROM checks)
+  `).run();
+  if (orphanedBankTx.changes > 0) console.log(`Deleted ${orphanedBankTx.changes} orphaned bank_transactions.`);
+
+} catch (cleanupError) {
+  console.error("Cleanup error:", cleanupError);
+}
+// -----------------------------------------------------------------
+
 // Seed MINERD Codes (Official List)
 db.exec("DELETE FROM minerd_codes");
 const codes = [
@@ -934,6 +963,26 @@ El JSON debe tener esta estructura exacta:
           const poIds = pos.map(p => p.id);
 
           if (poIds.length > 0) {
+            // Find Checks tied to those POs to clean up financial records
+            const checksToDelete = db.prepare(`SELECT * FROM checks WHERE purchase_order_id IN (${poIds.map(() => '?').join(',')}) AND center_id = ?`).all(...poIds, cid) as any[];
+            
+            for (const check of checksToDelete) {
+              // Delete related cash_book
+              db.prepare("DELETE FROM cash_book WHERE related_id = ? AND related_type = 'check' AND center_id = ?").run(check.id, cid);
+              
+              // Delete related bank_transaction (matching by amount and date)
+              if (check.amount_gross) {
+                db.prepare(`
+                  DELETE FROM bank_transactions 
+                  WHERE rowid = (
+                    SELECT rowid FROM bank_transactions 
+                    WHERE amount = ? AND date = ? AND center_id = ? AND type = 'expense'
+                    LIMIT 1
+                  )
+                `).run(check.amount_gross, check.date, cid);
+              }
+            }
+
             // Delete Checks tied to those POs
             db.prepare(`DELETE FROM checks WHERE purchase_order_id IN (${poIds.map(() => '?').join(',')}) AND center_id = ?`).run(...poIds, cid);
             // Delete POs
