@@ -507,12 +507,11 @@ const Dashboard = ({ onNavigate, apiFetch, currentCenter }: { onNavigate: (tab: 
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6">
-        <StatCard label="Balance Actual" value={formatCurrency(stats?.balance || 0)} icon={Landmark} color="bg-slate-900" trend="+12.5%" />
-        <StatCard label="Caja Chica" value={formatCurrency(stats?.pettyCashBalance || 0)} icon={Wallet} color="bg-indigo-500" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard label="Balance Actual (Banco)" value={formatCurrency(stats?.balance || 0)} icon={Landmark} color="bg-slate-900" />
+        <StatCard label="Balance Caja Chica" value={formatCurrency(stats?.pettyCashBalance || 0)} icon={Wallet} color="bg-indigo-600" />
         <StatCard label="Ingresos Totales" value={formatCurrency(stats?.income || 0)} icon={TrendingUp} color="bg-emerald-600" />
         <StatCard label="Egresos Totales" value={formatCurrency(stats?.expense || 0)} icon={TrendingDown} color="bg-rose-600" />
-        <StatCard label="Valor Inventario" value={formatCurrency(stats?.inventoryValue || 0)} icon={Package} color="bg-amber-500" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -534,41 +533,41 @@ const Dashboard = ({ onNavigate, apiFetch, currentCenter }: { onNavigate: (tab: 
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
           <h3 className="text-lg font-bold mb-6">Inversión por Área</h3>
-          <div className="h-[300px]">
+          <div className="h-[250px] flex-grow">
             <ResponsiveContainer width="100%" height="100%">
               <RePieChart>
                 <Pie
-                  data={[
-                    { name: 'Materiales', value: 400 },
-                    { name: 'Servicios', value: 300 },
-                    { name: 'Mantenimiento', value: 300 },
-                    { name: 'Otros', value: 200 },
-                  ]}
+                  data={stats?.categorySpending || []}
                   innerRadius={60}
                   outerRadius={80}
                   paddingAngle={5}
-                  dataKey="value"
+                  dataKey="total"
+                  nameKey="category"
                 >
-                  {data.map((entry, index) => (
+                  {(stats?.categorySpending || []).map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value: number) => formatCurrency(value)} />
               </RePieChart>
             </ResponsiveContainer>
           </div>
-          <div className="space-y-3 mt-4">
-            {['Materiales', 'Servicios', 'Mantenimiento', 'Otros'].map((label, i) => (
-              <div key={label} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i] }} />
-                  <span className="text-slate-600">{label}</span>
+          <div className="space-y-2 mt-4 max-h-[150px] overflow-y-auto pr-2">
+            {(stats?.categorySpending || []).length > 0 ? (
+              stats.categorySpending.map((entry: any, i: number) => (
+                <div key={entry.category} className="flex items-center justify-between text-[11px]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    <span className="text-slate-600 truncate max-w-[120px]">{entry.category}</span>
+                  </div>
+                  <span className="font-bold text-slate-900">{formatCurrency(entry.total)}</span>
                 </div>
-                <span className="font-medium text-slate-900">25%</span>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-center text-slate-400 text-xs py-4 italic">No hay gastos registrados</p>
+            )}
           </div>
         </div>
       </div>

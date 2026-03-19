@@ -775,11 +775,12 @@ async function startServer() {
 
         if (codes.length > 0) {
           const result = db.prepare(`
-            SELECT SUM(total) as total 
-            FROM quote_items 
+            SELECT SUM(amount) as total 
+            FROM checks 
             WHERE center_id = ? 
+            AND status = 'active'
             AND minerd_code IN (${codes.map(() => '?').join(',')})
-            AND strftime('%Y', created_at) = ?
+            AND strftime('%Y', date) = ?
           `).get(centerId, ...codes, year);
           executed = result.total || 0;
         }
@@ -1453,9 +1454,19 @@ El JSON debe tener esta estructura exacta:
     const pettyCashBalance = pettyCashIncome - pettyCashExpense;
 
     const categorySpending = db.prepare(`
-      SELECT 'General' as category, SUM(amount) as total 
-      FROM bank_transactions 
-      WHERE center_id = ? AND type = 'expense'
+      SELECT 
+        CASE 
+          WHEN minerd_code IN ('281') THEN 'Infraestructura'
+          WHEN minerd_code IN ('331', '332', '391', '392') THEN 'Materiales'
+          WHEN minerd_code IN ('612', '614', '617', '619', '282') THEN 'Equipos'
+          WHEN minerd_code IN ('215', '222', '232', '292', '295', '299') THEN 'Servicios'
+          WHEN minerd_code IN ('394', '395', '399', '333') THEN 'Pedagogía'
+          ELSE 'Otros'
+        END as category,
+        SUM(amount) as total 
+      FROM checks 
+      WHERE center_id = ? AND status = 'active'
+      GROUP BY category
     `).all(centerId);
 
     // Cash flow by month for current year
