@@ -430,38 +430,6 @@ const Dashboard = ({ onNavigate, apiFetch, currentCenter }: { onNavigate: (tab: 
         </div>
         <div className="flex gap-2">
           <button
-            onClick={async () => {
-              if (confirm('¿ESTÁ SEGURO? Esta acción borrará todas las cotizaciones, cheques y movimientos bancarios de este centro para empezar de cero. Esta acción no se puede deshacer.')) {
-                try {
-                  const res = await apiFetch('/api/reset-center', { method: 'POST' });
-                  if (res.ok) {
-                    alert('Datos limpiados correctamente. El sistema ahora está listo para sus datos reales.');
-                    // Refresh stats
-                    apiFetch('/api/stats').then((res: any) => res.json()).then((data: any) => setStats(data));
-                    apiFetch(`/api/budget-execution?year=${currentYear}`).then((res: any) => res.json()).then((data: any) => setExecution(data));
-                  }
-                } catch (e) {
-                  console.error(e);
-                  alert('Error al limpiar datos.');
-                }
-              }
-            }}
-            className="flex items-center gap-2 bg-rose-50 text-rose-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-rose-100 transition-colors border border-rose-200"
-          >
-            <Trash2 className="w-4 h-4" />
-            Limpiar Datos de Prueba
-          </button>
-          <button
-            onClick={() => {
-              apiFetch('/api/stats').then((res: any) => res.json()).then((data: any) => setStats(data));
-              apiFetch(`/api/budget-execution?year=${currentYear}`).then((res: any) => res.json()).then((data: any) => setExecution(data));
-            }}
-            className="flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors"
-          >
-            <History className="w-4 h-4" />
-            Actualizar Dashboard
-          </button>
-          <button
             onClick={() => onNavigate('reports')}
             className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors"
           >
@@ -4220,6 +4188,39 @@ const Configuration = ({ apiFetch, currentCenter, user }: { apiFetch: any, curre
                   className="bg-rose-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-100 disabled:opacity-50"
                 >
                   Restaurar Base de Datos
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-8 border-t border-slate-200">
+              <div className="bg-rose-50 p-6 rounded-2xl border border-rose-100 space-y-4">
+                <div className="flex items-center gap-3 text-rose-700">
+                  <Trash2 className="w-5 h-5" />
+                  <h4 className="font-black uppercase text-sm tracking-tight">Zona de Peligro: Reiniciar Centro</h4>
+                </div>
+                <p className="text-xs text-rose-600 font-medium">Esta acción borrará todas las cotizaciones, cheques y movimientos bancarios de este centro para empezar de cero. <span className="font-bold underline">Esta acción no se puede deshacer.</span></p>
+                <button
+                  onClick={async () => {
+                    if (confirm('¿ESTÁ TOTALMENTE SEGURO? Esta acción borrará todas las cotizaciones, cheques y movimientos bancarios de este centro para empezar de cero. Esto no borrará sus suplidores ni inventario. ¿Deseas continuar?')) {
+                      setLoading(true);
+                      try {
+                        const res = await apiFetch('/api/reset-center', { method: 'POST' });
+                        if (res.ok) {
+                          alert('Datos del centro limpiados correctamente. El sistema ahora está listo para un nuevo inicio.');
+                          window.location.reload();
+                        }
+                      } catch (e) {
+                        console.error(e);
+                        alert('Error al limpiar datos.');
+                      } finally {
+                        setLoading(false);
+                      }
+                    }
+                  }}
+                  className="bg-rose-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-100 flex items-center gap-2 text-sm"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Borrar Todos los Datos del Centro
                 </button>
               </div>
             </div>
