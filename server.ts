@@ -163,6 +163,7 @@ db.exec(`
     retention_itbis REAL,
     amount_net REAL,
     beneficiary TEXT,
+    description TEXT,
     purchase_order_id INTEGER,
     status TEXT DEFAULT 'issued',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -276,7 +277,8 @@ const migrations = [
   "ALTER TABLE quote_evidences ADD COLUMN center_id INTEGER;",
   "ALTER TABLE quotes ADD COLUMN description TEXT;",
   "ALTER TABLE requisitions ADD COLUMN description TEXT;",
-  "ALTER TABLE purchase_orders ADD COLUMN description TEXT;"
+  "ALTER TABLE purchase_orders ADD COLUMN description TEXT;",
+  "ALTER TABLE checks ADD COLUMN description TEXT"
 ];
 
 migrations.forEach(m => {
@@ -1024,12 +1026,12 @@ El JSON debe tener esta estructura exacta:
 
   app.post("/api/checks", (req, res) => {
     const centerId = (req as any).centerId;
-    const { check_number, date, amount_gross, supplier_id, beneficiary, retention_isr, retention_itbis, amount_net } = req.body;
+    const { check_number, date, amount_gross, supplier_id, beneficiary, retention_isr, retention_itbis, amount_net, description } = req.body;
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
 
     try {
       const transaction = db.transaction(() => {
-        const info = db.prepare("INSERT INTO checks (center_id, check_number, date, amount_gross, supplier_id, beneficiary, retention_isr, retention_itbis, amount_net) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run(centerId, check_number, date, amount_gross, supplier_id, beneficiary, retention_isr, retention_itbis, amount_net);
+        const info = db.prepare("INSERT INTO checks (center_id, check_number, date, amount_gross, supplier_id, beneficiary, retention_isr, retention_itbis, amount_net, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(centerId, check_number, date, amount_gross, supplier_id, beneficiary, retention_isr, retention_itbis, amount_net, description);
         const checkId = info.lastInsertRowid;
 
         // Mirror the gross amount as an expense in bank_transactions to sync Dashboard
@@ -1503,9 +1505,9 @@ El JSON debe tener esta estructura exacta:
             const currentCheck = db.prepare("SELECT id FROM checks WHERE purchase_order_id = ? AND center_id = ?").get((currentPo as any).id, centerId);
             if (currentCheck) {
               db.prepare(`
-                UPDATE checks SET check_number = ?, date = ?, amount_gross = ?, retention_isr = ?, retention_itbis = ?, amount_net = ?, beneficiary = ?
+                UPDATE checks SET check_number = ?, date = ?, amount_gross = ?, retention_isr = ?, retention_itbis = ?, amount_net = ?, beneficiary = ?, description = ?
                 WHERE id = ? AND center_id = ?
-              `).run(check.check_number, check.date, check.amount_gross, check.retention_isr, check.retention_itbis, check.amount_net, check.beneficiary, (currentCheck as any).id, centerId);
+              `).run(check.check_number, check.date, check.amount_gross, check.retention_isr, check.retention_itbis, check.amount_net, check.beneficiary, check.description, (currentCheck as any).id, centerId);
             }
           }
         }
@@ -1575,9 +1577,9 @@ El JSON debe tener esta estructura exacta:
 
         // 5. Check
         const checkInfo = db.prepare(`
-          INSERT INTO checks (center_id, check_number, date, amount_gross, retention_isr, retention_itbis, amount_net, beneficiary, purchase_order_id) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(centerId, check.check_number, check.date, check.amount_gross, check.retention_isr, check.retention_itbis, check.amount_net, check.beneficiary, poId);
+          INSERT INTO checks (center_id, check_number, date, amount_gross, retention_isr, retention_itbis, amount_net, beneficiary, purchase_order_id, description) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(centerId, check.check_number, check.date, check.amount_gross, check.retention_isr, check.retention_itbis, check.amount_net, check.beneficiary, poId, check.description);
         const checkId = checkInfo.lastInsertRowid;
 
         // 6. Bank Transaction

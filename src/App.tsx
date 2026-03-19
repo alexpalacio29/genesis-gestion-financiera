@@ -1384,7 +1384,8 @@ const Checks = ({ apiFetch }: { apiFetch: any }) => {
     date: new Date().toISOString().split('T')[0],
     amount_gross: 0,
     supplier_id: '',
-    beneficiary: ''
+    beneficiary: '',
+    description: ''
   });
 
   useEffect(() => {
@@ -1483,6 +1484,13 @@ const Checks = ({ apiFetch }: { apiFetch: any }) => {
               required
               value={newCheck.amount_gross || ''}
               onChange={e => setNewCheck({ ...newCheck, amount_gross: parseFloat(e.target.value) })}
+            />
+            <input
+              placeholder="Concepto / Descripción"
+              className="p-2 border rounded-lg md:col-span-2"
+              required
+              value={newCheck.description}
+              onChange={e => setNewCheck({ ...newCheck, description: e.target.value })}
             />
             <div className="md:col-span-2 flex justify-end gap-2">
               <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-slate-500">Cancelar</button>
@@ -2142,11 +2150,16 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
 
       // Formal: No ITBIS retention. Informal: 100% ITBIS retention.
       const retention_itbis = metadata.supplierType === 'informal' ? itbis : 0;
+      const finalDescription = metadata.concept || previewData.quote.description || (metadata.quoteType === 'labor' ? 'Servicios de mantenimiento' : 'Adquisición de materiales');
 
       const amount_net = total - retention_isr - retention_itbis;
 
       const payload = {
-        ...previewData,
+        supplier: previewData.supplier,
+        quote: {
+          ...previewData.quote,
+          description: finalDescription
+        },
         requisition: {
           code: 'REQ-' + previewData.quote.external_id,
           poa_year: metadata.poaYear
@@ -2156,7 +2169,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
           subtotal: subtotal,
           itbis: itbis,
           ncf: metadata.ncf,
-          description: previewData.quote.description
+          description: finalDescription
         },
         check: {
           check_number: metadata.checkNumber || 'CH-' + Math.floor(Math.random() * 10000),
@@ -2168,12 +2181,12 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
           retention_itbis: retention_itbis,
           amount_net: amount_net,
           beneficiary: previewData.supplier.name,
-          description: previewData.quote.description
+          description: finalDescription
         },
         bank_transaction: {
           type: 'expense',
           amount: total,
-          description: `Pago a ${previewData.supplier.name} - Cheque ${metadata.checkNumber}`,
+          description: `${finalDescription} - ${previewData.supplier.name} (Chq: ${metadata.checkNumber || 'Pendiente'})`,
           date: metadata.date
         }
       };
