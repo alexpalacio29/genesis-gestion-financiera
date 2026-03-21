@@ -1774,55 +1774,59 @@ El JSON debe tener esta estructura exacta:
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    
-    // Background Tasks after server is listening
-    console.log("Running background maintenance tasks...");
-    try {
-      // 1. Seed MINERD Codes
-      const codes = [
-        { code: '215', description: 'Servicio de agua' },
-        { code: '222', description: 'Servicio de energía eléctrica' },
-        { code: '232', description: 'Servicio de recogida de basura y otros.' },
-        { code: '281', description: 'Obras de infraestructura (Mantenimiento)' },
-        { code: '282', description: 'Maquinaria y equipo (Mantenimiento)' },
-        { code: '292', description: 'Servicios de telefonía residencial' },
-        { code: '295', description: 'Servicios de internet' },
-        { code: '299', description: 'Otros servicios de comunicación' },
-        { code: '331', description: 'Papel de escritorio' },
-        { code: '332', description: 'Productos de artes gráficas' },
-        { code: '333', description: 'Productos de papel y cartón' },
-        { code: '391', description: 'Elementos de limpieza y aseo.' },
-        { code: '392', description: 'Útiles de escritorio, oficina y enseñanza.' },
-        { code: '394', description: 'Útiles destinados a actividades deportivas.' },
-        { code: '395', description: 'Útiles destinados a actividades recreativas.' },
-        { code: '399', description: 'Otros productos alimenticios' },
-        { code: '612', description: 'Equipo educacional y recreativo' },
-        { code: '614', description: 'Equipos de informática.' },
-        { code: '617', description: 'Equipos y muebles de oficina' },
-        { code: '619', description: 'Equipos varios (Laboratorios de ciencias)' }
-      ];
-      const insertCode = db.prepare("INSERT OR IGNORE INTO minerd_codes (code, description) VALUES (?, ?)");
-      codes.forEach(c => insertCode.run(c.code, c.description));
 
-      // 2. Data Integrity Cleanup
-      const orphanedCashBook = db.prepare(`
-        DELETE FROM cash_book 
-        WHERE related_type = 'check' 
-        AND related_id NOT IN (SELECT id FROM checks)
-      `).run();
-      if (orphanedCashBook.changes > 0) console.log(`Deleted ${orphanedCashBook.changes} orphaned cash_book entries.`);
+    // Defer background maintenance tasks so the event loop is free to accept
+    // incoming HTTP requests immediately after the server binds to the port.
+    setImmediate(() => {
+      console.log("Running background maintenance tasks...");
+      try {
+        // 1. Seed MINERD Codes
+        const codes = [
+          { code: '215', description: 'Servicio de agua' },
+          { code: '222', description: 'Servicio de energía eléctrica' },
+          { code: '232', description: 'Servicio de recogida de basura y otros.' },
+          { code: '281', description: 'Obras de infraestructura (Mantenimiento)' },
+          { code: '282', description: 'Maquinaria y equipo (Mantenimiento)' },
+          { code: '292', description: 'Servicios de telefonía residencial' },
+          { code: '295', description: 'Servicios de internet' },
+          { code: '299', description: 'Otros servicios de comunicación' },
+          { code: '331', description: 'Papel de escritorio' },
+          { code: '332', description: 'Productos de artes gráficas' },
+          { code: '333', description: 'Productos de papel y cartón' },
+          { code: '391', description: 'Elementos de limpieza y aseo.' },
+          { code: '392', description: 'Útiles de escritorio, oficina y enseñanza.' },
+          { code: '394', description: 'Útiles destinados a actividades deportivas.' },
+          { code: '395', description: 'Útiles destinados a actividades recreativas.' },
+          { code: '399', description: 'Otros productos alimenticios' },
+          { code: '612', description: 'Equipo educacional y recreativo' },
+          { code: '614', description: 'Equipos de informática.' },
+          { code: '617', description: 'Equipos y muebles de oficina' },
+          { code: '619', description: 'Equipos varios (Laboratorios de ciencias)' }
+        ];
+        const insertCode = db.prepare("INSERT OR IGNORE INTO minerd_codes (code, description) VALUES (?, ?)");
+        codes.forEach(c => insertCode.run(c.code, c.description));
 
-      const orphanedBankTx = db.prepare(`
-        DELETE FROM bank_transactions 
-        WHERE type = 'expense'
-        AND (description LIKE 'Pago a%' OR description LIKE 'Pago Cheque%' OR description LIKE 'PAGO SEGÚN%')
-        AND amount NOT IN (SELECT amount_gross FROM checks)
-      `).run();
-      if (orphanedBankTx.changes > 0) console.log(`Deleted ${orphanedBankTx.changes} orphaned bank_transactions.`);
+        // 2. Data Integrity Cleanup
+        const orphanedCashBook = db.prepare(`
+          DELETE FROM cash_book 
+          WHERE related_type = 'check' 
+          AND related_id NOT IN (SELECT id FROM checks)
+        `).run();
+        if (orphanedCashBook.changes > 0) console.log(`Deleted ${orphanedCashBook.changes} orphaned cash_book entries.`);
 
-    } catch (e) {
-      console.error("Maintenance task error:", e);
-    }
+        const orphanedBankTx = db.prepare(`
+          DELETE FROM bank_transactions 
+          WHERE type = 'expense'
+          AND (description LIKE 'Pago a%' OR description LIKE 'Pago Cheque%' OR description LIKE 'PAGO SEGÚN%')
+          AND amount NOT IN (SELECT amount_gross FROM checks)
+        `).run();
+        if (orphanedBankTx.changes > 0) console.log(`Deleted ${orphanedBankTx.changes} orphaned bank_transactions.`);
+
+        console.log("Background maintenance tasks completed.");
+      } catch (e) {
+        console.error("Maintenance task error:", e);
+      }
+    });
   });
 }
 
