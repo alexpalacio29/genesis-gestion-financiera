@@ -96,6 +96,22 @@ async function startServer() {
 
   app.get("/api/ping", (req, res) => res.send("pong"));
 
+  if (process.env.NODE_ENV === "production") {
+    console.log("PRODUCTION MODE: Verifying build artifacts...");
+    const distPath = path.join(__dirname, "dist");
+    const indexPath = path.join(distPath, "index.html");
+    if (fs.existsSync(distPath)) {
+      console.log(`✓ dist/ folder found at ${distPath}`);
+      if (fs.existsSync(indexPath)) {
+        console.log(`✓ dist/index.html found at ${indexPath}`);
+      } else {
+        console.error(`✗ dist/index.html MISSING at ${indexPath}`);
+      }
+    } else {
+      console.error(`✗ dist/ folder MISSING at ${distPath}`);
+    }
+  }
+
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
   app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -1499,26 +1515,8 @@ El JSON debe tener esta estructura exacta:
       appType: "spa",
     });
     app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(__dirname, "dist");
-    const indexPath = path.join(distPath, "index.html");
-    
-    app.use(express.static(distPath));
-    
-    app.get("*", (req, res) => {
-      console.log(`Serving SPA from: ${indexPath}`);
-      if (!fs.existsSync(indexPath)) {
-        console.error(`ERROR: dist/index.html NOT FOUND at ${indexPath}`);
-        return res.status(500).send("Build artifact missing: dist/index.html not found. Please check build logs.");
-      }
-      res.sendFile(indexPath, (err) => {
-        if (err) {
-          console.error("Error sending index.html:", err);
-          res.status(500).end();
-        }
-      });
-    });
   }
+// SPA Fallback moved to end
 
   app.get("/api/backup-db", (req, res) => {
     try {
@@ -1560,6 +1558,25 @@ El JSON debe tener esta estructura exacta:
       res.status(500).json({ error: "Error al restaurar la base de datos: " + error.message });
     }
   });
+
+  // SPA Fallback - MUST BE ABSOLUTELY LAST
+  if (process.env.NODE_ENV !== "production") {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(__dirname, "dist");
+    const indexPath = path.join(distPath, "index.html");
+    app.use(express.static(distPath));
+    app.get("*", (req, res) => {
+      if (!fs.existsSync(indexPath)) {
+        return res.status(500).send("Falta el archivo dist/index.html. Por favor verifica los logs de compilación.");
+      }
+      res.sendFile(indexPath);
+    });
+  }
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
