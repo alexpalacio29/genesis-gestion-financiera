@@ -310,7 +310,13 @@ const codes = [
   { code: '299', description: 'Otros servicios no personales' },
   // 3. MATERIALES Y SUMINISTRO 40%
   { code: '311', description: 'Alimentos y bebidas para personas' },
-  { code: '331', description: 'Papel de escritorio.' },
+  { code: '331', description: 'Papel de escritorio' },
+  { code: '617', description: 'Equipos y muebles de oficina' },
+  { code: '619', description: 'Equipos varios (Laboratorios de ciencias)' }
+];
+const insertCode = db.prepare("INSERT OR IGNORE INTO minerd_codes (code, description) VALUES (?, ?)");
+codes.forEach(c => insertCode.run(c.code, c.description));
+
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
