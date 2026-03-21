@@ -25,8 +25,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // -----------------------------------------------------------------
 
-// Seed MINERD Codes (Official List)
-db.exec("DELETE FROM minerd_codes");
+// seeding will run in background
 const codes = [
   // 2. SERVICIOS NO PERSONALES 40%
   { code: '215', description: 'Servicio de internet y televisión por cable' },
@@ -1573,6 +1572,7 @@ El JSON debe tener esta estructura exacta:
         migrations.forEach(m => { try { db.exec(m); } catch (e) {} });
 
         // 2. Seed MINERD Codes
+        db.exec("DELETE FROM minerd_codes");
         const insertCode = db.prepare("INSERT OR IGNORE INTO minerd_codes (code, description) VALUES (?, ?)");
         codes.forEach(c => insertCode.run(c.code, c.description));
 
