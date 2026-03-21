@@ -14,7 +14,12 @@ dotenv.config(); // fallback
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DB_PATH = "genesis_finance.db";
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+const DB_PATH = path.join(DATA_DIR, "genesis_finance.db");
+
 // DB placeholder (initialized in startServer)
 let db: any;
 const upload = multer({ storage: multer.memoryStorage() });
