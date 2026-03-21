@@ -86,15 +86,18 @@ async function startServer() {
   ];
 
   const app = express();
-  const PORT = Number(process.env.PORT) || 3000;
+  const PORT = Number(process.env.PORT) || 8080;
 
-  // Request logger for diagnostics
+  // VERBOSE REQUEST LOGGER
   app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    console.log(`>>> [${new Date().toISOString()}] ${req.method} ${req.url} (Host: ${req.headers.host})`);
     next();
   });
 
-  app.get("/api/ping", (req, res) => res.send("pong"));
+  app.get("/api/ping", (req, res) => {
+    console.log("!!! PING RECEIVED !!!");
+    res.json({ status: "pong", time: new Date().toISOString() });
+  });
 
   if (process.env.NODE_ENV === "production") {
     console.log("PRODUCTION MODE: Verifying build artifacts...");
@@ -1567,14 +1570,24 @@ El JSON debe tener esta estructura exacta:
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(__dirname, "dist");
-    const indexPath = path.join(distPath, "index.html");
-    app.use(express.static(distPath));
+    const distPath = path.resolve(__dirname, "dist");
+    const indexPath = path.resolve(distPath, "index.html");
+    
+    console.log(`Setting up static serving from: ${distPath}`);
+    app.use(express.static(distPath, { index: 'index.html' }));
+    
     app.get("*", (req, res) => {
+      console.log(`SPA Catch-all hit: ${req.url}. Sending ${indexPath}`);
       if (!fs.existsSync(indexPath)) {
-        return res.status(500).send("Falta el archivo dist/index.html. Por favor verifica los logs de compilación.");
+        console.error("CRITICAL: index.html missing during request!");
+        return res.status(500).send("Falta dist/index.html");
       }
-      res.sendFile(indexPath);
+      res.sendFile(indexPath, (err) => {
+        if (err) {
+          console.error("res.sendFile error:", err);
+          if (!res.headersSent) res.status(500).send("Error al enviar index.html");
+        }
+      });
     });
   }
 
