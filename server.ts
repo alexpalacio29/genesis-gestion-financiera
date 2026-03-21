@@ -1595,7 +1595,7 @@ El JSON debe tener esta estructura exacta:
     console.log(`>>> SERVER READY AND LISTENING ON PORT: ${PORT} <<<`);
     console.log(`Internal URL: http://0.0.0.0:${PORT}`);
     
-    // Background Tasks after server is listening (Deferred by 5s to ensure event loop is free)
+    // Background Tasks (Deferred by 30s to be ABSOLUTELY sure they don't interfere with initial boot)
     setTimeout(() => {
       try {
         console.log("Running background maintenance tasks...");
