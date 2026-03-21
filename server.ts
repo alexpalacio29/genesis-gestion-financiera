@@ -1591,8 +1591,9 @@ El JSON debe tener esta estructura exacta:
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  app.listen(PORT, () => {
+    console.log(`>>> SERVER READY AND LISTENING ON PORT: ${PORT} <<<`);
+    console.log(`Internal URL: http://0.0.0.0:${PORT}`);
     
     // Background Tasks after server is listening (Deferred by 5s to ensure event loop is free)
     setTimeout(() => {
