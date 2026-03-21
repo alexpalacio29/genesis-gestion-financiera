@@ -19,267 +19,7 @@ const DB_PATH = "genesis_finance.db";
 let db: any;
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Initialize Database Schema
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    name TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS centers (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    rnc TEXT,
-    address TEXT,
-    phone TEXT,
-    email TEXT,
-    logo_url TEXT,
-    junta_name TEXT,
-    codigo_no TEXT,
-    codigo_dependencia TEXT,
-    cuenta_no TEXT,
-    status TEXT DEFAULT 'active',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS registration_codes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    code TEXT UNIQUE NOT NULL,
-    is_used INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    used_by_user_id INTEGER,
-    FOREIGN KEY (used_by_user_id) REFERENCES users(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS budgets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    center_id INTEGER NOT NULL,
-    year TEXT NOT NULL,
-    total_amount REAL DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (center_id) REFERENCES centers(id),
-    UNIQUE(center_id, year)
-  );
-
-  CREATE TABLE IF NOT EXISTS budget_allocations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    budget_id INTEGER NOT NULL,
-    category TEXT NOT NULL,
-    allocated_amount REAL DEFAULT 0,
-    FOREIGN KEY (budget_id) REFERENCES budgets(id),
-    UNIQUE(budget_id, category)
-  );
-`);
-
-  db.prepare(`
-    CREATE TABLE IF NOT EXISTS registration_codes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      code TEXT UNIQUE NOT NULL,
-      is_used INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      used_by_user_id INTEGER,
-      FOREIGN KEY (used_by_user_id) REFERENCES users(id)
-    )
-  `).run();
-
-db.exec(`
-  CREATE TABLE IF NOT EXISTS user_centers (
-    user_id INTEGER,
-    center_id INTEGER,
-    role TEXT DEFAULT 'admin',
-    PRIMARY KEY (user_id, center_id),
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (center_id) REFERENCES centers(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS suppliers (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    center_id INTEGER NOT NULL,
-    name TEXT NOT NULL,
-    rnc TEXT,
-    type TEXT DEFAULT 'formal',
-    phone TEXT,
-    address TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (center_id) REFERENCES centers(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS quotes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    center_id INTEGER NOT NULL,
-    supplier_id INTEGER,
-    type TEXT DEFAULT 'materials',
-    total_amount REAL,
-    subtotal REAL,
-    itbis REAL,
-    description TEXT,
-    status TEXT DEFAULT 'pending',
-    pdf_url TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (center_id) REFERENCES centers(id),
-    FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS requisitions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    center_id INTEGER NOT NULL,
-    quote_id INTEGER,
-    poa_year INTEGER DEFAULT 2026,
-    code TEXT,
-    description TEXT,
-    status TEXT DEFAULT 'pending',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (center_id) REFERENCES centers(id),
-    FOREIGN KEY (quote_id) REFERENCES quotes(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS purchase_orders (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    center_id INTEGER NOT NULL,
-    requisition_id INTEGER,
-    supplier_id INTEGER,
-    total_amount REAL,
-    subtotal REAL,
-    itbis REAL,
-    status TEXT DEFAULT 'pending',
-    ncf TEXT,
-    description TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (center_id) REFERENCES centers(id),
-    FOREIGN KEY (requisition_id) REFERENCES requisitions(id),
-    FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS checks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    center_id INTEGER NOT NULL,
-    check_number TEXT,
-    date TEXT,
-    amount_gross REAL,
-    retention_isr REAL,
-    retention_itbis REAL,
-    amount_net REAL,
-    beneficiary TEXT,
-    description TEXT,
-    purchase_order_id INTEGER,
-    status TEXT DEFAULT 'issued',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (center_id) REFERENCES centers(id),
-    FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS bank_transactions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    center_id INTEGER NOT NULL,
-    type TEXT,
-    amount REAL,
-    description TEXT,
-    date TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (center_id) REFERENCES centers(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS petty_cash (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    center_id INTEGER NOT NULL,
-    amount REAL,
-    description TEXT,
-    beneficiary TEXT,
-    receipt_no TEXT,
-    type TEXT,
-    date TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (center_id) REFERENCES centers(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS inventory (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    center_id INTEGER NOT NULL,
-    name TEXT,
-    description TEXT,
-    quantity INTEGER DEFAULT 0,
-    unit_price REAL DEFAULT 0,
-    min_quantity INTEGER DEFAULT 5,
-    category TEXT,
-    minerd_code TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (center_id) REFERENCES centers(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS quote_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    center_id INTEGER NOT NULL,
-    quote_id INTEGER,
-    description TEXT,
-    quantity REAL,
-    unit_price REAL,
-    total REAL,
-    minerd_code TEXT,
-    FOREIGN KEY (center_id) REFERENCES centers(id),
-    FOREIGN KEY (quote_id) REFERENCES quotes(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS cash_book (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    center_id INTEGER NOT NULL,
-    date TEXT,
-    reference_no TEXT,
-    beneficiary TEXT,
-    concept TEXT,
-    income REAL DEFAULT 0,
-    expense REAL DEFAULT 0,
-    balance REAL DEFAULT 0,
-    retention_isr REAL DEFAULT 0,
-    retention_itbis REAL DEFAULT 0,
-    related_id INTEGER,
-    related_type TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (center_id) REFERENCES centers(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS minerd_codes (
-    code TEXT PRIMARY KEY,
-    description TEXT
-  );
-
-  CREATE TABLE IF NOT EXISTS quote_evidences (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    center_id INTEGER NOT NULL,
-    quote_id INTEGER NOT NULL,
-    file_path TEXT NOT NULL,
-    file_name TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (center_id) REFERENCES centers(id),
-    FOREIGN KEY (quote_id) REFERENCES quotes(id)
-  );
-`);
-
-// Migrations / Schema Fixes for existing databases
-const migrations = [
-  "ALTER TABLE suppliers ADD COLUMN center_id INTEGER;",
-  "ALTER TABLE quotes ADD COLUMN center_id INTEGER;",
-  "ALTER TABLE requisitions ADD COLUMN center_id INTEGER;",
-  "ALTER TABLE purchase_orders ADD COLUMN center_id INTEGER;",
-  "ALTER TABLE checks ADD COLUMN center_id INTEGER;",
-  "ALTER TABLE bank_transactions ADD COLUMN center_id INTEGER;",
-  "ALTER TABLE petty_cash ADD COLUMN center_id INTEGER;",
-  "ALTER TABLE inventory ADD COLUMN center_id INTEGER;",
-  "ALTER TABLE inventory ADD COLUMN unit_price REAL DEFAULT 0;",
-  "ALTER TABLE quote_items ADD COLUMN center_id INTEGER;",
-  "ALTER TABLE cash_book ADD COLUMN center_id INTEGER;",
-  "ALTER TABLE centers ADD COLUMN junta_name TEXT;",
-  "ALTER TABLE centers ADD COLUMN codigo_no TEXT;",
-  "ALTER TABLE centers ADD COLUMN codigo_dependencia TEXT;",
-  "ALTER TABLE centers ADD COLUMN cuenta_no TEXT;",
-  "ALTER TABLE quote_evidences ADD COLUMN center_id INTEGER;",
-  "ALTER TABLE quotes ADD COLUMN description TEXT;",
-  "ALTER TABLE requisitions ADD COLUMN description TEXT;",
-  "ALTER TABLE purchase_orders ADD COLUMN description TEXT;",
-  "ALTER TABLE checks ADD COLUMN description TEXT"
-];
+// Schema and Migrations will be initialized inside startServer
 
 // migrations will run in background
 
@@ -313,6 +53,38 @@ const codes = [
 async function startServer() {
   console.log("Initializing database connection...");
   db = new Database(DB_PATH);
+
+  // Initialize Database Schema
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, name TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE IF NOT EXISTS centers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, rnc TEXT, address TEXT, phone TEXT, email TEXT, logo_url TEXT, junta_name TEXT, codigo_no TEXT, codigo_dependencia TEXT, cuenta_no TEXT, status TEXT DEFAULT 'active', created_at DATETIME DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE IF NOT EXISTS registration_codes (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT UNIQUE NOT NULL, is_used INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, used_by_user_id INTEGER, FOREIGN KEY (used_by_user_id) REFERENCES users(id));
+    CREATE TABLE IF NOT EXISTS budgets (id INTEGER PRIMARY KEY AUTOINCREMENT, center_id INTEGER NOT NULL, year TEXT NOT NULL, total_amount REAL DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (center_id) REFERENCES centers(id), UNIQUE(center_id, year));
+    CREATE TABLE IF NOT EXISTS budget_allocations (id INTEGER PRIMARY KEY AUTOINCREMENT, budget_id INTEGER NOT NULL, category TEXT NOT NULL, allocated_amount REAL DEFAULT 0, FOREIGN KEY (budget_id) REFERENCES budgets(id), UNIQUE(budget_id, category));
+    CREATE TABLE IF NOT EXISTS user_centers (user_id INTEGER, center_id INTEGER, role TEXT DEFAULT 'admin', PRIMARY KEY (user_id, center_id), FOREIGN KEY (user_id) REFERENCES users(id), FOREIGN KEY (center_id) REFERENCES centers(id));
+    CREATE TABLE IF NOT EXISTS suppliers (id INTEGER PRIMARY KEY AUTOINCREMENT, center_id INTEGER NOT NULL, name TEXT NOT NULL, rnc TEXT, type TEXT DEFAULT 'formal', phone TEXT, address TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (center_id) REFERENCES centers(id));
+    CREATE TABLE IF NOT EXISTS quotes (id INTEGER PRIMARY KEY AUTOINCREMENT, center_id INTEGER NOT NULL, supplier_id INTEGER, type TEXT DEFAULT 'materials', total_amount REAL, subtotal REAL, itbis REAL, description TEXT, status TEXT DEFAULT 'pending', pdf_url TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (center_id) REFERENCES centers(id), FOREIGN KEY (supplier_id) REFERENCES suppliers(id));
+    CREATE TABLE IF NOT EXISTS requisitions (id INTEGER PRIMARY KEY AUTOINCREMENT, center_id INTEGER NOT NULL, quote_id INTEGER, poa_year INTEGER DEFAULT 2026, code TEXT, description TEXT, status TEXT DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (center_id) REFERENCES centers(id), FOREIGN KEY (quote_id) REFERENCES quotes(id));
+    CREATE TABLE IF NOT EXISTS purchase_orders (id INTEGER PRIMARY KEY AUTOINCREMENT, center_id INTEGER NOT NULL, requisition_id INTEGER, supplier_id INTEGER, total_amount REAL, subtotal REAL, itbis REAL, status TEXT DEFAULT 'pending', ncf TEXT, description TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (center_id) REFERENCES centers(id), FOREIGN KEY (requisition_id) REFERENCES requisitions(id), FOREIGN KEY (supplier_id) REFERENCES suppliers(id));
+    CREATE TABLE IF NOT EXISTS checks (id INTEGER PRIMARY KEY AUTOINCREMENT, center_id INTEGER NOT NULL, check_number TEXT, date TEXT, amount_gross REAL, retention_isr REAL, retention_itbis REAL, amount_net REAL, beneficiary TEXT, description TEXT, purchase_order_id INTEGER, status TEXT DEFAULT 'issued', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (center_id) REFERENCES centers(id), FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders(id));
+    CREATE TABLE IF NOT EXISTS bank_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, center_id INTEGER NOT NULL, type TEXT, amount REAL, description TEXT, date TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (center_id) REFERENCES centers(id));
+    CREATE TABLE IF NOT EXISTS petty_cash (id INTEGER PRIMARY KEY AUTOINCREMENT, center_id INTEGER NOT NULL, amount REAL, description TEXT, beneficiary TEXT, receipt_no TEXT, type TEXT, date TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (center_id) REFERENCES centers(id));
+    CREATE TABLE IF NOT EXISTS inventory (id INTEGER PRIMARY KEY AUTOINCREMENT, center_id INTEGER NOT NULL, name TEXT, description TEXT, quantity INTEGER DEFAULT 0, unit_price REAL DEFAULT 0, min_quantity INTEGER DEFAULT 5, category TEXT, minerd_code TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (center_id) REFERENCES centers(id));
+    CREATE TABLE IF NOT EXISTS quote_items (id INTEGER PRIMARY KEY AUTOINCREMENT, center_id INTEGER NOT NULL, quote_id INTEGER, description TEXT, quantity REAL, unit_price REAL, total REAL, minerd_code TEXT, FOREIGN KEY (center_id) REFERENCES centers(id), FOREIGN KEY (quote_id) REFERENCES quotes(id));
+    CREATE TABLE IF NOT EXISTS cash_book (id INTEGER PRIMARY KEY AUTOINCREMENT, center_id INTEGER NOT NULL, date TEXT, reference_no TEXT, beneficiary TEXT, concept TEXT, income REAL DEFAULT 0, expense REAL DEFAULT 0, balance REAL DEFAULT 0, retention_isr REAL DEFAULT 0, retention_itbis REAL DEFAULT 0, related_id INTEGER, related_type TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (center_id) REFERENCES centers(id));
+    CREATE TABLE IF NOT EXISTS minerd_codes (code TEXT PRIMARY KEY, description TEXT);
+    CREATE TABLE IF NOT EXISTS quote_evidences (id INTEGER PRIMARY KEY AUTOINCREMENT, center_id INTEGER NOT NULL, quote_id INTEGER NOT NULL, file_path TEXT NOT NULL, file_name TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (center_id) REFERENCES centers(id), FOREIGN KEY (quote_id) REFERENCES quotes(id));
+  `);
+
+  const migrations = [
+    "ALTER TABLE suppliers ADD COLUMN center_id INTEGER;", "ALTER TABLE quotes ADD COLUMN center_id INTEGER;", "ALTER TABLE requisitions ADD COLUMN center_id INTEGER;",
+    "ALTER TABLE purchase_orders ADD COLUMN center_id INTEGER;", "ALTER TABLE checks ADD COLUMN center_id INTEGER;", "ALTER TABLE bank_transactions ADD COLUMN center_id INTEGER;",
+    "ALTER TABLE petty_cash ADD COLUMN center_id INTEGER;", "ALTER TABLE inventory ADD COLUMN center_id INTEGER;", "ALTER TABLE inventory ADD COLUMN unit_price REAL DEFAULT 0;",
+    "ALTER TABLE quote_items ADD COLUMN center_id INTEGER;", "ALTER TABLE cash_book ADD COLUMN center_id INTEGER;", "ALTER TABLE centers ADD COLUMN junta_name TEXT;",
+    "ALTER TABLE centers ADD COLUMN codigo_no TEXT;", "ALTER TABLE centers ADD COLUMN codigo_dependencia TEXT;", "ALTER TABLE centers ADD COLUMN cuenta_no TEXT;",
+    "ALTER TABLE quote_evidences ADD COLUMN center_id INTEGER;", "ALTER TABLE quotes ADD COLUMN description TEXT;", "ALTER TABLE requisitions ADD COLUMN description TEXT;",
+    "ALTER TABLE purchase_orders ADD COLUMN description TEXT;", "ALTER TABLE checks ADD COLUMN description TEXT"
+  ];
 
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
