@@ -117,7 +117,7 @@ async function startServer() {
     "ALTER TABLE purchase_orders ADD COLUMN description TEXT;", "ALTER TABLE checks ADD COLUMN description TEXT",
     "ALTER TABLE centers ADD COLUMN director_name TEXT;", "ALTER TABLE centers ADD COLUMN president_name TEXT;",
     "ALTER TABLE centers ADD COLUMN treasurer_name TEXT;", "ALTER TABLE centers ADD COLUMN district TEXT;",
-    "ALTER TABLE centers ADD COLUMN regional TEXT;"
+    "ALTER TABLE centers ADD COLUMN regional TEXT;", "ALTER TABLE centers ADD COLUMN secretary_name TEXT;"
   ];
 
   for (const m of migrations) {
@@ -539,7 +539,7 @@ async function startServer() {
   });
 
   app.post("/api/centers", async (req: any, res: any) => {
-    const { name, rnc, address, phone, email, userId, registrationCode, junta_name, codigo_no, codigo_dependencia, cuenta_no, director_name, president_name, treasurer_name, district, regional } = req.body;
+    const { name, rnc, address, phone, email, userId, registrationCode, junta_name, codigo_no, codigo_dependencia, cuenta_no, director_name, president_name, treasurer_name, district, regional, secretary_name } = req.body;
     
     const client = await pool.connect();
     try {
@@ -561,8 +561,8 @@ async function startServer() {
 
       await client.query('BEGIN');
       const centerIns = await client.query(
-        "INSERT INTO centers (name, rnc, address, phone, email, junta_name, codigo_no, codigo_dependencia, cuenta_no, director_name, president_name, treasurer_name, district, regional) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id",
-        [name, rnc, address, phone, email, junta_name, codigo_no, codigo_dependencia, cuenta_no, director_name, president_name, treasurer_name, district, regional]
+        "INSERT INTO centers (name, rnc, address, phone, email, junta_name, codigo_no, codigo_dependencia, cuenta_no, director_name, president_name, treasurer_name, district, regional, secretary_name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id",
+        [name, rnc, address, phone, email, junta_name, codigo_no, codigo_dependencia, cuenta_no, director_name, president_name, treasurer_name, district, regional, secretary_name]
       );
       const centerId = centerIns.rows[0].id;
       
@@ -583,13 +583,13 @@ async function startServer() {
     const centerId = (req as any).centerId;
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
     const { id } = req.params;
-    const { name, rnc, address, phone, email, junta_name, codigo_no, codigo_dependencia, cuenta_no, director_name, president_name, treasurer_name, district, regional } = req.body;
+    const { name, rnc, address, phone, email, junta_name, codigo_no, codigo_dependencia, cuenta_no, director_name, president_name, treasurer_name, district, regional, secretary_name } = req.body;
     try {
       await pool.query(`
         UPDATE centers 
-        SET name = $1, rnc = $2, address = $3, phone = $4, email = $5, junta_name = $6, codigo_no = $7, codigo_dependencia = $8, cuenta_no = $9, director_name = $10, president_name = $11, treasurer_name = $12, district = $13, regional = $14
-        WHERE id = $15
-      `, [name, rnc, address, phone, email, junta_name, codigo_no, codigo_dependencia, cuenta_no, director_name, president_name, treasurer_name, district, regional, id]);
+        SET name = $1, rnc = $2, address = $3, phone = $4, email = $5, junta_name = $6, codigo_no = $7, codigo_dependencia = $8, cuenta_no = $9, director_name = $10, president_name = $11, treasurer_name = $12, district = $13, regional = $14, secretary_name = $15
+        WHERE id = $16
+      `, [name, rnc, address, phone, email, junta_name, codigo_no, codigo_dependencia, cuenta_no, director_name, president_name, treasurer_name, district, regional, secretary_name, id]);
       res.json({ success: true });
     } catch (e: any) {
       res.status(500).json({ error: e.message });

@@ -390,7 +390,7 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
   doc.text(`A : Junta de Centro Educativo ${centerCode} ${centerName}`, 20, 85);
   doc.text(center?.director_name || "Director(a) de la Junta de Centro", 30, 92);
 
-  doc.text(`Atención : ${center?.president_name || 'Presidente(a) y/o Tesorero(a)'}`, 20, 105);
+  doc.text(`Atención : ${center?.director_name || 'Presidente(a) y/o Tesorero(a)'}`, 20, 105);
   
   // Dynamic Y positioning starts here
   let currentY = 115;
@@ -509,10 +509,10 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
 
   const finalY = (doc as any).lastAutoTable.finalY + 30;
   doc.text("____________________", 40, finalY);
-  doc.text(center?.president_name || "Presidente (a) de la Junta de Centro", 40, finalY + 5, { align: "center" });
+  doc.text(center?.director_name || "Presidente (a) de la Junta de Centro", 40, finalY + 5, { align: "center" });
 
   doc.text("____________________", 140, finalY);
-  doc.text("Secretario (a) de la Junta de Centro", 140, finalY + 5, { align: "center" });
+  doc.text(center?.secretary_name || "Secretario (a) de la Junta de Centro", 140, finalY + 5, { align: "center" });
 
   doc.text("____________________", 90, finalY + 25);
   doc.text(center?.treasurer_name || "Tesorero (a) de la Junta de Centro", 90, finalY + 30, { align: "center" });
@@ -621,7 +621,7 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[] = 
   doc.text(center?.director_name || "Director (a) Centro Educativo", 40, finalY + 5, { align: "center" });
 
   doc.text("____________________", 140, finalY);
-  doc.text("Secretario (a) Junta de Centro", 140, finalY + 5, { align: "center" });
+  doc.text(center?.secretary_name || "Secretario (a) Junta de Centro", 140, finalY + 5, { align: "center" });
 
   doc.save(`Orden_Compra_${po.id}.pdf`);
 };

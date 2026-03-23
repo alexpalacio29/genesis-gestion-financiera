@@ -3975,7 +3975,7 @@ const Configuration = ({ apiFetch, currentCenter, user }: { apiFetch: any, curre
     codigo_dependencia: currentCenter?.codigo_dependencia || '',
     cuenta_no: currentCenter?.cuenta_no || '',
     director_name: currentCenter?.director_name || '',
-    president_name: currentCenter?.president_name || '',
+    secretary_name: currentCenter?.secretary_name || '',
     treasurer_name: currentCenter?.treasurer_name || '',
     district: currentCenter?.district || '',
     regional: currentCenter?.regional || ''
@@ -4147,8 +4147,8 @@ const Configuration = ({ apiFetch, currentCenter, user }: { apiFetch: any, curre
                 <input type="text" placeholder="Ej: Enerolisa Mejía R." className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-slate-900/5 transition-all" value={centerForm.director_name} onChange={e => setCenterForm({ ...centerForm, director_name: e.target.value })} />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Pte. de la Junta</label>
-                <input type="text" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-slate-900/5 transition-all" value={centerForm.president_name} onChange={e => setCenterForm({ ...centerForm, president_name: e.target.value })} />
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Sec. de la Junta</label>
+                <input type="text" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-slate-900/5 transition-all" value={centerForm.secretary_name} onChange={e => setCenterForm({ ...centerForm, secretary_name: e.target.value })} />
               </div>
               <div className="space-y-1 md:col-span-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tesorero de la Junta</label>
