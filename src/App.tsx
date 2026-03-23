@@ -152,8 +152,8 @@ const Auth = ({ onLogin }: { onLogin: (user: any, centers: any[]) => void }) => 
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-100 p-8 space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Landmark className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden shadow-sm border border-slate-100">
+            <img src="/favicon.png" alt="Edugestion Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">
             {isRegister ? 'Crear Cuenta' : 'Bienvenido de Nuevo'}
@@ -4350,7 +4350,7 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">PANEL SAAS GLOBAL</h2>
-          <p className="text-slate-500 font-medium tracking-wide">Control total de la plataforma Génesis</p>
+          <p className="text-slate-500 font-medium tracking-wide">Control total de la plataforma Edugestion Financiera</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -4737,11 +4737,11 @@ export default function App() {
       >
         <div className="flex flex-col h-full">
           <div className="p-6 flex items-center gap-3 border-b border-slate-50">
-            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center">
-              <span className="text-white font-serif font-bold text-xl">G</span>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 shadow-sm">
+              <img src="/favicon.png" alt="Logo" className="w-full h-full object-cover" />
             </div>
             <div>
-              <h1 className="font-serif font-bold text-slate-900 leading-tight">Génesis</h1>
+              <h1 className="font-serif font-bold text-slate-900 leading-tight">Edugestion Financiera</h1>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Multi-Centro</p>
             </div>
           </div>
@@ -4804,7 +4804,7 @@ export default function App() {
             </button>
             <div className="flex flex-col">
               <h2 className="text-sm font-bold text-slate-900">
-                {currentCenter ? currentCenter.name : (showSaaSPanel ? 'ADMINISTRACIÓN GLOBAL' : 'Génesis')}
+                {currentCenter ? currentCenter.name : (showSaaSPanel ? 'ADMINISTRACIÓN GLOBAL' : 'Edugestion Financiera')}
               </h2>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                 {currentCenter?.rnc === 'SaaS-Global' || showSaaSPanel ? 'Panel de Control SaaS' : (currentCenter ? `RNC: ${currentCenter.rnc}` : 'Gestión Financiera')}

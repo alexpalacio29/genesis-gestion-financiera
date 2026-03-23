@@ -215,7 +215,7 @@ export const generateCheckPDF = (check: any, center?: any, logoBase64?: string) 
 
 export const generateRetentionCertPDF = (check: any, supplier: any, center?: any, logoBase64?: string) => {
   const doc = new jsPDF();
-  const centerName = center?.name || "Cristiano Genesis";
+  const centerName = center?.name || "Centro Educativo";
   const centerRNC = center?.rnc || "4-30-37254-4";
   const centerCode = center?.codigo_no || "06907";
 
@@ -288,7 +288,7 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
 
 export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?: any, logoBase64?: string) => {
   const doc = new jsPDF();
-  const centerName = center?.name || "Cristiano Genesis";
+  const centerName = center?.name || "Centro Educativo";
   const centerRNC = center?.rnc || "4-30-37254-4";
   const centerCode = center?.codigo_no || "06907";
 
