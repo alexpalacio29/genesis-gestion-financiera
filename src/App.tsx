@@ -2765,6 +2765,21 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
     retention_itbis: 0
   });
 
+  const [amountInput, setAmountInput] = useState('0');
+  const [amountError, setAmountError] = useState<string | null>(null);
+
+  const handleAmountChange = (val: string) => {
+    setAmountInput(val);
+    // Remove commas (thousands separators) for parsing
+    const sanitized = val.replace(/,/g, '');
+    if (val.trim() === '' || isNaN(Number(sanitized))) {
+      setAmountError('Monto inválido. Use punto para decimales (ej. 1250.50) y no incluya letras.');
+    } else {
+      setAmountError(null);
+      setNewEntry(prev => ({ ...prev, amount: parseFloat(sanitized) || 0 }));
+    }
+  };
+
   const fetchEntries = async () => {
     setLoading(true);
     try {
@@ -2784,6 +2799,11 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
 
   const handleAddEntry = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (amountError) {
+      alert(amountError);
+      return;
+    }
+
     try {
       const payload = {
         ...newEntry,
@@ -2815,6 +2835,8 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
           retention_isr: 0,
           retention_itbis: 0
         });
+        setAmountInput('0');
+        setAmountError(null);
         fetchEntries();
       }
     } catch (error) {
@@ -2835,6 +2857,8 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
       retention_isr: entry.retention_isr || 0,
       retention_itbis: entry.retention_itbis || 0
     });
+    setAmountInput((entry.income > 0 ? entry.income : entry.expense).toString());
+    setAmountError(null);
     setShowAddModal(true);
   };
 
@@ -2861,7 +2885,7 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
     e.reference_no?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const currentBalance = entries.length > 0 ? entries[0].balance : 0;
+  const currentBalance = entries.reduce((acc, e) => acc + (parseFloat(e.income) || 0) - (parseFloat(e.expense) || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -3083,13 +3107,19 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Monto (RD$)</label>
                 <input
-                  type="number"
+                  type="text"
                   required
-                  step="0.01"
-                  className="w-full p-2 border rounded-xl text-sm font-bold"
-                  value={newEntry.amount}
-                  onChange={e => setNewEntry({ ...newEntry, amount: parseFloat(e.target.value) || 0 })}
+                  className={cn(
+                    "w-full p-2 border rounded-xl text-sm font-bold",
+                    amountError ? "border-rose-500 bg-rose-50" : "border-slate-200"
+                  )}
+                  placeholder="0.00"
+                  value={amountInput}
+                  onChange={e => handleAmountChange(e.target.value)}
                 />
+                {amountError && (
+                  <p className="text-[10px] text-rose-600 mt-1 font-bold animate-pulse">{amountError}</p>
+                )}
               </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Beneficiario / Origen</label>

@@ -1169,6 +1169,24 @@ El JSON debe tener esta estructura exacta:
   });
 
   // Cash Book
+  // Helper to recalculate running balances for a center
+  const recalculateBalances = async (client: any, centerId: number) => {
+    const result = await client.query(
+      "SELECT id, income, expense FROM cash_book WHERE center_id = $1 ORDER BY date ASC, id ASC",
+      [centerId]
+    );
+
+    let currentBalance = 0;
+    for (const row of result.rows) {
+      currentBalance += parseFloat(row.income) - parseFloat(row.expense);
+      await client.query(
+        "UPDATE cash_book SET balance = $1 WHERE id = $2",
+        [currentBalance, row.id]
+      );
+    }
+    return currentBalance;
+  };
+
   app.get("/api/cash-book", async (req: any, res: any) => {
     const centerId = (req as any).centerId;
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
@@ -1208,18 +1226,8 @@ El JSON debe tener esta estructura exacta:
 
       const newId = ins.rows[0].id;
 
-      // 3. Recalculate all subsequent entries
-      const subEntriesRes = await client.query(`
-        SELECT * FROM cash_book 
-        WHERE center_id = $1 AND (date > $2 OR (date = $3 AND id > $4)) 
-        ORDER BY date ASC, id ASC
-      `, [centerId, date, date, newId]);
-
-      let currentBalance = newBalance;
-      for (const subEntry of subEntriesRes.rows) {
-        currentBalance = currentBalance + parseFloat(subEntry.income) - parseFloat(subEntry.expense);
-        await client.query("UPDATE cash_book SET balance = $1 WHERE id = $2", [currentBalance, subEntry.id]);
-      }
+      // 3. Recalculate all entries for this center to ensure consistency
+      await recalculateBalances(client, centerId);
 
       // 4. Mirror to bank_transactions
       if (inc > 0) {
@@ -1259,27 +1267,8 @@ El JSON debe tener esta estructura exacta:
         WHERE id = $9 AND center_id = $10
       `, [date, reference_no, beneficiary, concept, income || 0, expense || 0, retention_isr || 0, retention_itbis || 0, id, centerId]);
 
-      // 2. Recalculate balances from the earliest affected date
-      const earliestDate = entry.date < date ? entry.date : date;
-
-      const subEntriesRes = await client.query(`
-        SELECT * FROM cash_book 
-        WHERE center_id = $1 AND date >= $2 
-        ORDER BY date ASC, id ASC
-      `, [centerId, earliestDate]);
-
-      const prevBalRes = await client.query(`
-        SELECT balance FROM cash_book 
-        WHERE center_id = $1 AND (date < $2 OR (date = $3 AND id < (SELECT MIN(id) FROM cash_book WHERE center_id = $4 AND date = $5)))
-        ORDER BY date DESC, id DESC LIMIT 1
-      `, [centerId, earliestDate, earliestDate, centerId, earliestDate]);
-      
-      let currentBalance = prevBalRes.rows.length > 0 ? parseFloat(prevBalRes.rows[0].balance) : 0;
-
-      for (const subEntry of subEntriesRes.rows) {
-        currentBalance = currentBalance + parseFloat(subEntry.income) - parseFloat(subEntry.expense);
-        await client.query("UPDATE cash_book SET balance = $1 WHERE id = $2", [currentBalance, subEntry.id]);
-      }
+      // 2. Recalculate all entries for this center
+      await recalculateBalances(client, centerId);
       
       await client.query('COMMIT');
       res.json({ success: true });
@@ -1319,25 +1308,8 @@ El JSON debe tener esta estructura exacta:
 
       await client.query("DELETE FROM cash_book WHERE id = $1 AND center_id = $2", [id, centerId]);
 
-      // Recalculate subsequent
-      const subEntriesRes = await client.query(`
-        SELECT * FROM cash_book 
-        WHERE center_id = $1 AND date >= $2 
-        ORDER BY date ASC, id ASC
-      `, [centerId, entry.date]);
-
-      const prevBalRes = await client.query(`
-        SELECT balance FROM cash_book 
-        WHERE center_id = $1 AND (date < $2 OR (date = $3 AND id < $4))
-        ORDER BY date DESC, id DESC LIMIT 1
-      `, [centerId, entry.date, entry.date, id]);
-      
-      let currentBalance = prevBalRes.rows.length > 0 ? parseFloat(prevBalRes.rows[0].balance) : 0;
-
-      for (const subEntry of subEntriesRes.rows) {
-        currentBalance = currentBalance + parseFloat(subEntry.income) - parseFloat(subEntry.expense);
-        await client.query("UPDATE cash_book SET balance = $1 WHERE id = $2", [currentBalance, subEntry.id]);
-      }
+      // 2. Recalculate all entries for this center
+      await recalculateBalances(client, centerId);
 
       await client.query('COMMIT');
       res.json({ success: true });
