@@ -63,8 +63,22 @@ async function startServer() {
     console.log("✓ PostgreSQL Connected successfully");
     client.release();
   } catch (err: any) {
-    console.error("✗ Failed to connect to PostgreSQL:", err.message);
-    process.exit(1);
+    console.error("✗ Failed to connect to PostgreSQL with SSL. DB_URL exists?", !!DB_URL);
+    console.error("Error details:", err);
+    console.log("Retrying connection WITHOUT SSL...");
+    
+    try {
+      pool = new Pool({
+        connectionString: DB_URL,
+        ssl: false
+      });
+      const client2 = await pool.connect();
+      console.log("✓ PostgreSQL Connected successfully (without SSL)");
+      client2.release();
+    } catch (err2: any) {
+      console.error("✗ Failed to connect to PostgreSQL (both with and without SSL):", err2);
+      process.exit(1);
+    }
   }
 
   // Initialize Database Schema (PostgreSQL Syntax)
