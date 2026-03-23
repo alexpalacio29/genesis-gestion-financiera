@@ -44,6 +44,7 @@ import {
   cn,
   formatCurrency,
   formatDate,
+  formatDateYYYYMMDD,
   generateQuotePDF,
   generateCheckPDF,
   generateRetentionCertPDF,
@@ -2764,6 +2765,11 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
     retention_isr: 0,
     retention_itbis: 0
   });
+  
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+  });
 
   const [amountInput, setAmountInput] = useState('0');
   const [amountError, setAmountError] = useState<string | null>(null);
@@ -2879,13 +2885,18 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
     }
   };
 
-  const filteredEntries = entries.filter(e =>
-    e.beneficiary?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.concept?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.reference_no?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredEntries = entries.filter(e => {
+    const matchesSearch = e.beneficiary?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      e.concept?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      e.reference_no?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (selectedMonth) {
+      return matchesSearch && e.date.startsWith(selectedMonth);
+    }
+    return matchesSearch;
+  });
 
-  const currentBalance = entries.reduce((acc, e) => acc + (parseFloat(e.income) || 0) - (parseFloat(e.expense) || 0), 0);
+  const currentBalance = filteredEntries.reduce((acc, e) => acc + (parseFloat(e.income) || 0) - (parseFloat(e.expense) || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -2936,7 +2947,7 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
           <div className="w-full">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ingresos</p>
             <p className="text-sm sm:text-base font-black text-slate-900 break-words">
-              {formatCurrency(entries.reduce((acc, e) => acc + (parseFloat(e.income) || 0), 0))}
+              {formatCurrency(filteredEntries.reduce((acc, e) => acc + (parseFloat(e.income) || 0), 0))}
             </p>
           </div>
         </div>
@@ -2947,7 +2958,7 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
           <div className="w-full">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Egresos</p>
             <p className="text-sm sm:text-base font-black text-slate-900 break-words">
-              {formatCurrency(entries.reduce((acc, e) => acc + (parseFloat(e.expense) || 0), 0))}
+              {formatCurrency(filteredEntries.reduce((acc, e) => acc + (parseFloat(e.expense) || 0), 0))}
             </p>
           </div>
         </div>
@@ -2958,7 +2969,7 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
           <div className="w-full">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ret. ISR</p>
             <p className="text-sm sm:text-base font-black text-slate-900 break-words">
-              {formatCurrency(entries.reduce((acc, e) => acc + (parseFloat(e.retention_isr) || 0), 0))}
+              {formatCurrency(filteredEntries.reduce((acc, e) => acc + (parseFloat(e.retention_isr) || 0), 0))}
             </p>
           </div>
         </div>
@@ -2969,15 +2980,15 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
           <div className="w-full">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ret. ITBIS</p>
             <p className="text-sm sm:text-base font-black text-slate-900 break-words">
-              {formatCurrency(entries.reduce((acc, e) => acc + (parseFloat(e.retention_itbis) || 0), 0))}
+              {formatCurrency(filteredEntries.reduce((acc, e) => acc + (parseFloat(e.retention_itbis) || 0), 0))}
             </p>
           </div>
         </div>
       </div>
 
       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="relative flex-1">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6">
+          <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
@@ -2986,6 +2997,23 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Calendar className="w-4 h-4 text-slate-400" />
+            <input
+              type="month"
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none transition-all"
+              value={selectedMonth}
+              onChange={e => setSelectedMonth(e.target.value)}
+            />
+            {selectedMonth && (
+              <button 
+                onClick={() => setSelectedMonth('')}
+                className="text-xs text-slate-400 hover:text-slate-600"
+              >
+                Ver Todos
+              </button>
+            )}
           </div>
         </div>
 
@@ -3017,7 +3045,7 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
               ) : (
                 filteredEntries.map((entry) => (
                   <tr key={entry.id} className="hover:bg-slate-50 transition-colors group">
-                    <td className="p-4 font-medium whitespace-nowrap">{formatDate(entry.date)}</td>
+                    <td className="p-4 font-medium whitespace-nowrap font-mono text-slate-600">{formatDateYYYYMMDD(entry.date)}</td>
                     <td className="p-4 font-mono text-xs">{entry.reference_no || '-'}</td>
                     <td className="p-4 font-bold">{entry.beneficiary}</td>
                     <td className="p-4 text-slate-600 max-w-xs truncate">{entry.concept}</td>

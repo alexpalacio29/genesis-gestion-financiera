@@ -13,11 +13,22 @@ export function formatCurrency(amount: number) {
 }
 
 export function formatDate(date: string | Date) {
-  return new Date(date).toLocaleDateString("es-DO", {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
+  return d.toLocaleDateString("es-DO", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+}
+
+export function formatDateYYYYMMDD(date: string | Date) {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
+  const year = d.getUTCFullYear();
+  const month = (d.getUTCMonth() + 1).toString().padStart(2, '0');
+  const day = d.getUTCDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export function formatDateShort(date: string | Date) {
