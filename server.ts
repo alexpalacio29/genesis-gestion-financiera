@@ -1649,16 +1649,6 @@ El JSON debe tener esta estructura exacta:
     }
   });
 
-  app.get("/api/reports", (req, res) => {
-    const centerId = (req as any).centerId;
-    if (!centerId) return res.status(400).json({ error: "Center ID required" });
-
-    const { startDate, endDate } = req.query;
-    if (!startDate || !endDate) {
-      return res.status(400).json({ error: "startDate and endDate are required" });
-    }
-
-    try {
   app.get("/api/reports", async (req: any, res: any) => {
     const centerId = (req as any).centerId;
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
@@ -1711,17 +1701,6 @@ El JSON debe tener esta estructura exacta:
     }
   });
 
-  // SPA Fallback - MUST BE LAST
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  }
-// SPA Fallback moved to end
-
-
   // SPA Fallback - MUST BE ABSOLUTELY LAST
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
@@ -1750,13 +1729,6 @@ El JSON debe tener esta estructura exacta:
       });
     });
   }
-
-    // 3. Start Listener
-    console.log("Setting up static serving from:", distPath);
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
 
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`>>> SERVER READY AND LISTENING ON PORT: ${PORT} <<<`);
@@ -1792,11 +1764,6 @@ El JSON debe tener esta estructura exacta:
           .catch(e => console.error("Maintenance task error:", e));
       }, 5000);
     });
-
-  } catch (error: any) {
-    console.error("Error during server initialization:", error);
-    throw error;
-  }
 }
 
 startServer().catch(err => {
