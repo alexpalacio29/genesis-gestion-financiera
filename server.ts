@@ -391,6 +391,72 @@ async function startServer() {
     }
   });
 
+  app.post("/api/ai/extract-bank-statement", async (req, res) => {
+    try {
+      const { base64Data, mimeType } = req.body;
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey || apiKey === "") {
+        return res.status(400).json({ error: "API Key de Gemini no configurada." });
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
+      const prompt = `
+        Analiza este estado bancario y extrae todas las transacciones financieras. 
+        Importante:
+        - La columna "Debito" o "Cargo" representa un GASTO (expense).
+        - La columna "Credito" o "Abono" representa un INGRESO (income).
+        - Usa el "Num. Doc." o "Referencia" para el campo reference_no.
+        - El "Origen" o "Causal" debe mapearse a beneficiary y concept.
+        - Devuelve un array de objetos JSON con este esquema: { transactions: [{ date, reference_no, beneficiary, concept, income, expense }] }
+        - Asegúrate de que los montos sean números. Si no hay monto para una columna, usa 0.
+        - La fecha debe estar en formato YYYY-MM-DD.
+      `;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-1.5-flash",
+        contents: [
+          {
+            parts: [
+              { inlineData: { data: base64Data, mimeType: mimeType || "application/pdf" } },
+              { text: prompt }
+            ]
+          }
+        ],
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              transactions: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    date: { type: Type.STRING },
+                    reference_no: { type: Type.STRING },
+                    beneficiary: { type: Type.STRING },
+                    concept: { type: Type.STRING },
+                    income: { type: Type.NUMBER },
+                    expense: { type: Type.NUMBER }
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      let aiText = response.text || '{"transactions":[]}';
+      aiText = aiText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+      const data = JSON.parse(aiText);
+      res.json(data);
+    } catch (error: any) {
+      console.error("Error in /api/ai/extract-bank-statement:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.post("/api/ai/extract-pdf", async (req, res) => {
     try {
       const { base64Data } = req.body;
