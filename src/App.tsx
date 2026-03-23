@@ -2765,12 +2765,6 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
     retention_itbis: 0
   });
 
-  // Bank Statement Extraction State
-  const [showStatementModal, setShowStatementModal] = useState(false);
-  const [extractedTransactions, setExtractedTransactions] = useState<any[]>([]);
-  const [isExtracting, setIsExtracting] = useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
   const fetchEntries = async () => {
     setLoading(true);
     try {
@@ -2861,41 +2855,6 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
     }
   };
 
-  const handleRegisterAll = async () => {
-    const selected = extractedTransactions.filter(t => t.selected);
-    if (selected.length === 0) return;
-
-    setLoading(true);
-    setShowStatementModal(false);
-    
-    let successCount = 0;
-    for (const t of selected) {
-      try {
-        const payload = {
-          date: t.date,
-          reference_no: t.reference_no,
-          beneficiary: t.beneficiary,
-          concept: t.concept,
-          income: t.income,
-          expense: t.expense,
-          related_type: 'bank_statement'
-        };
-
-        const res = await apiFetch('/api/cash-book', {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
-
-        if (res?.ok) successCount++;
-      } catch (error) {
-        console.error('Error registering transaction:', error);
-      }
-    }
-
-    alert(`Se registraron ${successCount} de ${selected.length} transacciones.`);
-    fetchEntries();
-  };
-
   const filteredEntries = entries.filter(e =>
     e.beneficiary?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     e.concept?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -2919,51 +2878,6 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
             <Plus className="w-4 h-4" />
             Registrar Transacción
           </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isExtracting}
-            className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 disabled:opacity-50"
-          >
-            {isExtracting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FileImage className="w-4 h-4" />}
-            Procesar Estado Bancario
-          </button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept=".pdf,.jpg,.jpeg,.png"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-
-              setIsExtracting(true);
-              try {
-                const reader = new FileReader();
-                reader.onload = async () => {
-                  const base64 = (reader.result as string).split(',')[1];
-                  const res = await apiFetch('/api/ai/extract-bank-statement', {
-                    method: 'POST',
-                    body: JSON.stringify({ base64Data: base64, mimeType: file.type })
-                  });
-                  const data = await res.json();
-                  if (data.transactions) {
-                    setExtractedTransactions(data.transactions.map((t: any, idx: number) => ({ ...t, id: idx, selected: true })));
-                    setShowStatementModal(true);
-                  } else {
-                    alert('No se pudieron extraer transacciones.');
-                  }
-                  setIsExtracting(false);
-                };
-                reader.readAsDataURL(file);
-              } catch (error) {
-                console.error(error);
-                alert('Error al procesar el archivo.');
-                setIsExtracting(false);
-              }
-              // Reset input
-              e.target.value = '';
-            }}
-          />
           <button
             onClick={() => generateCashBookReportPDF(entries, entries[entries.length - 1]?.date || '', entries[0]?.date || '', currentCenter)}
             className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors"
@@ -3239,163 +3153,6 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
                 Guardar Transacción
               </button>
             </form>
-          </div>
-        </div>
-      )}
-
-      {showStatementModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-5xl shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-[2.5rem]">
-              <div>
-                <h3 className="text-2xl font-black text-slate-900">Revisar Transacciones Extraídas</h3>
-                <p className="text-slate-500 text-sm">Verifica y edita los datos antes de registrarlos en el libro.</p>
-              </div>
-              <button onClick={() => setShowStatementModal(false)} className="p-3 hover:bg-white rounded-full transition-all">
-                <X className="w-6 h-6 text-slate-400" />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-auto p-8 custom-scrollbar">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-white z-10">
-                  <tr className="border-b-2 border-slate-100 text-slate-400 uppercase text-[10px] font-bold">
-                    <th className="p-3 text-left w-10">
-                      <input 
-                        type="checkbox" 
-                        checked={extractedTransactions.every(t => t.selected)}
-                        onChange={(e) => setExtractedTransactions(extractedTransactions.map(t => ({ ...t, selected: e.target.checked })))}
-                      />
-                    </th>
-                    <th className="p-3 text-left">Fecha</th>
-                    <th className="p-3 text-left">Ref.</th>
-                    <th className="p-3 text-left">Beneficiario/Concepto</th>
-                    <th className="p-3 text-right">Ingreso</th>
-                    <th className="p-3 text-right">Egreso</th>
-                    <th className="p-3 text-center">Acción</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {extractedTransactions.map((t, idx) => (
-                    <tr key={idx} className={cn("hover:bg-slate-50/50", !t.selected && "opacity-50")}>
-                      <td className="p-3">
-                        <input 
-                          type="checkbox" 
-                          checked={t.selected} 
-                          onChange={(e) => {
-                            const newTs = [...extractedTransactions];
-                            newTs[idx].selected = e.target.checked;
-                            setExtractedTransactions(newTs);
-                          }}
-                        />
-                      </td>
-                      <td className="p-3">
-                        <input 
-                          type="date" 
-                          className="w-full p-1 border rounded" 
-                          value={t.date} 
-                          onChange={(e) => {
-                            const newTs = [...extractedTransactions];
-                            newTs[idx].date = e.target.value;
-                            setExtractedTransactions(newTs);
-                          }}
-                        />
-                      </td>
-                      <td className="p-3">
-                        <input 
-                          type="text" 
-                          className="w-full p-1 border rounded font-mono text-xs" 
-                          value={t.reference_no} 
-                          onChange={(e) => {
-                            const newTs = [...extractedTransactions];
-                            newTs[idx].reference_no = e.target.value;
-                            setExtractedTransactions(newTs);
-                          }}
-                        />
-                      </td>
-                      <td className="p-3">
-                        <div className="space-y-1">
-                          <input 
-                            type="text" 
-                            className="w-full p-1 border rounded font-bold" 
-                            placeholder="Beneficiario"
-                            value={t.beneficiary} 
-                            onChange={(e) => {
-                              const newTs = [...extractedTransactions];
-                              newTs[idx].beneficiary = e.target.value;
-                              setExtractedTransactions(newTs);
-                            }}
-                          />
-                          <input 
-                            type="text" 
-                            className="w-full p-1 border rounded text-xs text-slate-500" 
-                            placeholder="Concepto"
-                            value={t.concept} 
-                            onChange={(e) => {
-                              const newTs = [...extractedTransactions];
-                              newTs[idx].concept = e.target.value;
-                              setExtractedTransactions(newTs);
-                            }}
-                          />
-                        </div>
-                      </td>
-                      <td className="p-3 text-right">
-                        <input 
-                          type="number" 
-                          className="w-24 p-1 border rounded text-right text-emerald-600 font-bold" 
-                          value={t.income} 
-                          onChange={(e) => {
-                            const newTs = [...extractedTransactions];
-                            newTs[idx].income = parseFloat(e.target.value) || 0;
-                            setExtractedTransactions(newTs);
-                          }}
-                        />
-                      </td>
-                      <td className="p-3 text-right">
-                        <input 
-                          type="number" 
-                          className="w-24 p-1 border rounded text-right text-rose-600 font-bold" 
-                          value={t.expense} 
-                          onChange={(e) => {
-                            const newTs = [...extractedTransactions];
-                            newTs[idx].expense = parseFloat(e.target.value) || 0;
-                            setExtractedTransactions(newTs);
-                          }}
-                        />
-                      </td>
-                      <td className="p-3 text-center">
-                        <button 
-                          onClick={() => setExtractedTransactions(extractedTransactions.filter((_, i) => i !== idx))}
-                          className="p-2 text-rose-500 hover:bg-rose-50 rounded-full"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="p-8 border-t border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-b-[2.5rem]">
-              <p className="text-sm text-slate-500">
-                <span className="font-bold text-slate-900">{extractedTransactions.filter(t => t.selected).length}</span> transacciones seleccionadas para registro.
-              </p>
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => setShowStatementModal(false)}
-                  className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-white transition-all"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  onClick={handleRegisterAll}
-                  className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20"
-                >
-                  Registrar Seleccionados
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       )}
