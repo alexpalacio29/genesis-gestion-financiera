@@ -268,6 +268,29 @@ async function startServer() {
     }
   });
 
+  app.get("/api/saas/users", isSuperAdminCheck, async (req: any, res: any) => {
+    try {
+      const result = await pool.query("SELECT id, name, email, created_at FROM users ORDER BY created_at DESC");
+      res.json(result.rows);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post("/api/saas/users/:id/reset", isSuperAdminCheck, async (req: any, res: any) => {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
+    }
+    try {
+      await pool.query("UPDATE users SET password = $1 WHERE id = $2", [newPassword, id]);
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   const storage = multer.diskStorage({
     destination: function (req, file, cb) {
       cb(null, 'uploads/evidence/')

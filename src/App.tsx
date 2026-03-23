@@ -4245,6 +4245,7 @@ const Configuration = ({ apiFetch, currentCenter, user }: { apiFetch: any, curre
 const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
   const [centers, setCenters] = useState<any[]>([]);
   const [codes, setCodes] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('centers');
 
@@ -4266,9 +4267,9 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
           setCenters(data);
           // Also fetch codes if centers load fine
           const codesRes = await apiFetch('/api/saas/codes');
-          if (codesRes && codesRes.ok) {
-            setCodes(await codesRes.json());
-          }
+          if (codesRes && codesRes.ok) setCodes(await codesRes.json());
+          const usersRes = await apiFetch('/api/saas/users');
+          if (usersRes && usersRes.ok) setUsers(await usersRes.json());
         } else {
           setError("Respuesta del servidor no es una lista válida");
         }
@@ -4319,6 +4320,31 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
     }
   };
 
+  const handleResetPassword = async (userId: number, userName: string) => {
+    const newPassword = prompt(`Introduce la nueva contraseña temporal para ${userName} (mínimo 6 caracteres):`);
+    if (!newPassword) return;
+    if (newPassword.length < 6) {
+      alert("La contraseña debe tener al menos 6 caracteres.");
+      return;
+    }
+    
+    try {
+      const res = await apiFetch(`/api/saas/users/${userId}/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`¡Contraseña de ${userName} restablecida con éxito!`);
+      } else {
+        alert(`Error: ${data.error}`);
+      }
+    } catch (e) {
+      alert("Error al restablecer contraseña");
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-6xl mx-auto">
       <div className="flex justify-between items-center">
@@ -4364,6 +4390,12 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
           className={cn("pb-2 font-bold text-sm transition-colors relative", activeTab === 'codes' ? "text-slate-900 border-b-2 border-slate-900" : "text-slate-400 hover:text-slate-600")}
         >
           Códigos de Registro ({codes.filter(c => !c.is_used).length} Libres)
+        </button>
+        <button
+          onClick={() => setActiveTab('users')}
+          className={cn("pb-2 font-bold text-sm transition-colors relative", activeTab === 'users' ? "text-slate-900 border-b-2 border-slate-900" : "text-slate-400 hover:text-slate-600")}
+        >
+          Usuarios ({users.length})
         </button>
       </div>
 
@@ -4420,7 +4452,7 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
             </tbody>
           </table>
         </div>
-      ) : (
+      ) : activeTab === 'codes' ? (
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
           <table className="w-full text-left">
             <thead className="bg-slate-50 border-b border-slate-200">
@@ -4461,7 +4493,39 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
             </tbody>
           </table>
         </div>
-      )}
+      ) : activeTab === 'users' ? (
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">ID</th>
+                <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Nombre</th>
+                <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</th>
+                <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Registro</th>
+                <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Acción</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {users.map(u => (
+                <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="p-4 font-mono text-xs">{u.id}</td>
+                  <td className="p-4 font-bold text-slate-900">{u.name || 'Sin Nombre'}</td>
+                  <td className="p-4 text-xs font-medium text-slate-600">{u.email}</td>
+                  <td className="p-4 text-[11px] text-slate-500">{new Date(u.created_at).toLocaleDateString()}</td>
+                  <td className="p-4 text-right">
+                    <button
+                      onClick={() => handleResetPassword(u.id, u.name || u.email)}
+                      className="text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-2 rounded-xl transition-all"
+                    >
+                      Restablecer Contraseña
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
     </div>
   );
 };
