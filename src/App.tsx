@@ -2936,7 +2936,7 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
           <div className="w-full">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ingresos</p>
             <p className="text-sm sm:text-base font-black text-slate-900 break-words">
-              {formatCurrency(entries.reduce((acc, e) => acc + e.income, 0))}
+              {formatCurrency(entries.reduce((acc, e) => acc + (parseFloat(e.income) || 0), 0))}
             </p>
           </div>
         </div>
@@ -2947,7 +2947,7 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
           <div className="w-full">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Egresos</p>
             <p className="text-sm sm:text-base font-black text-slate-900 break-words">
-              {formatCurrency(entries.reduce((acc, e) => acc + e.expense, 0))}
+              {formatCurrency(entries.reduce((acc, e) => acc + (parseFloat(e.expense) || 0), 0))}
             </p>
           </div>
         </div>
@@ -2958,7 +2958,7 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
           <div className="w-full">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ret. ISR</p>
             <p className="text-sm sm:text-base font-black text-slate-900 break-words">
-              {formatCurrency(entries.reduce((acc, e) => acc + (e.retention_isr || 0), 0))}
+              {formatCurrency(entries.reduce((acc, e) => acc + (parseFloat(e.retention_isr) || 0), 0))}
             </p>
           </div>
         </div>
@@ -2969,7 +2969,7 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
           <div className="w-full">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ret. ITBIS</p>
             <p className="text-sm sm:text-base font-black text-slate-900 break-words">
-              {formatCurrency(entries.reduce((acc, e) => acc + (e.retention_itbis || 0), 0))}
+              {formatCurrency(entries.reduce((acc, e) => acc + (parseFloat(e.retention_itbis) || 0), 0))}
             </p>
           </div>
         </div>
