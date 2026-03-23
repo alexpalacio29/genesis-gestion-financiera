@@ -225,11 +225,20 @@ const Auth = ({ onLogin }: { onLogin: (user: any, centers: any[]) => void }) => 
   );
 };
 
-const CenterSelector = ({ user, centers, onSelect, onAdd }: { user: any, centers: any[], onSelect: (center: any) => void, onAdd: () => void }) => {
+const CenterSelector = ({ user, centers, onSelect, onAdd, onLogout }: { user: any, centers: any[], onSelect: (center: any) => void, onAdd: () => void, onLogout?: () => void }) => {
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 relative">
+      {onLogout && (
+        <button
+          onClick={onLogout}
+          className="absolute top-4 right-4 sm:top-8 sm:right-8 flex items-center gap-2 px-4 py-2 bg-white text-rose-600 rounded-xl font-bold shadow-sm border border-slate-200 hover:bg-rose-50 hover:border-rose-200 transition-all"
+        >
+          <LogOut className="w-4 h-4" />
+          <span className="hidden sm:inline">Cerrar Sesión</span>
+        </button>
+      )}
       <div className="max-w-2xl w-full space-y-8">
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-2 mt-12 sm:mt-0">
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Tus Centros Educativos</h1>
           <p className="text-slate-500 font-medium">Selecciona el centro que deseas gestionar hoy</p>
           {user?.email?.toLowerCase() === 'alexpalacio29@gmail.com' && (
@@ -4576,6 +4585,7 @@ export default function App() {
         centers={centers}
         onSelect={handleSelectCenter}
         onAdd={() => setShowCenterForm(true)}
+        onLogout={handleLogout}
       />
       {showCenterForm && (
         <CenterForm
