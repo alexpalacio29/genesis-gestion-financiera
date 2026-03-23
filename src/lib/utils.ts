@@ -111,8 +111,8 @@ export const generateQuotePDF = (quote: any, supplier: any, items: any[] = [], c
   }
 
   doc.setFontSize(12);
-  doc.text("DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 20, { align: "center" });
-  doc.text("DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 26, { align: "center" });
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 20, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 26, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -227,8 +227,8 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("Regional 12, Higüey", 105, 20, { align: "center" });
-  doc.text("Distrito 12-01", 105, 27, { align: "center" });
+  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 20, { align: "center" });
+  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 27, { align: "center" });
   doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 34, { align: "center" });
   doc.text(`RNC: ${centerRNC}`, 105, 41, { align: "center" });
 
@@ -240,7 +240,7 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
   doc.setFont("helvetica", "normal");
   doc.text(`DD 12-01 Núm..: ${check.check_number}-2026`, 20, 65);
 
-  const text = `Quien suscribe, Lic. Tamaris Altagracia Calderon de De Peña, directora de la Junta de centro Educativo ${centerCode} ${centerName} del Distrito 12-01 de Higüey, Republica Dominicana, CERTIFICA: Que de acuerdo a lo establecido en el Art. 309 (y sus modificaciones) de la Ley 11-92, que establece el código Tributario Dominicano, en la Norma General 02-05 (y sus modificaciones), Decreto 293-11, la Ley 253-12, la Resolución Núm.. 41-2014, de la Dirección General de Impuestos Internos (DGII), en lo referente, hemos efectuado las retenciones de lugar aplicadas al pago de:`;
+  const text = `Quien suscribe, ${center?.director_name || 'Nombre del Director(a)'}, directora de la Junta de centro Educativo ${centerCode} ${centerName} del Distrito ${center?.district || '12-01 de Higüey'}, Republica Dominicana, CERTIFICA: Que de acuerdo a lo establecido en el Art. 309 (y sus modificaciones) de la Ley 11-92, que establece el código Tributario Dominicano, en la Norma General 02-05 (y sus modificaciones), Decreto 293-11, la Ley 253-12, la Resolución Núm.. 41-2014, de la Dirección General de Impuestos Internos (DGII), en lo referente, hemos efectuado las retenciones de lugar aplicadas al pago de:`;
 
   const splitText = doc.splitTextToSize(text, 170);
   doc.text(splitText, 20, 75);
@@ -277,10 +277,10 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
   });
 
   const finalY = (doc as any).lastAutoTable.finalY + 15;
-  doc.text(`Dada a solicitud de la parte interesada, para los fines correspondiente, en la ciudad de Higüey, Provincia La Altagracia, Republica Dominicana, el día ${new Date().getDate()} mes de ${new Date().toLocaleString('es-DO', { month: 'long' })} del año dos mil veintiséis (2026).`, 20, finalY, { maxWidth: 170 });
+  doc.text(`Dada a solicitud de la parte interesada, para los fines correspondiente, en Higüey, Provincia La Altagracia, Republica Dominicana, el día ${new Date().getDate()} mes de ${new Date().toLocaleString('es-DO', { month: 'long' })} del año ${new Date().getFullYear()}.`, 20, finalY, { maxWidth: 170 });
 
   doc.setFont("helvetica", "bold");
-  doc.text("Lic. Tamaris Altagracia Calderon de De Peña", 20, finalY + 40);
+  doc.text(center?.director_name || "Nombre del Director(a)", 20, finalY + 40);
   doc.text(`Directora de la Junta de centro Educativo ${centerCode} ${centerName}`, 20, finalY + 47);
 
   doc.save(`Certificacion_Retencion_Conjunta_${check.check_number}.pdf`);
@@ -300,8 +300,8 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("Regional 12, Higüey", 105, 20, { align: "center" });
-  doc.text("Distrito 12-01", 105, 27, { align: "center" });
+  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 20, { align: "center" });
+  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 27, { align: "center" });
   doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 34, { align: "center" });
   doc.text(`RNC: ${centerRNC}`, 105, 41, { align: "center" });
 
@@ -312,7 +312,7 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
   doc.setFont("helvetica", "normal");
   doc.text(`DD 12-01 Núm..: ${check.check_number}-2026`, 20, 65);
 
-  const text = `Quien suscribe, Lic. Tamaris Altagracia Calderon de De Peña, directora de la Junta de centro Educativo ${centerCode} ${centerName} del Distrito 12-01 de Higüey, Republica Dominicana, CERTIFICA: Que de acuerdo a lo establecido en la Norma General 02-05 de la Dirección General de Impuestos Internos (DGII) sobre Proveedores Informales, hemos efectuado la retención del 100% del ITBIS facturado aplicado al pago de:`;
+  const text = `Quien suscribe, ${center?.director_name || 'Nombre del Director(a)'}, directora de la Junta de centro Educativo ${centerCode} ${centerName} del Distrito ${center?.district || '12-01 de Higüey'}, Republica Dominicana, CERTIFICA: Que de acuerdo a lo establecido en la Norma General 02-05 de la Dirección General de Impuestos Internos (DGII) sobre Proveedores Informales, hemos efectuado la retención del 100% del ITBIS facturado aplicado al pago de:`;
 
   const splitText = doc.splitTextToSize(text, 170);
   doc.text(splitText, 20, 75);
@@ -345,10 +345,10 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
   });
 
   const finalY = (doc as any).lastAutoTable.finalY + 15;
-  doc.text(`Dada a solicitud de la parte interesada, para los fines correspondiente, en la ciudad de Higüey, Provincia La Altagracia, Republica Dominicana, el día ${new Date().getDate()} mes de ${new Date().toLocaleString('es-DO', { month: 'long' })} del año dos mil veintiséis (2026).`, 20, finalY, { maxWidth: 170 });
+  doc.text(`Dada a solicitud de la parte interesada, para los fines correspondiente, en Higüey, Provincia La Altagracia, Republica Dominicana, el día ${new Date().getDate()} mes de ${new Date().toLocaleString('es-DO', { month: 'long' })} del año ${new Date().getFullYear()}.`, 20, finalY, { maxWidth: 170 });
 
   doc.setFont("helvetica", "bold");
-  doc.text("Lic. Tamaris Altagracia Calderon de De Peña", 20, finalY + 40);
+  doc.text(center?.director_name || "Nombre del Director(a)", 20, finalY + 40);
   doc.text(`Directora de la Junta de centro Educativo ${centerCode} ${centerName}`, 20, finalY + 47);
 
   doc.save(`Certificacion_Retencion_ITBIS_${check.check_number}.pdf`);
@@ -366,8 +366,8 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
   }
 
   doc.setFontSize(12);
-  doc.text("DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 20, { align: "center" });
-  doc.text("DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 26, { align: "center" });
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 20, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 26, { align: "center" });
 
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
@@ -388,9 +388,9 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
 
   doc.setFont("helvetica", "bold");
   doc.text(`A : Junta de Centro Educativo ${centerCode} ${centerName}`, 20, 85);
-  doc.text("Lic. Tamaris Altagracia Calderón de De Peña", 30, 92);
+  doc.text(center?.director_name || "Director(a) de la Junta de Centro", 30, 92);
 
-  doc.text("Atención : Enerolisa Mejía R.", 20, 105);
+  doc.text(`Atención : ${center?.president_name || 'Presidente(a) y/o Tesorero(a)'}`, 20, 105);
   
   // Dynamic Y positioning starts here
   let currentY = 115;
@@ -470,7 +470,7 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
   }
 
   doc.setFontSize(12);
-  doc.text("DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 20, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 20, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -509,15 +509,15 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
 
   const finalY = (doc as any).lastAutoTable.finalY + 30;
   doc.text("____________________", 40, finalY);
-  doc.text("Presidente (a) de la Junta de Centro", 40, finalY + 5, { align: "center" });
+  doc.text(center?.president_name || "Presidente (a) de la Junta de Centro", 40, finalY + 5, { align: "center" });
 
   doc.text("____________________", 140, finalY);
   doc.text("Secretario (a) de la Junta de Centro", 140, finalY + 5, { align: "center" });
 
   doc.text("____________________", 90, finalY + 25);
-  doc.text("Tesorero (a) de la Junta de Centro", 90, finalY + 30, { align: "center" });
+  doc.text(center?.treasurer_name || "Tesorero (a) de la Junta de Centro", 90, finalY + 30, { align: "center" });
 
-  doc.text(`Visto por la Dirección Distrital Educativa 12-01, Higüey: ________________________________`, 20, finalY + 50);
+  doc.text(`Visto por la Dirección Distrital Educativa ${center?.district || '12-01, Higüey'}: ________________________________`, 20, finalY + 50);
 
   doc.save(`Requisicion_${requisition.id}.pdf`);
 };
@@ -534,8 +534,8 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[] = 
   }
 
   doc.setFontSize(12);
-  doc.text("DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 20, { align: "center" });
-  doc.text("DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 26, { align: "center" });
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 20, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 26, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -618,7 +618,7 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[] = 
 
   const finalY = (doc as any).lastAutoTable.finalY + 35;
   doc.text("____________________", 40, finalY);
-  doc.text("Director (a) Centro Educativo", 40, finalY + 5, { align: "center" });
+  doc.text(center?.director_name || "Director (a) Centro Educativo", 40, finalY + 5, { align: "center" });
 
   doc.text("____________________", 140, finalY);
   doc.text("Secretario (a) Junta de Centro", 140, finalY + 5, { align: "center" });
@@ -734,7 +734,8 @@ export const generateLaborReceiptPDF = (check: any, supplier: any, center?: any,
   doc.text(`FECHA: ${formatDate(check.date)}`, 20, 45);
 
   const amountInWords = numberToWordsSpanish(check.amount_net);
-  const text = `HE RECIBIDO DE LA JUNTA DE CENTRO ${centerCode} ${centerName.toUpperCase()}, DEL DISTRITO 12-01, HIGÜEY, LA SUMA DE RD$ ${formatCurrency(check.amount_net).replace('RD$', '')} ****** (${amountInWords}) *******`;
+  const dist = center?.district ? `DEL DISTRITO ${center.district.toUpperCase()}` : "DEL DISTRITO 12-01, HIGÜEY";
+  const text = `HE RECIBIDO DE LA JUNTA DE CENTRO ${centerCode} ${centerName.toUpperCase()}, ${dist}, LA SUMA DE RD$ ${formatCurrency(check.amount_net).replace('RD$', '')} ****** (${amountInWords}) *******`;
 
   const splitText = doc.splitTextToSize(text, 170);
   doc.text(splitText, 20, 55);

@@ -3973,7 +3973,12 @@ const Configuration = ({ apiFetch, currentCenter, user }: { apiFetch: any, curre
     junta_name: currentCenter?.junta_name || '',
     codigo_no: currentCenter?.codigo_no || '',
     codigo_dependencia: currentCenter?.codigo_dependencia || '',
-    cuenta_no: currentCenter?.cuenta_no || ''
+    cuenta_no: currentCenter?.cuenta_no || '',
+    director_name: currentCenter?.director_name || '',
+    president_name: currentCenter?.president_name || '',
+    treasurer_name: currentCenter?.treasurer_name || '',
+    district: currentCenter?.district || '',
+    regional: currentCenter?.regional || ''
   });
 
   // User form state
@@ -4136,6 +4141,26 @@ const Configuration = ({ apiFetch, currentCenter, user }: { apiFetch: any, curre
               <div className="space-y-1">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Cuenta No.</label>
                 <input type="text" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-slate-900/5 transition-all" value={centerForm.cuenta_no} onChange={e => setCenterForm({ ...centerForm, cuenta_no: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Nombre Director(a)</label>
+                <input type="text" placeholder="Ej: Enerolisa Mejía R." className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-slate-900/5 transition-all" value={centerForm.director_name} onChange={e => setCenterForm({ ...centerForm, director_name: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Pte. de la Junta</label>
+                <input type="text" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-slate-900/5 transition-all" value={centerForm.president_name} onChange={e => setCenterForm({ ...centerForm, president_name: e.target.value })} />
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tesorero de la Junta</label>
+                <input type="text" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-slate-900/5 transition-all" value={centerForm.treasurer_name} onChange={e => setCenterForm({ ...centerForm, treasurer_name: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Distrito Educativo</label>
+                <input type="text" placeholder="Ej: 12-01 de Higüey" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-slate-900/5 transition-all" value={centerForm.district} onChange={e => setCenterForm({ ...centerForm, district: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Regional</label>
+                <input type="text" placeholder="Ej: 12 HIGÜEY" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-slate-900/5 transition-all" value={centerForm.regional} onChange={e => setCenterForm({ ...centerForm, regional: e.target.value })} />
               </div>
             </div>
             <button type="submit" disabled={loading} className="w-full bg-slate-900 text-white p-4 rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
