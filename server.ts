@@ -1178,7 +1178,9 @@ El JSON debe tener esta estructura exacta:
 
     let currentBalance = 0;
     for (const row of result.rows) {
-      currentBalance += parseFloat(row.income) - parseFloat(row.expense);
+      const inc = parseFloat(row.income) || 0;
+      const exp = parseFloat(row.expense) || 0;
+      currentBalance += inc - exp;
       await client.query(
         "UPDATE cash_book SET balance = $1 WHERE id = $2",
         [currentBalance, row.id]
@@ -1407,6 +1409,17 @@ El JSON debe tener esta estructura exacta:
     try {
       await pool.query("UPDATE inventory SET minerd_code = $1, quantity = $2, unit_price = $3 WHERE id = $4 AND center_id = $5", [minerd_code, quantity, unit_price || 0, id, centerId]);
       res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get("/api/diag", async (req: any, res: any) => {
+    try {
+      const types = await pool.query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'cash_book'");
+      const stats = await pool.query("SELECT SUM(income) as s_inc, SUM(expense) as s_exp, count(*) as total FROM cash_book");
+      const sample = await pool.query("SELECT id, income, expense, balance FROM cash_book ORDER BY id DESC LIMIT 5");
+      res.json({ types: types.rows, stats: stats.rows[0], sample: sample.rows });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
