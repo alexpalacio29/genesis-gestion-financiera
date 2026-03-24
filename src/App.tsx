@@ -4674,6 +4674,46 @@ export default function App() {
   const [isSuspended, setIsSuspended] = useState(false);
   const [minerdCodes, setMinerdCodes] = useState<any[]>([]);
 
+  // Global fetch wrapper with center context
+  const apiFetch = useCallback(async (url: string, options: any = {}) => {
+    if (!user) return null;
+
+    // Allow SaaS routes even without a center
+    const isSaasRoute = url.startsWith('/api/saas');
+    if (!currentCenter && !isSaasRoute) return null;
+
+    const headers: any = {
+      ...options.headers,
+      'x-user-id': user.id.toString()
+    };
+    if (!(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+    if (currentCenter) {
+      headers['x-center-id'] = currentCenter.id.toString();
+    }
+    return fetch(url, { ...options, headers }).then(res => {
+      // Logic for suspension only if we have a center ID context
+      if (res.status === 403 && headers['x-center-id']) {
+        setIsSuspended(true);
+      } else if (headers['x-center-id']) {
+        setIsSuspended(false);
+      }
+      return res;
+    });
+  }, [currentCenter, user]);
+
+
+  useEffect(() => {
+    if (user) {
+      apiFetch('/api/minerd-codes')
+        .then((res: any) => res.json())
+        .then((data: any) => setMinerdCodes(data))
+        .catch((err: any) => console.error("Error fetching codes:", err));
+    }
+  }, [user, apiFetch]);
+
+
 
   const isSuperAdmin = user?.email?.toLowerCase() === 'alexpalacio29@gmail.com';
 
@@ -4737,34 +4777,6 @@ export default function App() {
     setShowCenterForm(false);
   };
 
-  // Global fetch wrapper with center context
-  const apiFetch = useCallback(async (url: string, options: any = {}) => {
-    if (!user) return null;
-
-    // Allow SaaS routes even without a center
-    const isSaasRoute = url.startsWith('/api/saas');
-    if (!currentCenter && !isSaasRoute) return null;
-
-    const headers: any = {
-      ...options.headers,
-      'x-user-id': user.id.toString()
-    };
-    if (!(options.body instanceof FormData)) {
-      headers['Content-Type'] = 'application/json';
-    }
-    if (currentCenter) {
-      headers['x-center-id'] = currentCenter.id.toString();
-    }
-    return fetch(url, { ...options, headers }).then(res => {
-      // Logic for suspension only if we have a center ID context
-      if (res.status === 403 && headers['x-center-id']) {
-        setIsSuspended(true);
-      } else if (headers['x-center-id']) {
-        setIsSuspended(false);
-      }
-      return res;
-    });
-  }, [currentCenter, user]);
 
   useEffect(() => {
     if (currentCenter?.rnc === 'SaaS-Global') {
@@ -4813,14 +4825,6 @@ export default function App() {
   ];
 
 
-  useEffect(() => {
-    if (user) {
-      apiFetch('/api/minerd-codes')
-        .then((res: any) => res.json())
-        .then((data: any) => setMinerdCodes(data))
-        .catch((err: any) => console.error("Error fetching codes:", err));
-    }
-  }, [user]);
 
   const renderContent = () => {
 
