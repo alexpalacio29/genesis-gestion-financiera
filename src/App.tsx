@@ -439,7 +439,31 @@ const Dashboard = ({ onNavigate, apiFetch, currentCenter }: { onNavigate: (tab: 
           <h1 className="text-3xl font-serif font-bold text-slate-900">Resumen Financiero</h1>
           <p className="text-slate-500">Vista general del estado de la Junta Descentralizada</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={async () => {
+              if (confirm('¿Deseas descargar una copia de seguridad completa con todos los datos de este centro educativo?')) {
+                try {
+                  const res = await apiFetch('/api/export-center-data');
+                  const data = await res.json();
+                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `Respaldo_${currentCenter?.name || 'Centro'}_${new Date().toISOString().split('T')[0]}.json`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                } catch (e) {
+                  alert('Error al exportar datos');
+                }
+              }
+            }}
+            className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20"
+          >
+            <Download className="w-4 h-4" />
+            Copia de Seguridad (JSON)
+          </button>
           <button
             onClick={() => onNavigate('reports')}
             className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors"

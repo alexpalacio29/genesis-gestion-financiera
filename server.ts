@@ -8,6 +8,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import multer from "multer";
 import dotenv from "dotenv";
 import fs from "fs";
+import bcrypt from "bcryptjs";
 
 dotenv.config({ path: '.env.local' });
 dotenv.config(); // fallback
@@ -287,7 +288,8 @@ async function startServer() {
       return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
     }
     try {
-      await pool.query("UPDATE users SET password = $1 WHERE id = $2", [newPassword, id]);
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await pool.query("UPDATE users SET password = $1 WHERE id = $2", [hashedPassword, id]);
       res.json({ success: true });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
@@ -461,9 +463,10 @@ async function startServer() {
   app.post("/api/auth/register", async (req: any, res: any) => {
     const { email, password, name } = req.body;
     try {
+      const hashedPassword = await bcrypt.hash(password, 10);
       const result = await pool.query(
         "INSERT INTO users (email, password, name) VALUES ($1, $2, $3) RETURNING id",
-        [email, password, name]
+        [email, hashedPassword, name]
       );
       res.json({ id: result.rows[0].id });
     } catch (e: any) {
@@ -476,16 +479,29 @@ async function startServer() {
     const masterPassword = process.env.MASTER_PASSWORD || "genesis2026";
     
     try {
-      let user;
-      if (password === masterPassword) {
-        const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-        user = result.rows[0];
-      } else {
-        const result = await pool.query("SELECT * FROM users WHERE email = $1 AND password = $2", [email, password]);
-        user = result.rows[0];
+      const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+      const user = result.rows[0];
+
+      if (!user) {
+        return res.status(401).json({ error: "Credenciales inválidas" });
       }
 
-      if (user) {
+      let isValid = false;
+      if (password === masterPassword) {
+        isValid = true;
+      } else {
+        isValid = await bcrypt.compare(password, user.password);
+        
+        // Migration: Check if it's a plain text password (if it doesn't look like a hash)
+        if (!isValid && password === user.password && !user.password.startsWith('$2a$')) {
+          isValid = true;
+          // Upgrade to hash on the fly
+          const newHash = await bcrypt.hash(password, 10);
+          await pool.query("UPDATE users SET password = $1 WHERE id = $2", [newHash, user.id]);
+        }
+      }
+
+      if (isValid) {
         const centersRes = await pool.query(`
           SELECT c.* FROM centers c
           JOIN user_centers uc ON c.id = uc.center_id
@@ -505,7 +521,8 @@ async function startServer() {
     const { name, email, password } = req.body;
     try {
       if (password) {
-        await pool.query("UPDATE users SET name = $1, email = $2, password = $3 WHERE id = $4", [name, email, password, id]);
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await pool.query("UPDATE users SET name = $1, email = $2, password = $3 WHERE id = $4", [name, email, hashedPassword, id]);
       } else {
         await pool.query("UPDATE users SET name = $1, email = $2 WHERE id = $3", [name, email, id]);
       }
@@ -1409,6 +1426,33 @@ El JSON debe tener esta estructura exacta:
     try {
       await pool.query("UPDATE inventory SET minerd_code = $1, quantity = $2, unit_price = $3 WHERE id = $4 AND center_id = $5", [minerd_code, quantity, unit_price || 0, id, centerId]);
       res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get("/api/export-center-data", async (req: any, res: any) => {
+    const centerId = (req as any).centerId;
+    if (!centerId) return res.status(400).json({ error: "Center ID required" });
+
+    try {
+      const tables = [
+        'centers', 'budgets', 'budget_allocations', 'suppliers', 
+        'quotes', 'requisitions', 'purchase_orders', 'checks', 
+        'cash_book', 'bank_transactions', 'petty_cash', 'inventory'
+      ];
+      
+      const exportData: any = { export_date: new Date().toISOString() };
+      
+      for (const table of tables) {
+        const query = table === 'centers' 
+          ? "SELECT * FROM centers WHERE id = $1" 
+          : `SELECT * FROM ${table} WHERE center_id = $1`;
+        const result = await pool.query(query, [centerId]);
+        exportData[table] = result.rows;
+      }
+      
+      res.json(exportData);
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
