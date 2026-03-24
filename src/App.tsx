@@ -2189,6 +2189,12 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
 
       const payload = {
         supplier: previewData.supplier,
+        items: previewData.items,
+        metadata: {
+          ...metadata,
+          selectedDocs
+        },
+
         quote: {
           ...previewData.quote,
           description: finalDescription
