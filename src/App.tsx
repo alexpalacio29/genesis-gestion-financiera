@@ -998,9 +998,10 @@ const Inventory = ({ apiFetch, minerdCodes }: { apiFetch: any, minerdCodes: any[
                         onChange={(e) => setEditForm({ ...editForm, minerd_code: e.target.value })}
                       >
                         <option value="">Seleccionar...</option>
-                        {minerdCodes.map(c => (
+                        {(minerdCodes || []).map(c => (
                            <option key={c.code} value={c.code}>{c.code} - {c.description}</option>
                          ))}
+
                       </select>
                     ) : (
                       <span className="font-mono text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100">
@@ -1876,22 +1877,32 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
         body: formData
       });
 
-      let data = { items: [], supplier_name: '', quote_date: '' };
+      let data;
       if (response?.ok) {
         data = await response.json();
       } else {
-        const errData = await response?.json();
-        throw new Error(errData?.error || "Error al procesar la imagen en el servidor.");
+        const errText = await response?.text();
+        let errMsg = "Error al procesar la imagen en el servidor.";
+        try {
+          const errJson = JSON.parse(errText);
+          errMsg = errJson.error || errMsg;
+        } catch(e) {}
+        throw new Error(errMsg);
       }
-      const description = metadata.concept || (data.items?.length > 0 ? data.items[0].description : 'Adquisición de materiales');
+      
+      const items = data.items || [];
+      const description = metadata.concept || (items.length > 0 ? items[0].description : 'Adquisición de materiales');
+
 
       // Calculate totals since AI might not return them perfectly
-      const subtotal = data.items.reduce((acc: number, item: any) => acc + (item.total || 0), 0);
+      const subtotal = items.reduce((acc: number, item: any) => acc + (item.total || 0), 0);
       const itbis = subtotal * 0.18;
       const total = subtotal + itbis;
 
+
       // Suggest minerd codes for the extracted items
-      const itemsForCodes = data.items.map((i: any) => ({ name: i.description, quantity: i.quantity, unit_price: i.unit_price, total: i.total }));
+      const itemsForCodes = items.map((i: any) => ({ name: i.description, quantity: i.quantity, unit_price: i.unit_price, total: i.total }));
+
       const itemsWithCodes = await suggestMinerdCodes(itemsForCodes);
 
       setPreviewData({
@@ -1931,15 +1942,18 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
           body: JSON.stringify({ base64Data })
         });
 
-        let data = { items: [], supplier: {}, quote_number: '', subtotal: 0, itbis: 0, total: 0 };
+        let data;
         if (response?.ok) {
           data = await response.json();
         } else {
           throw new Error("Failed to process PDF on backend");
         }
-        const description = metadata.concept || (data.items?.length > 0 ? data.items[0].name : 'Adquisición de materiales');
+        
+        const items = data.items || [];
+        const description = metadata.concept || (items.length > 0 ? items[0].name : 'Adquisición de materiales');
 
-        const itemsWithCodes = await suggestMinerdCodes(data.items || []);
+        const itemsWithCodes = await suggestMinerdCodes(items);
+
 
         setPreviewData({
           supplier: { ...data.supplier, type: metadata.supplierType },
@@ -2428,11 +2442,12 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
                           }}
                         >
                           <option value="">Código MINERD...</option>
-                          {minerdCodes.map((c: any) => (
+                          {(minerdCodes || []).map((c: any) => (
                             <option key={c.code} value={c.code}>{c.code} - {c.description}</option>
                           ))}
                         </select>
                       </div>
+
 
                     </div>
                   ))}
@@ -2760,9 +2775,10 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
                               }}
                             >
                               <option value="">Seleccionar Código...</option>
-                              {minerdCodes.map(c => (
+                              {(minerdCodes || []).map(c => (
                                 <option key={c.code} value={c.code}>{c.code} - {c.description}</option>
                               ))}
+
                             </select>
                           </td>
                           <td className="p-2 text-right">{formatCurrency(item.unit_price)}</td>
