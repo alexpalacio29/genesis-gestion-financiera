@@ -29,26 +29,46 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // seeding will run in background
 const codes = [
-  // 2. SERVICIOS NO PERSONALES 40%
-  { code: '215', description: 'Servicio de internet y televisión por cable' },
-  { code: '222', description: 'Agua' },
-  { code: '232', description: 'Impresión y encuadernación, Fotocopias' },
-  { code: '241', description: 'Viáticos dentro del país' },
-  { code: '251', description: 'Pasajes' },
-  { code: '252', description: 'Fletes' },
-  { code: '254', description: 'Peaje' },
-  { code: '281', description: 'Obras menores' },
-  { code: '282', description: 'maquinarias y equipos' },
-  { code: '292', description: 'Comisiones y gastos bancarios' },
-  { code: '294', description: 'Servicios funerarios y gastos conexos' },
-  { code: '295', description: 'Servicios especiales' },
-  { code: '299', description: 'Otros servicios no personales' },
-  // 3. MATERIALES Y SUMINISTRO 40%
-  { code: '311', description: 'Alimentos y bebidas para personas' },
-  { code: '331', description: 'Papel de escritorio' },
-  { code: '617', description: 'Equipos y muebles de oficina' },
-  { code: '619', description: 'Equipos varios (Laboratorios de ciencias)' }
+  { "code": "215", "description": "Servicio de internet y televisión por cable" },
+  { "code": "222", "description": "Agua" },
+  { "code": "232", "description": "Impresión y encuadernación, Fotocopias" },
+  { "code": "241", "description": "Viáticos dentro del país" },
+  { "code": "251", "description": "Pasajes" },
+  { "code": "252", "description": "Fletes" },
+  { "code": "254", "description": "Peaje" },
+  { "code": "281", "description": "Obras menores" },
+  { "code": "282", "description": "maquinarias y equipos" },
+  { "code": "292", "description": "Comisiones y gastos bancarios" },
+  { "code": "294", "description": "Servicios funerarios y gastos conexos" },
+  { "code": "295", "description": "Servicios especiales" },
+  { "code": "299", "description": "Otros servicios no personales" },
+  { "code": "311", "description": "Alimentos y bebidas para personas" },
+  { "code": "331", "description": "Papel de escritorio." },
+  { "code": "332", "description": "Productos de papel y cartón" },
+  { "code": "333", "description": "Productos de artes gráficas" },
+  { "code": "341", "description": "Combustibles y lubricantes" },
+  { "code": "342", "description": "Productos químico y conexos" },
+  { "code": "343", "description": "Productos farmacéuticos y conexos" },
+  { "code": "353", "description": "Llantas y neumáticos" },
+  { "code": "355", "description": "Artículos de plásticos" },
+  { "code": "361", "description": "Productos de cemento y asbesto" },
+  { "code": "362", "description": "Productos de vidrio, loza y porcelana" },
+  { "code": "363", "description": "Cemento, cal y yeso" },
+  { "code": "365", "description": "Productos metálicos" },
+  { "code": "366", "description": "Minerales: Arena y graba" },
+  { "code": "391", "description": "Material de limpieza." },
+  { "code": "392", "description": "Útiles de escritorio, oficina y enseñanza" },
+  { "code": "394", "description": "Útiles de deporte y recreativos" },
+  { "code": "395", "description": "Útiles de cocina y comedor" },
+  { "code": "396", "description": "Productos eléctricos y afines" },
+  { "code": "397", "description": "Materiales y útiles relacionados con informática" },
+  { "code": "399", "description": "Útiles diversos" },
+  { "code": "612", "description": "Equipo educacional y recreativo" },
+  { "code": "614", "description": "Equipos de informática." },
+  { "code": "617", "description": "Equipos y muebles de oficina" },
+  { "code": "619", "description": "Equipos varios (Laboratorios de ciencias)" }
 ];
+
 // seeding will run in background
 
 async function startServer() {
@@ -351,15 +371,19 @@ async function startServer() {
       const ai = new GoogleGenAI({ apiKey });
       const prompt = `
         You are a financial assistant for public schools in the Dominican Republic.
-        Match each of the following item descriptions to the MOST APPROPRIATE MINERD concept code.
-        If it's food (empanadas, jugo, picadera, etc.), use '311'.
-        If it's office supplies (papel, lapices, carpetas, grapas, zafacon etc.), use '331' or '392'.
-        If it's cleaning supplies (escoba, suape, cloro, detergente, etc.), use '391'.
-        If it's hardware/electrical (cables, bombillas, tomacorrientes), use '396'.
-        If it's printing/binding, use '232'.
-        If it's internet/cable, use '215'.
-
-        Here are the official MINERD codes:
+        Match each of the following item descriptions to the MOST APPROPRIATE MINERD concept code from the list provided below.
+        
+        Rules:
+        1. If it's food (empanadas, jugo, picadera, galletas, etc.), use '311'.
+        2. If it's paper/office supplies (papel, sobres, etc.), use '331'.
+        3. If it's cleaning supplies (cloro, desinfectante, etc.), use '391'.
+        4. If it's general office/teaching supplies (lapices, carpetas, marcadores, etc.), use '392'.
+        5. If it's electrical/hardware (cables, bombillas), use '396'.
+        6. If it's printing/copying services, use '232'.
+        7. If it's computer related (toner, mouse, etc.), use '397' or '614'.
+        8. If it's furniture (silla, mesa), use '617'.
+        
+        Official MINERD codes:
         ${JSON.stringify(codes)}
 
         And here are the items you need to classify:

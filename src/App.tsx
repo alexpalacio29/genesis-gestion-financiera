@@ -752,7 +752,7 @@ const Suppliers = ({ apiFetch }: { apiFetch: any }) => {
   );
 };
 
-const Inventory = ({ apiFetch }: { apiFetch: any }) => {
+const Inventory = ({ apiFetch, minerdCodes }: { apiFetch: any, minerdCodes: any[] }) => {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'date' | 'code' | 'status'>('date');
@@ -998,9 +998,9 @@ const Inventory = ({ apiFetch }: { apiFetch: any }) => {
                         onChange={(e) => setEditForm({ ...editForm, minerd_code: e.target.value })}
                       >
                         <option value="">Seleccionar...</option>
-                        {Array.from(new Set(items.map(i => i.minerd_code).filter(Boolean))).sort().map(code => (
-                          <option key={code} value={code}>{code}</option>
-                        ))}
+                        {minerdCodes.map(c => (
+                           <option key={c.code} value={c.code}>{c.code} - {c.description}</option>
+                         ))}
                       </select>
                     ) : (
                       <span className="font-mono text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100">
@@ -1714,7 +1714,7 @@ const BankBook = ({ apiFetch }: { apiFetch: any }) => {
   );
 };
 
-const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit, setQuoteToEdit }: any) => {
+const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit, setQuoteToEdit, minerdCodes }: any) => {
   const [file, setFile] = useState<File | null>(null);
   const [metadata, setMetadata] = useState<any>({
     supplierType: 'formal',
@@ -1728,10 +1728,9 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
   });
   const [processing, setProcessing] = useState(false);
   const [suggestingCodes, setSuggestingCodes] = useState(false);
-  const [minerdCodes, setMinerdCodes] = useState<any[]>([]);
   const [previewData, setPreviewData] = useState<any>(null);
   const [result, setResult] = useState<any>(null);
-  const [manualItems, setManualItems] = useState<any[]>([{ name: '', quantity: 1, unit_price: 0 }]);
+  const [manualItems, setManualItems] = useState<any[]>([{ name: '', quantity: 1, unit_price: 0, minerd_code: '' }]);
   const [manualSupplier, setManualSupplier] = useState<any>({ name: '', rnc: '', address: '', phone: '' });
   const [selectedDocs, setSelectedDocs] = useState<string[]>([
     'quote', 'requisition', 'po', 'check', 'calc', 'retention', 'letter'
@@ -1807,11 +1806,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
     }
   }, [quoteToEdit, apiFetch]);
 
-  useEffect(() => {
-    apiFetch('/api/minerd-codes')
-      .then((res: any) => res.json())
-      .then((data: any) => setMinerdCodes(data));
-  }, [apiFetch]);
+
 
   const suggestMinerdCodes = async (items: any[]) => {
     try {
@@ -1826,7 +1821,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
       const suggestedCodes = await response?.json() || [];
       return items.map((item, index) => ({
         ...item,
-        minerd_code: suggestedCodes[index] || ''
+        minerd_code: item.minerd_code || suggestedCodes[index] || ''
       }));
     } catch (error) {
       console.error("Error suggesting MINERD codes:", error);
@@ -2423,7 +2418,22 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
                             setManualItems(newItems);
                           }}
                         />
+                        <select
+                          className="w-full p-2 border rounded-lg text-xs bg-white text-blue-600 font-bold"
+                          value={item.minerd_code}
+                          onChange={e => {
+                            const newItems = [...manualItems];
+                            newItems[idx].minerd_code = e.target.value;
+                            setManualItems(newItems);
+                          }}
+                        >
+                          <option value="">Código MINERD...</option>
+                          {minerdCodes.map((c: any) => (
+                            <option key={c.code} value={c.code}>{c.code} - {c.description}</option>
+                          ))}
+                        </select>
                       </div>
+
                     </div>
                   ))}
                 </div>
@@ -4646,6 +4656,8 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [quoteToEdit, setQuoteToEdit] = useState<number | null>(null);
   const [isSuspended, setIsSuspended] = useState(false);
+  const [minerdCodes, setMinerdCodes] = useState<any[]>([]);
+
 
   const isSuperAdmin = user?.email?.toLowerCase() === 'alexpalacio29@gmail.com';
 
@@ -4784,9 +4796,20 @@ export default function App() {
     { id: 'configuration', label: 'Configuración', icon: Settings },
   ];
 
+
+  useEffect(() => {
+    if (user) {
+      apiFetch('/api/minerd-codes')
+        .then((res: any) => res.json())
+        .then((data: any) => setMinerdCodes(data))
+        .catch((err: any) => console.error("Error fetching codes:", err));
+    }
+  }, [user]);
+
   const renderContent = () => {
+
     // Pass apiFetch to components that need it
-    const props = { apiFetch, currentCenter, user, onNavigate: setActiveTab };
+    const props = { apiFetch, currentCenter, user, onNavigate: setActiveTab, minerdCodes };
     const onEditQuote = (id: number) => {
       setQuoteToEdit(id);
       setActiveTab('auto-processor');
