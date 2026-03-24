@@ -2173,10 +2173,9 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
 
     try {
       const subtotal = previewData.quote.subtotal;
+      const itbis = previewData.quote.itbis;
+      const total = previewData.quote.total_amount;
 
-      // Strict rule: Informal suppliers must have an exact 18% ITBIS for calculating the gross total correctly.
-      const itbis = metadata.supplierType === 'informal' ? subtotal * 0.18 : previewData.quote.itbis;
-      const total = subtotal + itbis;
 
       // Calculations based on subtotal for ISR
       const retention_isr = subtotal * 0.05;
@@ -2734,10 +2733,21 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
                       <label className="text-[10px] text-slate-400 uppercase">ITBIS (18%)</label>
                       <input
                         type="number"
-                        className="w-full p-2 border rounded-lg text-sm bg-slate-50"
+                        className="w-full p-2 border rounded-lg text-sm bg-white"
                         value={previewData.quote.itbis}
-                        readOnly
+                        onChange={(e) => {
+                          const newItbis = parseFloat(e.target.value) || 0;
+                          setPreviewData({
+                            ...previewData,
+                            quote: {
+                              ...previewData.quote,
+                              itbis: newItbis,
+                              total_amount: previewData.quote.subtotal + newItbis
+                            }
+                          });
+                        }}
                       />
+
                     </div>
                   </div>
                   <div>
