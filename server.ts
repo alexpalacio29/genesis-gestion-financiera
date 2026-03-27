@@ -1504,7 +1504,10 @@ El JSON debe tener esta estructura exacta:
       
       const expenseRes = await pool.query("SELECT SUM(expense) as total FROM cash_book WHERE center_id = $1", [centerId]);
       const expense = parseFloat(expenseRes.rows[0].total) || 0;
-      const balance = income - expense;
+      
+      // Get the latest balance directly from the cash_book
+      const lastBalRes = await pool.query("SELECT balance FROM cash_book WHERE center_id = $1 ORDER BY date DESC, id DESC LIMIT 1", [centerId]);
+      const balance = lastBalRes.rows.length > 0 ? parseFloat(lastBalRes.rows[0].balance) : 0;
 
       const invRes = await pool.query("SELECT SUM(quantity * unit_price) as total FROM inventory WHERE center_id = $1", [centerId]);
       const inventoryValue = parseFloat(invRes.rows[0].total) || 0;
@@ -1519,31 +1522,34 @@ El JSON debe tener esta estructura exacta:
       const catSpendingRes = await pool.query(`
         SELECT 
           CASE 
-            WHEN minerd_code IN ('281') THEN 'Infraestructura'
-            WHEN minerd_code IN ('331', '332', '391', '392') THEN 'Materiales'
-            WHEN minerd_code IN ('612', '614', '617', '619', '282') THEN 'Equipos'
-            WHEN minerd_code IN ('215', '222', '232', '292', '295', '299') THEN 'Servicios'
-            WHEN minerd_code IN ('394', '395', '399', '333') THEN 'Pedagogía'
+            WHEN qi.minerd_code IN ('281') THEN 'Infraestructura'
+            WHEN qi.minerd_code IN ('331', '332', '391', '392') THEN 'Materiales'
+            WHEN qi.minerd_code IN ('612', '614', '617', '619', '282') THEN 'Equipos'
+            WHEN qi.minerd_code IN ('215', '222', '232', '292', '295', '299') THEN 'Servicios'
+            WHEN qi.minerd_code IN ('394', '395', '399', '333') THEN 'Pedagogía'
             ELSE 'Otros'
           END as category,
-          SUM(amount_net) as total 
-        FROM checks 
-        WHERE center_id = $1 AND status = 'active'
+          SUM(qi.total) as total 
+        FROM quote_items qi
+        JOIN quotes q ON qi.quote_id = q.id
+        WHERE q.center_id = $1
         GROUP BY category
       `, [centerId]);
+
 
       // Cash flow by month for current year
       const currentYear = new Date().getFullYear().toString();
       const cashFlowRes = await pool.query(`
         SELECT 
-          TO_CHAR(date, 'MM') as month,
+          SUBSTRING(date FROM 6 FOR 2) as month,
           SUM(income) as ingresos,
           SUM(expense) as egresos
         FROM cash_book
-        WHERE center_id = $1 AND TO_CHAR(date, 'YYYY') = $2
+        WHERE center_id = $1 AND SUBSTRING(date FROM 1 FOR 4) = $2
         GROUP BY month
         ORDER BY month ASC
       `, [centerId, currentYear]);
+
 
       const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
       const cashFlow = monthNames.map((name, index) => {
