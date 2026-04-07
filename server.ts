@@ -852,6 +852,9 @@ async function startServer() {
 El JSON debe tener esta estructura exacta:
 {
   "supplier_name": "Nombre del proveedor o tienda",
+  "supplier_rnc": "RNC o Cédula del proveedor si está disponible",
+  "supplier_address": "Dirección si está disponible",
+  "supplier_phone": "Teléfono si está disponible",
   "quote_date": "Fecha de la cotización si está disponible",
   "items": [
     {
@@ -878,8 +881,9 @@ El JSON debe tener esta estructura exacta:
       });
 
       const textResult = response.text || "";
-      // Limpiar posibles bloques de markdown
-      const cleanJsonStr = textResult.replace(/^```json/g, "").replace(/```$/g, "").trim();
+      // Limpieza más robusta de bloques de markdown y texto extra
+      const jsonMatch = textResult.match(/\{[\s\S]*\}/);
+      const cleanJsonStr = jsonMatch ? jsonMatch[0] : textResult;
       const jsonData = JSON.parse(cleanJsonStr);
 
       res.json(jsonData);
@@ -1647,15 +1651,31 @@ El JSON debe tener esta estructura exacta:
       await client.query('BEGIN');
       // 1. Supplier
       let supplierId;
-      const sRes = await client.query("SELECT id FROM suppliers WHERE rnc = $1 AND center_id = $2", [supplier.rnc, centerId]);
-      if (sRes.rows.length > 0) {
-        supplierId = sRes.rows[0].id;
-        await client.query("UPDATE suppliers SET name = $1, type = $2, phone = $3, address = $4 WHERE id = $5 AND center_id = $6",
-          [supplier.name, supplier.type, supplier.phone, supplier.address, supplierId, centerId]);
-      } else {
-        const insS = await client.query("INSERT INTO suppliers (center_id, name, rnc, type, phone, address) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
-          [centerId, supplier.name, supplier.rnc, supplier.type, supplier.phone, supplier.address]);
-        supplierId = insS.rows[0].id;
+      const rncClean = supplier.rnc ? supplier.rnc.trim() : "";
+      
+      // Solo buscar por RNC si no está vacío
+      if (rncClean && rncClean !== "") {
+        const sRes = await client.query("SELECT id FROM suppliers WHERE rnc = $1 AND center_id = $2", [rncClean, centerId]);
+        if (sRes.rows.length > 0) {
+          supplierId = sRes.rows[0].id;
+          await client.query("UPDATE suppliers SET name = $1, type = $2, phone = $3, address = $4 WHERE id = $5 AND center_id = $6",
+            [supplier.name, supplier.type, supplier.phone, supplier.address, supplierId, centerId]);
+        }
+      }
+
+      // Si no se encontró por RNC o el RNC estaba vacío, buscar por nombre exacto para evitar duplicados en el mismo centro
+      if (!supplierId) {
+        const sNameRes = await client.query("SELECT id FROM suppliers WHERE name = $1 AND center_id = $2", [supplier.name, centerId]);
+        if (sNameRes.rows.length > 0) {
+          supplierId = sNameRes.rows[0].id;
+          // Actualizamos datos adicionales si se encuentran
+          await client.query("UPDATE suppliers SET rnc = $1, type = $2, phone = $3, address = $4 WHERE id = $5 AND center_id = $6",
+            [supplier.rnc, supplier.type, supplier.phone, supplier.address, supplierId, centerId]);
+        } else {
+          const insS = await client.query("INSERT INTO suppliers (center_id, name, rnc, type, phone, address) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+            [centerId, supplier.name, supplier.rnc, supplier.type, supplier.phone, supplier.address]);
+          supplierId = insS.rows[0].id;
+        }
       }
 
       // 2. Quote

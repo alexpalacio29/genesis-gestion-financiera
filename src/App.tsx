@@ -1906,7 +1906,13 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
       const itemsWithCodes = await suggestMinerdCodes(itemsForCodes);
 
       setPreviewData({
-        supplier: { name: data.supplier_name || 'Desconocido', rnc: '', address: '', phone: '', type: metadata.supplierType },
+        supplier: { 
+          name: data.supplier_name || 'Desconocido', 
+          rnc: data.supplier_rnc || '', 
+          address: data.supplier_address || '', 
+          phone: data.supplier_phone || '', 
+          type: metadata.supplierType 
+        },
         quote: {
           type: metadata.quoteType,
           total_amount: total,
