@@ -1900,11 +1900,6 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
       const total = subtotal + itbis;
 
 
-      // Suggest minerd codes for the extracted items
-      const itemsForCodes = items.map((i: any) => ({ name: i.description, quantity: i.quantity, unit_price: i.unit_price, total: i.total }));
-
-      const itemsWithCodes = await suggestMinerdCodes(itemsForCodes);
-
       setPreviewData({
         supplier: { 
           name: data.supplier_name || 'Desconocido', 
@@ -1921,7 +1916,13 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
           description,
           external_id: Math.floor(Math.random() * 10000).toString()
         },
-        items: itemsWithCodes
+        items: items.map((i: any) => ({
+          name: i.description,
+          quantity: i.quantity,
+          unit_price: i.unit_price,
+          total: i.total || (i.quantity * i.unit_price),
+          minerd_code: i.minerd_code || ''
+        }))
       });
       setProcessing(false);
     } catch (error: any) {

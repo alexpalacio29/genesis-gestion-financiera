@@ -849,6 +849,10 @@ async function startServer() {
     try {
       const ai = new GoogleGenAI({ apiKey: aiKey });
       const prompt = `Analiza la siguiente imagen de una cotización o factura y extrae la información en formato JSON estrictamente válido, sin texto adicional (ni siquiera formato Markdown alrededor como \`\`\`json).
+Usa la siguiente lista de códigos MINERD oficiales para clasificar cada producto extraído, asignando el código más apropiado según su descripción:
+Códigos MINERD disponibles:
+${JSON.stringify(codes)}
+
 El JSON debe tener esta estructura exacta:
 {
   "supplier_name": "Nombre del proveedor o tienda",
@@ -861,7 +865,8 @@ El JSON debe tener esta estructura exacta:
       "description": "Nombre o descripción del producto",
       "quantity": número (entero o decimal),
       "unit_price": precio unitario como número,
-      "total": precio total de ese producto (quantity * unit_price) como número
+      "total": precio total de ese producto (quantity * unit_price) como número,
+      "minerd_code": "Solo el código de 3 dígitos de la lista anterior que mejor se ajuste"
     }
   ]
 }
