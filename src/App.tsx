@@ -1143,7 +1143,7 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
       if (data.items && Array.isArray(data.items)) {
         data.items = data.items.map((item: any) => ({
           ...item,
-          name: item.description || item.name
+          name: item.name || item.description || 'Producto/Servicio'
         }));
       }
 
@@ -1236,6 +1236,30 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
                   <span className="text-xs text-amber-600 font-medium">{q.status}</span>
                 </td>
                 <td className="data-grid-cell text-right flex justify-end gap-2 relative">
+                  <button
+                    onClick={async () => {
+                      const newDate = prompt("Ingrese la nueva fecha (AAAA-MM-DD):", q.created_at.split(' ')[0]);
+                      if (newDate) {
+                        try {
+                          const res = await apiFetch(`/api/quotes/${q.id}/date`, {
+                            method: 'PATCH',
+                            body: JSON.stringify({ date: newDate })
+                          });
+                          if (!res.ok) throw new Error('Error al actualizar fecha');
+                          fetchQuotes();
+                        } catch (error) {
+                          console.error(error);
+                          alert('Hubo un error al actualizar la fecha.');
+                        }
+                      }
+                    }}
+                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors relative group"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-indigo-900 text-white text-xs px-2 py-1 rounded shadow-xl whitespace-nowrap z-50">
+                      Cambiar Fecha
+                    </span>
+                  </button>
                   <button
                     onClick={() => onEditQuote && onEditQuote(q.id)}
                     className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors relative group"
@@ -2193,9 +2217,14 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
 
       const amount_net = total - retention_isr - retention_itbis;
 
+      const sanitizedItems = (previewData.items || []).map((item: any) => ({
+        ...item,
+        name: item.name || item.description || 'Producto/Servicio'
+      }));
+
       const payload = {
         supplier: previewData.supplier,
-        items: previewData.items,
+        items: sanitizedItems,
         metadata: {
           ...metadata,
           selectedDocs
@@ -2203,7 +2232,8 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
 
         quote: {
           ...previewData.quote,
-          description: finalDescription
+          description: finalDescription,
+          date: metadata.date
         },
         requisition: {
           code: 'REQ-' + previewData.quote.external_id,
@@ -2516,6 +2546,15 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
                   <option value="materials">Materiales / Productos</option>
                   <option value="labor">Mano de Obra / Servicios</option>
                 </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase text-slate-400">Fecha del Registro</label>
+                <input
+                  type="date"
+                  className="w-full p-2 border rounded-lg mt-1"
+                  value={metadata.date}
+                  onChange={e => setMetadata({ ...metadata, date: e.target.value })}
+                />
               </div>
               <div>
                 <label className="text-xs font-bold uppercase text-slate-400">NCF (Opcional)</label>

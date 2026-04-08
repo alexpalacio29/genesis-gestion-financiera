@@ -139,15 +139,15 @@ export const generateQuotePDF = (quote: any, supplier: any, items: any[] = [], c
   doc.text("SERVICIOS COTIZADOS", 105, 65 + (centerLines.length > 1 ? (centerLines.length - 1) * 7 : 0), { align: "center" });
 
   const tableStartY = 70 + (centerLines.length > 1 ? (centerLines.length - 1) * 7 : 0);
-  const tableBody = items.length > 0
+  const tableBody = (items && items.length > 0)
     ? items.map((item, index) => [
       (index + 1).toString(),
-      item.name,
-      item.quantity.toString(),
-      formatCurrency(item.unit_price),
-      formatCurrency(item.quantity * item.unit_price)
+      item.name || item.description || 'N/A',
+      (item.quantity || 1).toString(),
+      formatCurrency(item.unit_price || 0),
+      formatCurrency((item.quantity || 1) * (item.unit_price || 0))
     ])
-    : [['1', quote.description || 'Reparación / Mantenimiento', '1', formatCurrency(quote.subtotal), formatCurrency(quote.subtotal)]];
+    : [['1', quote.description || 'Reparación / Mantenimiento', '1', formatCurrency(quote.total_amount), formatCurrency(quote.total_amount)]];
 
   autoTable(doc, {
     startY: tableStartY,
@@ -502,17 +502,19 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
   const tableStartY = 72 + (conceptLines.length * 6) + 10;
   doc.text("DESCRIPCIÓN", 105, tableStartY - 5, { align: "center" });
 
-  const tableBody = items.length > 0
+  const tableBody = (items && items.length > 0)
     ? items.map((item, index) => [
       (index + 1).toString(),
-      item.name,
-      item.quantity.toString()
+      item.name || item.description || 'N/A',
+      (item.quantity || 1).toString(),
+      formatCurrency(item.unit_price || 0),
+      formatCurrency((item.quantity || 1) * (item.unit_price || 0))
     ])
-    : [['1', quote.description || 'Materiales didácticos nivel inicial, primaria y secundaria', '1']];
+    : [['1', quote.description || 'Materiales didácticos nivel inicial, primaria y secundaria', '1', formatCurrency(quote.total_amount), formatCurrency(quote.total_amount)]];
 
   autoTable(doc, {
     startY: tableStartY,
-    head: [['ITEM', 'DESCRIPCIÓN', 'CANTIDAD']],
+    head: [['ITEM', 'DESCRIPCIÓN', 'CANTIDAD', 'PRECIO UNIT.', 'TOTAL']],
     body: tableBody,
     theme: 'grid',
     headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
@@ -604,17 +606,18 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[] = 
   currentY += (conceptoLines.length * 6) + 10;
   doc.text("Valor en RD$", 160, currentY - 5);
 
-  const tableBody = items.length > 0
+  const tableBody = (items && items.length > 0)
     ? items.map(item => [
-      item.quantity.toString(),
-      item.name,
-      formatCurrency(item.unit_price)
+      (item.quantity || 1).toString(),
+      item.name || item.description || 'N/A',
+      formatCurrency(item.unit_price || 0),
+      formatCurrency((item.quantity || 1) * (item.unit_price || 0))
     ])
-    : [['1', po.description || 'Materiales didácticos nivel inicial, primaria y secundaria', formatCurrency(po.total_amount)]];
+    : [['1', po.description || 'Materiales didácticos nivel inicial, primaria y secundaria', formatCurrency(po.total_amount), formatCurrency(po.total_amount)]];
 
   autoTable(doc, {
     startY: currentY,
-    head: [['CANTIDAD', 'DESCRIPCIÓN', 'PRECIO']],
+    head: [['CANTI.', 'DESCRIPCIÓN', 'PRECIO UNIT.', 'TOTAL']],
     body: tableBody,
     foot: [['', 'TOTAL', formatCurrency(po.total_amount)]],
     theme: 'grid',

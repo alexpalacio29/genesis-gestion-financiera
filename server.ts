@@ -930,6 +930,61 @@ El JSON debe tener esta estructura exacta:
     }
   });
 
+  app.patch("/api/quotes/:id/date", async (req: any, res: any) => {
+    const centerId = (req as any).centerId;
+    if (!centerId) return res.status(400).json({ error: "Center ID required" });
+    const { id } = req.params;
+    const { date } = req.body;
+
+    if (!date) return res.status(400).json({ error: "Date is required" });
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // Update Quote
+      await client.query("UPDATE quotes SET created_at = $1 WHERE id = $2 AND center_id = $3", [date, id, centerId]);
+      
+      // Update Requisition
+      const rRes = await client.query("SELECT id FROM requisitions WHERE quote_id = $1 AND center_id = $2", [id, centerId]);
+      if (rRes.rows.length > 0) {
+        const requisitionId = rRes.rows[0].id;
+        await client.query("UPDATE requisitions SET created_at = $1 WHERE id = $2 AND center_id = $3", [date, requisitionId, centerId]);
+        
+        // Update PO
+        const pRes = await client.query("SELECT id FROM purchase_orders WHERE requisition_id = $1 AND center_id = $2", [requisitionId, centerId]);
+        if (pRes.rows.length > 0) {
+          const poId = pRes.rows[0].id;
+          await client.query("UPDATE purchase_orders SET created_at = $1 WHERE id = $2 AND center_id = $3", [date, poId, centerId]);
+          
+          // Update Check
+          const cRes = await client.query("SELECT id FROM checks WHERE purchase_order_id = $1 AND center_id = $2", [poId, centerId]);
+          if (cRes.rows.length > 0) {
+            const checkId = cRes.rows[0].id;
+            const oldCheck = cRes.rows[0];
+            await client.query("UPDATE checks SET date = $1, created_at = $2 WHERE id = $3 AND center_id = $4", [date, date, checkId, centerId]);
+            
+            // Update Cash Book entries related to this check
+            await client.query("UPDATE cash_book SET date = $1 WHERE related_id = $2 AND related_type = 'check' AND center_id = $3", [date, checkId, centerId]);
+          }
+        }
+      }
+
+      // Update Bank Transaction if it was created based on the concept/supplier
+      // Note: This is more complex since bank_transactions aren't directly linked by ID yet, 
+      // but we can try to find them by date and amount if needed, or just skip if too risky.
+      // For now, let's update everything that is clearly linked.
+
+      await client.query('COMMIT');
+      res.json({ success: true });
+    } catch (e: any) {
+      await client.query('ROLLBACK');
+      res.status(500).json({ error: e.message });
+    } finally {
+      client.release();
+    }
+  });
+
   app.post("/api/sync-dashboard", async (req: any, res: any) => {
     const centerId = (req as any).centerId;
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
@@ -1601,21 +1656,21 @@ El JSON debe tener esta estructura exacta:
       }
 
       // 2. Update Quote
-      await client.query("UPDATE quotes SET supplier_id = $1, type = $2, total_amount = $3, subtotal = $4, itbis = $5 WHERE id = $6 AND center_id = $7",
-        [supplierId, quote.type, quote.total_amount, quote.subtotal, quote.itbis, quoteId, centerId]);
+      await client.query("UPDATE quotes SET supplier_id = $1, type = $2, total_amount = $3, subtotal = $4, itbis = $5, created_at = $6 WHERE id = $7 AND center_id = $8",
+        [supplierId, quote.type, quote.total_amount, quote.subtotal, quote.itbis, quote.date || 'NOW()', quoteId, centerId]);
 
       // 3. Update Requisition
       const rRes = await client.query("SELECT id FROM requisitions WHERE quote_id = $1 AND center_id = $2", [quoteId, centerId]);
       if (rRes.rows.length > 0) {
         const requisitionId = rRes.rows[0].id;
-        await client.query("UPDATE requisitions SET poa_year = $1 WHERE id = $2 AND center_id = $3", [requisition.poa_year, requisitionId, centerId]);
+        await client.query("UPDATE requisitions SET poa_year = $1, created_at = $2 WHERE id = $3 AND center_id = $4", [requisition.poa_year, quote.date || 'NOW()', requisitionId, centerId]);
 
         // 4. Update PO
         const pRes = await client.query("SELECT id FROM purchase_orders WHERE requisition_id = $1 AND center_id = $2", [requisitionId, centerId]);
         if (pRes.rows.length > 0) {
           const poId = pRes.rows[0].id;
-          await client.query("UPDATE purchase_orders SET supplier_id = $1, total_amount = $2, subtotal = $3, itbis = $4, ncf = $5 WHERE id = $6 AND center_id = $7",
-            [supplierId, purchase_order.total_amount, purchase_order.subtotal, purchase_order.itbis, purchase_order.ncf, poId, centerId]);
+          await client.query("UPDATE purchase_orders SET supplier_id = $1, total_amount = $2, subtotal = $3, itbis = $4, ncf = $5, created_at = $6 WHERE id = $7 AND center_id = $8",
+            [supplierId, purchase_order.total_amount, purchase_order.subtotal, purchase_order.itbis, purchase_order.ncf, quote.date || 'NOW()', poId, centerId]);
 
           // 5. Update Check
           const cRes = await client.query("SELECT id FROM checks WHERE purchase_order_id = $1 AND center_id = $2", [poId, centerId]);
@@ -1684,18 +1739,18 @@ El JSON debe tener esta estructura exacta:
       }
 
       // 2. Quote
-      const qIns = await client.query("INSERT INTO quotes (center_id, supplier_id, type, total_amount, subtotal, itbis, description) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
-        [centerId, supplierId, quote.type, quote.total_amount, quote.subtotal, quote.itbis, quote.description]);
+      const qIns = await client.query("INSERT INTO quotes (center_id, supplier_id, type, total_amount, subtotal, itbis, description, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
+        [centerId, supplierId, quote.type, quote.total_amount, quote.subtotal, quote.itbis, quote.description, quote.date || 'NOW()']);
       const quoteId = qIns.rows[0].id;
 
       // 3. Requisition
-      const rIns = await client.query("INSERT INTO requisitions (center_id, quote_id, code, poa_year, description) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-        [centerId, quoteId, requisition.code, requisition.poa_year, quote.description]);
+      const rIns = await client.query("INSERT INTO requisitions (center_id, quote_id, code, poa_year, description, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+        [centerId, quoteId, requisition.code, requisition.poa_year, quote.description, quote.date || 'NOW()']);
       const requisitionId = rIns.rows[0].id;
 
       // 4. Purchase Order
-      const pIns = await client.query("INSERT INTO purchase_orders (center_id, requisition_id, supplier_id, total_amount, subtotal, itbis, ncf, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
-        [centerId, requisitionId, supplierId, purchase_order.total_amount, purchase_order.subtotal, purchase_order.itbis, purchase_order.ncf, purchase_order.description]);
+      const pIns = await client.query("INSERT INTO purchase_orders (center_id, requisition_id, supplier_id, total_amount, subtotal, itbis, ncf, description, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id",
+        [centerId, requisitionId, supplierId, purchase_order.total_amount, purchase_order.subtotal, purchase_order.itbis, purchase_order.ncf, purchase_order.description, quote.date || 'NOW()']);
       const poId = pIns.rows[0].id;
 
       // 5. Check
