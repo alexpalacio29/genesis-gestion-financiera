@@ -1266,19 +1266,23 @@ export const generateBankReconciliationPDF = (reconciliation: any, center?: any,
     doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 5, LOGO_W, LOGO_H);
   } catch (e) {}
 
-  doc.setFontSize(14);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text("CONCILIACIÓN BANCARIA", 105, 45, { align: "center" });
+  doc.text("MINISTERIO DE EDUCACIÓN", 105, 30, { align: "center" });
+  doc.text("Dirección General de Gestión Financiera", 105, 35, { align: "center" });
+
+  doc.setFontSize(14);
+  doc.text("CONCILIACIÓN BANCARIA", 105, 48, { align: "center" });
   
   doc.setFontSize(12);
-  doc.text(centerName.toUpperCase(), 105, 52, { align: "center" });
+  doc.text(centerName.toUpperCase(), 105, 55, { align: "center" });
   
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Período: ${reconciliation.period_date}`, 105, 58, { align: "center" });
-  doc.text(`Cuenta Bancaria No.: ${accountNo}`, 105, 63, { align: "center" });
+  doc.text(`Período: ${reconciliation.period_date}`, 105, 62, { align: "center" });
+  doc.text(`Cuenta Bancaria No.: ${accountNo}`, 105, 67, { align: "center" });
 
-  let currentY = 75;
+  let currentY = 80;
 
   // BANK SECTION
   doc.setFont("helvetica", "bold");
