@@ -722,20 +722,38 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
             <h3 className="font-bold text-slate-900">Registrar Rangos NCF Autorizados</h3>
             <button onClick={() => setShowSequenceForm(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5"/></button>
           </div>
-          <form onSubmit={handleCreateSequence} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <form onSubmit={handleCreateSequence} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Prefijo</label>
+              <input required type="text" className="w-full p-2 border border-slate-300 rounded-lg text-sm font-bold text-rose-600" value={seqFormData.prefix} onChange={e => setSeqFormData({...seqFormData, prefix: e.target.value.toUpperCase()})} placeholder="Ej: B11" />
+            </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Desde (Número)</label>
-              <input required type="number" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.start_number} onChange={e => setSeqFormData({...seqFormData, start_number: e.target.value})} />
+              <input required type="text" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.start_number} onChange={e => {
+                const val = e.target.value;
+                if (val.startsWith(seqFormData.prefix)) {
+                   setSeqFormData({...seqFormData, start_number: val.replace(seqFormData.prefix, '').replace(/^0+/, '') || '0'});
+                } else {
+                   setSeqFormData({...seqFormData, start_number: val.replace(/\D/g, '')});
+                }
+              }} placeholder="Ej: 1" />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hasta (Número)</label>
-              <input required type="number" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.end_number} onChange={e => setSeqFormData({...seqFormData, end_number: e.target.value})} />
+              <input required type="text" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.end_number} onChange={e => {
+                const val = e.target.value;
+                if (val.startsWith(seqFormData.prefix)) {
+                   setSeqFormData({...seqFormData, end_number: val.replace(seqFormData.prefix, '').replace(/^0+/, '') || '0'});
+                } else {
+                   setSeqFormData({...seqFormData, end_number: val.replace(/\D/g, '')});
+                }
+              }} placeholder="Ej: 5" />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vencimiento</label>
               <input required type="date" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.expiration_date} onChange={e => setSeqFormData({...seqFormData, expiration_date: e.target.value})} />
             </div>
-            <button type="submit" disabled={loading} className="bg-slate-900 text-white p-2 rounded-lg font-bold text-sm">Guardar Rango</button>
+            <button type="submit" disabled={loading} className="bg-slate-900 text-white p-2 rounded-lg font-bold text-sm h-[38px]">Guardar Rango</button>
           </form>
           
           <div className="pt-4">
