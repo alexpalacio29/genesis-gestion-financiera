@@ -589,6 +589,7 @@ const BankReconciliation = ({ apiFetch, currentCenter }: { apiFetch: any, curren
 const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: any }) => {
   const [sequences, setSequences] = useState<any[]>([]);
   const [vouchers, setVouchers] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   const [showSequenceForm, setShowSequenceForm] = useState(false);
   const [showVoucherForm, setShowVoucherForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -612,12 +613,17 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
   });
 
   const fetchData = useCallback(async () => {
-    const [seqRes, vouRes] = await Promise.all([
+    const [seqRes, vouRes, supRes] = await Promise.all([
       apiFetch('/api/ncf/sequences'),
-      apiFetch('/api/ncf/vouchers')
+      apiFetch('/api/ncf/vouchers'),
+      apiFetch('/api/suppliers')
     ]);
     if (seqRes?.ok) setSequences(await seqRes.json());
     if (vouRes?.ok) setVouchers(await vouRes.json());
+    if (supRes?.ok) {
+      const allSups = await supRes.json();
+      setSuppliers(allSups.filter((s: any) => s.type?.toLowerCase() === 'informal'));
+    }
   }, [apiFetch]);
 
   useEffect(() => {
@@ -821,6 +827,24 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
              </div>
 
              <form onSubmit={handleCreateVoucher} className="space-y-6">
+               <div className="space-y-1">
+                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Seleccionar Suplidor Registrado</label>
+                 <select 
+                    className="w-full p-3 border border-slate-300 rounded-xl bg-slate-50 outline-none focus:border-slate-900 text-sm font-medium"
+                    onChange={e => {
+                      const s = suppliers.find(sup => sup.id.toString() === e.target.value);
+                      if (s) {
+                        setVoucherFormData({...voucherFormData, supplier_name: s.name, supplier_rnc_cedula: s.rnc || ''});
+                      }
+                    }}
+                 >
+                   <option value="">-- Suplidores Informales Registrados --</option>
+                   {suppliers.map(s => (
+                     <option key={s.id} value={s.id}>{s.name} ({s.rnc || 'Sin RNC'})</option>
+                   ))}
+                 </select>
+               </div>
+
                <div className="grid grid-cols-2 gap-6">
                  <div className="space-y-1">
                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nombre del Suplidor / Contribuyente</label>
