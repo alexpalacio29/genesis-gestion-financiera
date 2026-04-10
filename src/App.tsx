@@ -652,21 +652,26 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
 
   const handlePullData = (item: any) => {
     // Priority: If item has amount_gross (like checks), use it. 
-    // Otherwise, assume the amount is the subtotal and calculate.
-    const gross = parseFloat(item.amount_gross || item.amount || item.total_amount || '0');
+    // Otherwise, assume the amount is the total (including ITBIS) and extract gross.
+    let gross = parseFloat(item.amount_gross || '0');
+    if (!gross) {
+      const total = parseFloat(item.amount || item.total_amount || '0');
+      gross = total / 1.18; // Extract subtotal from total with 18% ITBIS
+    }
+    
     const isr = parseFloat(item.retention_isr || (gross * 0.05).toString());
-    const itbis = parseFloat(item.retention_itbis || item.itbis_amount || (gross * 0.18).toString());
-    const net = parseFloat(item.amount_net || (gross - isr).toString());
+    const itbis = parseFloat(item.retention_itbis || (gross * 0.18).toString());
+    const net = gross - isr; // Net paid is Subtotal - 5% ISR (ITBIS is 100% retained)
 
     setVoucherFormData({
       ...voucherFormData,
       supplier_name: item.beneficiary || item.supplier_name || '',
       supplier_rnc_cedula: item.rnc || item.supplier_rnc || item.supplier_rnc_cedula || '',
-      amount: net.toString(),
-      amount_gross: gross.toString(),
-      retention_isr: isr.toString(),
-      retention_itbis: itbis.toString(),
-      itbis_amount: itbis.toString(),
+      amount: net.toFixed(2),
+      amount_gross: gross.toFixed(2),
+      retention_isr: isr.toFixed(2),
+      retention_itbis: itbis.toFixed(2),
+      itbis_amount: itbis.toFixed(2),
       concept: item.description || item.concept || '',
       date: item.date || (item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]),
       payment_method: sourceType === 'checks' ? 'Cheque' : (sourceType === 'quotes' ? 'Transferencia' : 'Efectivo')
