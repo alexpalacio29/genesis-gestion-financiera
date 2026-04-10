@@ -61,7 +61,8 @@ import {
   generateInventoryReportPDF,
   exportCashBookToExcel,
   generateGeneralReportPDF,
-  exportOfficialMinerdReport
+  exportOfficialMinerdReport,
+  generateBankReconciliationPDF
 } from './lib/utils';
 import * as XLSX from 'xlsx';
 import {
@@ -409,6 +410,180 @@ const CenterForm = ({ userId, onCancel, onSuccess }: { userId: number, onCancel:
 };
 
 // --- Views ---
+const BankReconciliation = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: any }) => {
+  const [reconciliations, setReconciliations] = useState<any[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    period_date: '',
+    bank_balance: '',
+    book_balance: '',
+    deposits_in_transit: '0',
+    checks_in_transit: '0',
+    deposits_month: '0',
+    notes_credit: '0',
+    notes_debit: '0',
+    bank_commissions: '0',
+    prepared_by: '',
+    reviewed_by: '',
+    authorized_by: ''
+  });
+
+  const fetchReconciliations = useCallback(async () => {
+    const res = await apiFetch('/api/bank/reconciliations');
+    if (res && res.ok) setReconciliations(await res.json());
+  }, [apiFetch]);
+
+  useEffect(() => {
+    fetchReconciliations();
+  }, [fetchReconciliations]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await apiFetch('/api/bank/reconciliations', {
+        method: 'POST',
+        body: JSON.stringify(formData)
+      });
+      if (res.ok) {
+        setShowForm(false);
+        fetchReconciliations();
+        alert('Conciliación guardada correctamente');
+      }
+    } catch (e) {
+      alert('Error al guardar la conciliación');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGeneratePDF = (rec: any) => {
+    generateBankReconciliationPDF(rec, currentCenter);
+  };
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-serif font-bold">Conciliación Bancaria</h2>
+          <p className="text-slate-500">Gestión de estados bancarios y conciliación trimestral</p>
+        </div>
+        <button
+          onClick={() => setShowForm(true)}
+          className="bg-slate-900 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-800"
+        >
+          <Plus className="w-4 h-4" />
+          Nueva Conciliación
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6 animate-in zoom-in-95">
+          <h3 className="text-lg font-bold">Registrar Estado del Mes / Trimestre</h3>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Periodo (Ej: Marzo 2026)</label>
+                <input required type="text" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none" value={formData.period_date} onChange={e => setFormData({...formData, period_date: e.target.value})} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Balance según Banco</label>
+                <input required type="number" step="0.01" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none" value={formData.bank_balance} onChange={e => setFormData({...formData, bank_balance: e.target.value})} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Balance según Libros</label>
+                <input required type="number" step="0.01" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none" value={formData.book_balance} onChange={e => setFormData({...formData, book_balance: e.target.value})} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-100">
+              <div className="space-y-4">
+                <h4 className="font-black text-slate-900 text-xs uppercase tracking-tight">Ajustes de Banco</h4>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Depósitos en Tránsito (+)</label>
+                  <input type="number" step="0.01" className="w-full p-2 bg-slate-50 border border-slate-100 rounded-lg outline-none" value={formData.deposits_in_transit} onChange={e => setFormData({...formData, deposits_in_transit: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cheques en Tránsito (-)</label>
+                  <input type="number" step="0.01" className="w-full p-2 bg-slate-50 border border-slate-100 rounded-lg outline-none" value={formData.checks_in_transit} onChange={e => setFormData({...formData, checks_in_transit: e.target.value})} />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h4 className="font-black text-slate-900 text-xs uppercase tracking-tight">Ajustes de Libros</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Notas de Crédito (+)</label>
+                    <input type="number" step="0.01" className="w-full p-2 bg-slate-50 border border-slate-100 rounded-lg outline-none" value={formData.notes_credit} onChange={e => setFormData({...formData, notes_credit: e.target.value})} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Notas de Débito (-)</label>
+                    <input type="number" step="0.01" className="w-full p-2 bg-slate-50 border border-slate-100 rounded-lg outline-none" value={formData.notes_debit} onChange={e => setFormData({...formData, notes_debit: e.target.value})} />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Comisiones Bancarias (-)</label>
+                  <input type="number" step="0.01" className="w-full p-2 bg-slate-50 border border-slate-100 rounded-lg outline-none" value={formData.bank_commissions} onChange={e => setFormData({...formData, bank_commissions: e.target.value})} />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-100">
+              <input placeholder="Preparado por" className="p-2 border rounded-lg text-[11px] font-medium" value={formData.prepared_by} onChange={e => setFormData({...formData, prepared_by: e.target.value})} />
+              <input placeholder="Revisado por" className="p-2 border rounded-lg text-[11px] font-medium" value={formData.reviewed_by} onChange={e => setFormData({...formData, reviewed_by: e.target.value})} />
+              <input placeholder="Autorizado por" className="p-2 border rounded-lg text-[11px] font-medium" value={formData.authorized_by} onChange={e => setFormData({...formData, authorized_by: e.target.value})} />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <button type="button" onClick={() => setShowForm(false)} className="px-6 py-2 text-slate-400 text-xs font-black uppercase tracking-widest hover:text-slate-900 transition-colors">Cancelar</button>
+              <button type="submit" disabled={loading} className="px-10 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg">
+                {loading ? 'Guardando...' : 'Guardar y Finalizar'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-100">
+              <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Periodo</th>
+              <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Balance Banco</th>
+              <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Balance Libros</th>
+              <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fecha Registro</th>
+              <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {reconciliations.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-10 text-center text-slate-400 italic font-medium">No hay conciliaciones registradas.</td>
+              </tr>
+            ) : reconciliations.map(rec => (
+              <tr key={rec.id} className="hover:bg-slate-50 transition-colors">
+                <td className="p-4 font-bold text-slate-900">{rec.period_date}</td>
+                <td className="p-4 text-slate-600 font-medium">{formatCurrency(rec.bank_balance)}</td>
+                <td className="p-4 text-slate-600 font-medium">{formatCurrency(rec.book_balance)}</td>
+                <td className="p-4 text-[10px] text-slate-400 font-mono tracking-tighter">{new Date(rec.created_at).toLocaleString()}</td>
+                <td className="p-4 text-right">
+                  <button
+                    onClick={() => handleGeneratePDF(rec)}
+                    className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-tight hover:bg-emerald-100 inline-flex items-center gap-2 transition-all"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Generar Reporte
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 
 const Dashboard = ({ onNavigate, apiFetch, currentCenter }: { onNavigate: (tab: string) => void, apiFetch: any, currentCenter: any }) => {
   const [execution, setExecution] = useState<any>(null);
@@ -4896,6 +5071,7 @@ export default function App() {
     { id: 'checks', label: 'Cheques', icon: CreditCard },
     { id: 'bank', label: 'Estado Bancario', icon: Landmark },
     { id: 'petty-cash', label: 'Caja Chica', icon: Wallet },
+    { id: 'bank-reconciliation', label: 'Conciliación Bancaria', icon: Landmark },
     { id: 'reports', label: 'Reportes', icon: PieChart },
     { id: 'configuration', label: 'Configuración', icon: Settings },
   ];
@@ -4921,6 +5097,7 @@ export default function App() {
       case 'checks': return <Checks {...props} />;
       case 'cash-book': return <CashBook {...props} />;
       case 'bank': return <BankBook {...props} />;
+      case 'bank-reconciliation': return <BankReconciliation {...props} />;
       case 'petty-cash': return <PettyCash {...props} />;
       case 'reports': return <Reports {...props} />;
       case 'configuration': return <Configuration {...props} />;

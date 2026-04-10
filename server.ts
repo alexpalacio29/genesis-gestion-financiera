@@ -123,6 +123,7 @@ async function startServer() {
       CREATE TABLE IF NOT EXISTS cash_book (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), date TEXT, reference_no TEXT, beneficiary TEXT, concept TEXT, income DECIMAL DEFAULT 0, expense DECIMAL DEFAULT 0, balance DECIMAL DEFAULT 0, retention_isr DECIMAL DEFAULT 0, retention_itbis DECIMAL DEFAULT 0, related_id INTEGER, related_type TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS minerd_codes (code TEXT PRIMARY KEY, description TEXT);
       CREATE TABLE IF NOT EXISTS quote_evidences (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), quote_id INTEGER NOT NULL REFERENCES quotes(id), file_path TEXT NOT NULL, file_name TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS bank_reconciliations (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), period_date TEXT NOT NULL, bank_balance DECIMAL DEFAULT 0, book_balance DECIMAL DEFAULT 0, deposits_in_transit DECIMAL DEFAULT 0, checks_in_transit DECIMAL DEFAULT 0, deposits_month DECIMAL DEFAULT 0, notes_credit DECIMAL DEFAULT 0, notes_debit DECIMAL DEFAULT 0, bank_commissions DECIMAL DEFAULT 0, prepared_by TEXT, reviewed_by TEXT, authorized_by TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
     `);
   } catch (err: any) {
     console.error("Schema init error (expected if already exists):", err.message);
@@ -1271,6 +1272,45 @@ El JSON debe tener esta estructura exacta:
       res.json({ success: true, message: "Transacción eliminada correctamente." });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Bank Reconciliations
+  app.get("/api/bank/reconciliations", async (req: any, res: any) => {
+    const centerId = (req as any).centerId;
+    if (!centerId) return res.status(400).json({ error: "Center ID required" });
+    try {
+      const result = await pool.query("SELECT * FROM bank_reconciliations WHERE center_id = $1 ORDER BY period_date DESC", [centerId]);
+      res.json(result.rows);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post("/api/bank/reconciliations", async (req: any, res: any) => {
+    const centerId = (req as any).centerId;
+    if (!centerId) return res.status(400).json({ error: "Center ID required" });
+    const { 
+      period_date, bank_balance, book_balance, deposits_in_transit, 
+      checks_in_transit, deposits_month, notes_credit, notes_debit, 
+      bank_commissions, prepared_by, reviewed_by, authorized_by 
+    } = req.body;
+    try {
+      const result = await pool.query(
+        `INSERT INTO bank_reconciliations (
+          center_id, period_date, bank_balance, book_balance, deposits_in_transit, 
+          checks_in_transit, deposits_month, notes_credit, notes_debit, 
+          bank_commissions, prepared_by, reviewed_by, authorized_by
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+        [
+          centerId, period_date, bank_balance, book_balance, deposits_in_transit, 
+          checks_in_transit, deposits_month, notes_credit, notes_debit, 
+          bank_commissions, prepared_by, reviewed_by, authorized_by
+        ]
+      );
+      res.json({ id: result.rows[0].id });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
     }
   });
 

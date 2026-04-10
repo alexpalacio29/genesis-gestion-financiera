@@ -1241,3 +1241,90 @@ export const exportOfficialMinerdReport = (data: any, center: any, startDate: st
 
   XLSX.writeFile(workbook, `Rendicion_Cuentas_MINERD_${center.name}_${startDate}.xlsx`);
 };
+
+export const generateBankReconciliationPDF = (reconciliation: any, center?: any, logoBase64?: string) => {
+  const doc = new jsPDF();
+  const centerName = center?.name || "CENTRO EDUCATIVO CRISTIANO GÉNESIS";
+  const accountNo = center?.cuenta_no || reconciliation.account_number || "FALTA CUENTA NO.";
+
+  try {
+    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 5, LOGO_W, LOGO_H);
+  } catch (e) {}
+
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("CONCILIACIÓN BANCARIA", 105, 45, { align: "center" });
+  
+  doc.setFontSize(12);
+  doc.text(centerName.toUpperCase(), 105, 52, { align: "center" });
+  
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Período: ${reconciliation.period_date}`, 105, 58, { align: "center" });
+  doc.text(`Cuenta Bancaria No.: ${accountNo}`, 105, 63, { align: "center" });
+
+  let currentY = 75;
+
+  // BANK SECTION
+  doc.setFont("helvetica", "bold");
+  doc.text("BALANCE SEGÚN ESTADO DE BANCO", 20, currentY);
+  doc.text(formatCurrency(reconciliation.bank_balance), 180, currentY, { align: "right" });
+  currentY += 10;
+
+  doc.setFont("helvetica", "normal");
+  doc.text("(+) Depósitos en Tránsito", 30, currentY);
+  doc.text(formatCurrency(reconciliation.deposits_in_transit), 160, currentY, { align: "right" });
+  currentY += 8;
+
+  doc.text("(-) Cheques en Tránsito", 30, currentY);
+  doc.text(formatCurrency(reconciliation.checks_in_transit), 160, currentY, { align: "right" });
+  currentY += 12;
+
+  doc.setFont("helvetica", "bold");
+  doc.text("BALANCE CONCILIADO EN BANCO", 20, currentY);
+  const reconciledBank = parseFloat(reconciliation.bank_balance) + parseFloat(reconciliation.deposits_in_transit) - parseFloat(reconciliation.checks_in_transit);
+  doc.text(formatCurrency(reconciledBank), 180, currentY, { align: "right" });
+  currentY += 20;
+
+  // BOOK SECTION
+  doc.setFont("helvetica", "bold");
+  doc.text("BALANCE SEGÚN LIBROS", 20, currentY);
+  doc.text(formatCurrency(reconciliation.book_balance), 180, currentY, { align: "right" });
+  currentY += 10;
+
+  doc.setFont("helvetica", "normal");
+  doc.text("(+) Notas de Crédito / Intereses", 30, currentY);
+  doc.text(formatCurrency(reconciliation.notes_credit), 160, currentY, { align: "right" });
+  currentY += 8;
+
+  doc.text("(-) Notas de Débito", 30, currentY);
+  doc.text(formatCurrency(reconciliation.notes_debit), 160, currentY, { align: "right" });
+  currentY += 8;
+
+  doc.text("(-) Comisiones Bancarias", 30, currentY);
+  doc.text(formatCurrency(reconciliation.bank_commissions), 160, currentY, { align: "right" });
+  currentY += 12;
+
+  doc.setFont("helvetica", "bold");
+  doc.text("BALANCE CONCILIADO EN LIBROS", 20, currentY);
+  const reconciledBook = parseFloat(reconciliation.book_balance) + parseFloat(reconciliation.notes_credit) - parseFloat(reconciliation.notes_debit) - parseFloat(reconciliation.bank_commissions);
+  doc.text(formatCurrency(reconciledBook), 180, currentY, { align: "right" });
+  
+  // SIGNATURES
+  currentY += 40;
+  doc.setFontSize(9);
+  
+  doc.line(20, currentY, 70, currentY);
+  doc.text(reconciliation.prepared_by || "Preparado por", 45, currentY + 5, { align: "center" });
+  doc.text("Enc. de Contabilidad", 45, currentY + 10, { align: "center" });
+
+  doc.line(75, currentY, 125, currentY);
+  doc.text(reconciliation.reviewed_by || "Revisado por", 100, currentY + 5, { align: "center" });
+  doc.text("Coordinador(a) Administrativo(a)", 100, currentY + 10, { align: "center" });
+
+  doc.line(130, currentY, 185, currentY);
+  doc.text(reconciliation.authorized_by || "Autorizado por", 157.5, currentY + 5, { align: "center" });
+  doc.text("Director(a)", 157.5, currentY + 10, { align: "center" });
+
+  doc.save(`Conciliacion_Bancaria_${reconciliation.period_date.replace(/ /g, '_')}.pdf`);
+};
