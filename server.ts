@@ -138,7 +138,8 @@ async function startServer() {
     "ALTER TABLE purchase_orders ADD COLUMN description TEXT;", "ALTER TABLE checks ADD COLUMN description TEXT",
     "ALTER TABLE centers ADD COLUMN director_name TEXT;", "ALTER TABLE centers ADD COLUMN president_name TEXT;",
     "ALTER TABLE centers ADD COLUMN treasurer_name TEXT;", "ALTER TABLE centers ADD COLUMN district TEXT;",
-    "ALTER TABLE centers ADD COLUMN regional TEXT;", "ALTER TABLE centers ADD COLUMN secretary_name TEXT;"
+    "ALTER TABLE centers ADD COLUMN regional TEXT;", "ALTER TABLE centers ADD COLUMN secretary_name TEXT;",
+    "ALTER TABLE quotes ADD COLUMN quote_number TEXT;"
   ];
 
   for (const m of migrations) {
@@ -904,7 +905,7 @@ El JSON debe tener esta estructura exacta:
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
     try {
       const result = await pool.query(`
-        SELECT q.*, s.name as supplier_name, s.type as supplier_type 
+        SELECT q.*, s.name as supplier_name, s.type as supplier_type, s.rnc, s.phone, s.address
         FROM quotes q 
         JOIN suppliers s ON q.supplier_id = s.id
         WHERE q.center_id = $1
@@ -1656,8 +1657,8 @@ El JSON debe tener esta estructura exacta:
       }
 
       // 2. Update Quote
-      await client.query("UPDATE quotes SET supplier_id = $1, type = $2, total_amount = $3, subtotal = $4, itbis = $5, created_at = $6 WHERE id = $7 AND center_id = $8",
-        [supplierId, quote.type, quote.total_amount, quote.subtotal, quote.itbis, quote.date || 'NOW()', quoteId, centerId]);
+      await client.query("UPDATE quotes SET supplier_id = $1, type = $2, total_amount = $3, subtotal = $4, itbis = $5, created_at = $6, quote_number = $7 WHERE id = $8 AND center_id = $9",
+        [supplierId, quote.type, quote.total_amount, quote.subtotal, quote.itbis, quote.date || 'NOW()', quote.quote_number, quoteId, centerId]);
 
       // 3. Update Requisition
       const rRes = await client.query("SELECT id FROM requisitions WHERE quote_id = $1 AND center_id = $2", [quoteId, centerId]);
@@ -1739,8 +1740,8 @@ El JSON debe tener esta estructura exacta:
       }
 
       // 2. Quote
-      const qIns = await client.query("INSERT INTO quotes (center_id, supplier_id, type, total_amount, subtotal, itbis, description, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
-        [centerId, supplierId, quote.type, quote.total_amount, quote.subtotal, quote.itbis, quote.description, quote.date || 'NOW()']);
+      const qIns = await client.query("INSERT INTO quotes (center_id, supplier_id, type, total_amount, subtotal, itbis, description, created_at, quote_number) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id",
+        [centerId, supplierId, quote.type, quote.total_amount, quote.subtotal, quote.itbis, quote.description, quote.date || 'NOW()', quote.quote_number]);
       const quoteId = qIns.rows[0].id;
 
       // 3. Requisition

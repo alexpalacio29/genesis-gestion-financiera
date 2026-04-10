@@ -1211,6 +1211,7 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
           <thead>
             <tr className="bg-slate-50">
               <th className="data-grid-header">Fecha</th>
+              <th className="data-grid-header">N. Cotización</th>
               <th className="data-grid-header">Suplidor</th>
               <th className="data-grid-header">Tipo</th>
               <th className="data-grid-header">Monto Total</th>
@@ -1222,6 +1223,7 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
             {quotes.map((q: any) => (
               <tr key={q.id} className="data-grid-row">
                 <td className="data-grid-cell text-xs font-medium text-slate-500">{formatDate(q.created_at)}</td>
+                <td className="data-grid-cell text-xs font-mono font-bold text-indigo-600">{q.quote_number || `#${q.id}`}</td>
                 <td className="data-grid-cell font-medium">{q.supplier_name}</td>
                 <td className="data-grid-cell">
                   <span className={cn(
@@ -1795,6 +1797,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
             poaYear: data.requisition ? data.requisition.poa_year : 2026,
             ncf: data.purchase_order ? data.purchase_order.ncf : '',
             checkNumber: data.check ? data.check.check_number : '',
+            quote_number: data.quote.quote_number || '',
             concept: data.check ? data.check.description : data.quote.description,
             inputMode: 'manual'
           }));
@@ -1817,7 +1820,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
 
           setPreviewData({
             supplier: { name: data.quote.supplier_name, rnc: data.quote.rnc, phone: data.quote.phone, address: data.quote.address, type: data.quote.supplier_type },
-            quote: { type: data.quote.type, total_amount: data.quote.total_amount, subtotal: data.quote.subtotal, itbis: data.quote.itbis, description: data.quote.description || (data.check && data.check.description), external_id: data.quote.id },
+            quote: { type: data.quote.type, total_amount: data.quote.total_amount, subtotal: data.quote.subtotal, itbis: data.quote.itbis, description: data.quote.description || (data.check && data.check.description), quote_number: data.quote.id },
             items: data.items.map((i: any) => ({ name: i.description, quantity: i.quantity, unit_price: i.unit_price, total: i.total, minerd_code: i.minerd_code || '' }))
           });
           setProcessing(false);
@@ -1879,7 +1882,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
 
     setPreviewData({
       supplier: { ...manualSupplier, type: metadata.supplierType },
-      quote: { type: metadata.quoteType, total_amount: total, subtotal, itbis, description, external_id: Math.floor(Math.random() * 10000).toString() },
+      quote: { type: metadata.quoteType, total_amount: total, subtotal, itbis, description, quote_number: Math.floor(Math.random() * 10000).toString() },
       items: itemsWithCodes
     });
   };
@@ -1938,7 +1941,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
           subtotal: subtotal,
           itbis: itbis,
           description,
-          external_id: Math.floor(Math.random() * 10000).toString()
+          quote_number: Math.floor(Math.random() * 10000).toString()
         },
         items: items.map((i: any) => ({
           name: i.description,
@@ -1994,7 +1997,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
             subtotal: data.subtotal || 0,
             itbis: data.itbis || 0,
             description,
-            external_id: data.quote_number || Math.floor(Math.random() * 10000).toString()
+            quote_number: data.quote_number || ''
           },
           items: itemsWithCodes
         });
@@ -2185,7 +2188,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
 
         setPreviewData({
           supplier: { name: supplierName, rnc, phone, address, type: metadata.supplierType },
-          quote: { type: metadata.quoteType, total_amount: total, subtotal, itbis, description, external_id: quoteNumber },
+          quote: { type: metadata.quoteType, total_amount: total, subtotal, itbis, description, quote_number: quoteNumber },
           items: itemsWithCodes
         });
         setProcessing(false);
@@ -2233,10 +2236,11 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
         quote: {
           ...previewData.quote,
           description: finalDescription,
-          date: metadata.date
+          date: metadata.date,
+          quote_number: metadata.quote_number
         },
         requisition: {
-          code: 'REQ-' + previewData.quote.external_id,
+          code: metadata.quote_number ? 'REQ-' + metadata.quote_number : 'REQ-' + Math.floor(Math.random() * 10000).toString(),
           poa_year: metadata.poaYear
         },
         purchase_order: {
@@ -2554,6 +2558,16 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
                   className="w-full p-2 border rounded-lg mt-1"
                   value={metadata.date}
                   onChange={e => setMetadata({ ...metadata, date: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase text-slate-400">N. Cotización</label>
+                <input
+                  type="text"
+                  placeholder="Ej: 123456"
+                  className="w-full p-2 border rounded-lg mt-1"
+                  value={metadata.quote_number}
+                  onChange={e => setMetadata({ ...metadata, quote_number: e.target.value })}
                 />
               </div>
               <div>
