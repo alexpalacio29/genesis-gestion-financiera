@@ -781,7 +781,7 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-serif font-bold">Comprobantes NCF (B11)</h2>
+          <h2 className="text-2xl font-serif font-bold">Comprobantes NCF</h2>
           <p className="text-slate-500">Gestión de NCF y Comprobantes de Compras (B11)</p>
         </div>
         <div className="flex gap-2">
@@ -5609,7 +5609,7 @@ export default function App() {
     { id: 'bank', label: 'Estado Bancario', icon: Landmark },
     { id: 'petty-cash', label: 'Caja Chica', icon: Wallet },
     { id: 'bank-reconciliation', label: 'Conciliación Bancaria', icon: Landmark },
-    { id: 'fiscal-documents', label: 'Comprobantes NCF (B11)', icon: FileImage },
+    { id: 'fiscal-documents', label: 'Comprobantes NCF', icon: FileImage },
     { id: 'reports', label: 'Reportes', icon: PieChart },
     { id: 'configuration', label: 'Configuración', icon: Settings },
   ];
