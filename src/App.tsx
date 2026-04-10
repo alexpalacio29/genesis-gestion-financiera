@@ -754,25 +754,11 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Desde (Número)</label>
-              <input required type="text" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.start_number} onChange={e => {
-                const val = e.target.value;
-                if (val.startsWith(seqFormData.prefix)) {
-                   setSeqFormData({...seqFormData, start_number: val.replace(seqFormData.prefix, '').replace(/^0+/, '') || '0'});
-                } else {
-                   setSeqFormData({...seqFormData, start_number: val.replace(/\D/g, '')});
-                }
-              }} placeholder="Ej: 1" />
+              <input required type="number" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.start_number} onChange={e => setSeqFormData({...seqFormData, start_number: e.target.value})} placeholder="Ej: 1" />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hasta (Número)</label>
-              <input required type="text" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.end_number} onChange={e => {
-                const val = e.target.value;
-                if (val.startsWith(seqFormData.prefix)) {
-                   setSeqFormData({...seqFormData, end_number: val.replace(seqFormData.prefix, '').replace(/^0+/, '') || '0'});
-                } else {
-                   setSeqFormData({...seqFormData, end_number: val.replace(/\D/g, '')});
-                }
-              }} placeholder="Ej: 5" />
+              <input required type="number" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.end_number} onChange={e => setSeqFormData({...seqFormData, end_number: e.target.value})} placeholder="Ej: 5" />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vencimiento</label>
@@ -791,7 +777,11 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
                      <span className="text-slate-400 mx-2">|</span>
                      <span className="font-medium text-slate-700">Rango: {s.start_number} - {s.end_number}</span>
                      <span className="text-slate-400 mx-2">|</span>
-                     <span className="text-slate-500">Próximo: <b className="text-slate-900">{s.prefix}{s.current_number.toString().padStart(8, '0')}</b></span>
+                     <span className="text-slate-500">Próximo: <b className="text-slate-900">{(() => {
+                        const targetLen = s.prefix.startsWith('E') ? 13 : 11;
+                        const padLen = Math.max(0, targetLen - s.prefix.length);
+                        return s.prefix + s.current_number.toString().padStart(padLen, '0');
+                      })()}</b></span>
                    </div>
                    <div className="flex items-center gap-4">
                      <span className="text-[10px] font-bold text-slate-400 uppercase">Vence: {s.expiration_date || 'N/A'}</span>

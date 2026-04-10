@@ -1385,13 +1385,18 @@ El JSON debe tener esta estructura exacta:
       await client.query('BEGIN');
 
       // 1. Get active sequence
+      // We look for any active sequence for B11, regardless of exact prefix matching if it starts with B11
       const seqResult = await client.query(
-        "SELECT * FROM ncf_sequences WHERE center_id = $1 AND status = 'active' AND prefix = 'B11' FOR UPDATE",
+        "SELECT * FROM ncf_sequences WHERE center_id = $1 AND status = 'active' AND (prefix = 'B11' OR prefix ILIKE 'B11%') ORDER BY id DESC LIMIT 1 FOR UPDATE",
         [centerId]
       );
 
       if (seqResult.rows.length === 0) {
-        throw new Error("No hay secuencias de NCF activas.");
+        // Log for debugging if needed
+        console.log(`NCF Search failed for center ${centerId}. Checking all sequences...`);
+        const allSeqs = await client.query("SELECT * FROM ncf_sequences WHERE center_id = $1", [centerId]);
+        console.log("Found sequences:", allSeqs.rows);
+        throw new Error("No hay secuencias de NCF activas registradas para este centro.");
       }
 
       const seq = seqResult.rows[0];
@@ -1402,7 +1407,11 @@ El JSON debe tener esta estructura exacta:
       }
 
       // 2. Format NCF
-      const ncfNum = seq.current_number.toString().padStart(8, '0');
+      // Standard NCF is 11 chars (B11 + 8 digits). e-CF is 13 chars (E31 + 10 digits).
+      const isElectronic = seq.prefix.startsWith('E');
+      const targetLength = isElectronic ? 13 : 11;
+      const padLength = Math.max(0, targetLength - seq.prefix.length);
+      const ncfNum = seq.current_number.toString().padStart(padLength, '0');
       const ncf = `${seq.prefix}${ncfNum}`;
 
       // 3. Create voucher
