@@ -1372,7 +1372,8 @@ export const generatePurchaseVoucherPDF = (voucher: any, center?: any) => {
   if (centerAddress) doc.text(centerAddress, 105, 61, { align: "center" });
 
   doc.setLineWidth(0.5);
-  doc.line(20, 58, 190, 58);
+  // Line removed as requested
+
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
