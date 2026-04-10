@@ -969,7 +969,8 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
             <tr className="bg-slate-50 border-b border-slate-100">
               <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">NCF</th>
               <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Suplidor</th>
-              <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fecha</th>
+              <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Emisión</th>
+              <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Vencimiento</th>
               <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Monto</th>
               <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Acciones</th>
             </tr>
@@ -977,7 +978,7 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
           <tbody className="divide-y divide-slate-100">
             {vouchers.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-10 text-center text-slate-400 italic">No hay comprobantes generados aún.</td>
+                <td colSpan={7} className="p-10 text-center text-slate-400 italic">No hay comprobantes generados aún.</td>
               </tr>
             ) : vouchers.map(v => (
               <tr key={v.id} className="hover:bg-slate-50 transition-colors">
@@ -986,7 +987,8 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
                   <p className="font-bold text-slate-900">{v.supplier_name}</p>
                   <p className="text-[10px] text-slate-400 font-medium">{v.supplier_rnc_cedula}</p>
                 </td>
-                <td className="p-4 text-[11px] text-slate-500 font-medium">{formatDate(v.date)}</td>
+                <td className="p-4 text-[11px] text-slate-500 font-bold text-center">{formatDate(v.date)}</td>
+                <td className="p-4 text-[11px] text-rose-600 font-bold text-center">{v.expiration_date ? formatDate(v.expiration_date) : 'N/A'}</td>
                 <td className="p-4 font-bold text-slate-700">{formatCurrency(v.amount)}</td>
                 <td className="p-4 text-right">
                   <button

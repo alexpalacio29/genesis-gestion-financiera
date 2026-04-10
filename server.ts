@@ -1368,7 +1368,13 @@ El JSON debe tener esta estructura exacta:
     const centerId = (req as any).centerId;
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
     try {
-      const result = await pool.query("SELECT * FROM purchase_vouchers WHERE center_id = $1 ORDER BY date DESC, id DESC", [centerId]);
+      const result = await pool.query(`
+        SELECT pv.*, s.expiration_date 
+        FROM purchase_vouchers pv
+        LEFT JOIN ncf_sequences s ON pv.sequence_id = s.id
+        WHERE pv.center_id = $1 
+        ORDER BY pv.date DESC, pv.id DESC
+      `, [centerId]);
       res.json(result.rows);
     } catch (e: any) {
       res.status(500).json({ error: e.message });
