@@ -1142,6 +1142,7 @@ const Suppliers = ({ apiFetch }: { apiFetch: any }) => {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [newSupplier, setNewSupplier] = useState({ name: '', rnc: '', type: 'formal', phone: '', address: '' });
 
   const fetchSuppliers = useCallback(() => {
@@ -1157,13 +1158,31 @@ const Suppliers = ({ apiFetch }: { apiFetch: any }) => {
     fetchSuppliers();
   }, [fetchSuppliers]);
 
+  const handleEditClick = (s: any) => {
+    setEditingId(s.id);
+    setNewSupplier({
+      name: s.name || '',
+      rnc: s.rnc || '',
+      type: s.type || 'formal',
+      phone: s.phone || '',
+      address: s.address || ''
+    });
+    setShowForm(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await apiFetch('/api/suppliers', {
-      method: 'POST',
+    const method = editingId ? 'PUT' : 'POST';
+    const url = editingId ? `/api/suppliers/${editingId}` : '/api/suppliers';
+    
+    await apiFetch(url, {
+      method,
       body: JSON.stringify(newSupplier)
     });
+    
+    setEditingId(null);
     setShowForm(false);
+    setNewSupplier({ name: '', rnc: '', type: 'formal', phone: '', address: '' });
     fetchSuppliers();
   };
 
@@ -1175,7 +1194,11 @@ const Suppliers = ({ apiFetch }: { apiFetch: any }) => {
           <p className="text-slate-500">Gestión de proveedores formales e informales</p>
         </div>
         <button
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            setEditingId(null);
+            setNewSupplier({ name: '', rnc: '', type: 'formal', phone: '', address: '' });
+            setShowForm(true);
+          }}
           className="bg-slate-900 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-800"
         >
           <Plus className="w-4 h-4" />
@@ -1185,23 +1208,23 @@ const Suppliers = ({ apiFetch }: { apiFetch: any }) => {
 
       {showForm && (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl animate-in zoom-in-95 duration-200">
-          <h3 className="text-lg font-bold mb-4">Registrar Nuevo Suplidor</h3>
+          <h3 className="text-lg font-bold mb-4">{editingId ? 'Editar Suplidor' : 'Registrar Nuevo Suplidor'}</h3>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               placeholder="Nombre / Empresa"
-              className="p-2 border rounded-lg"
+              className="p-2 border rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
               required
               value={newSupplier.name}
               onChange={e => setNewSupplier({ ...newSupplier, name: e.target.value })}
             />
             <input
               placeholder="RNC / Cédula"
-              className="p-2 border rounded-lg"
+              className="p-2 border rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
               value={newSupplier.rnc}
               onChange={e => setNewSupplier({ ...newSupplier, rnc: e.target.value })}
             />
             <select
-              className="p-2 border rounded-lg"
+              className="p-2 border rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
               value={newSupplier.type}
               onChange={e => setNewSupplier({ ...newSupplier, type: e.target.value })}
             >
@@ -1210,21 +1233,23 @@ const Suppliers = ({ apiFetch }: { apiFetch: any }) => {
             </select>
             <input
               placeholder="Teléfono"
-              className="p-2 border rounded-lg"
+              className="p-2 border rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
               value={newSupplier.phone}
               onChange={e => setNewSupplier({ ...newSupplier, phone: e.target.value })}
             />
             <div className="md:col-span-2">
               <textarea
                 placeholder="Dirección"
-                className="w-full p-2 border rounded-lg"
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
                 value={newSupplier.address}
                 onChange={e => setNewSupplier({ ...newSupplier, address: e.target.value })}
               />
             </div>
-            <div className="md:col-span-2 flex justify-end gap-2">
-              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-slate-500">Cancelar</button>
-              <button type="submit" className="px-4 py-2 bg-slate-900 text-white rounded-lg">Guardar Suplidor</button>
+            <div className="md:col-span-2 flex justify-end gap-2 text-sm font-bold uppercase tracking-widest">
+              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-slate-400 hover:text-slate-600">Cancelar</button>
+              <button type="submit" className="px-6 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors">
+                {editingId ? 'Actualizar Datos' : 'Guardar Suplidor'}
+              </button>
             </div>
           </form>
         </div>
@@ -1267,8 +1292,12 @@ const Suppliers = ({ apiFetch }: { apiFetch: any }) => {
                   <td className="data-grid-cell font-mono text-xs">{s.rnc}</td>
                   <td className="data-grid-cell">{s.phone}</td>
                   <td className="data-grid-cell text-right">
-                    <button className="text-slate-400 hover:text-slate-900 p-1">
-                      <ChevronRight className="w-4 h-4" />
+                    <button 
+                      onClick={() => handleEditClick(s)}
+                      className="text-slate-400 hover:text-slate-900 p-2 hover:bg-slate-100 rounded-lg transition-all"
+                      title="Editar Suplidor"
+                    >
+                      <Edit2 className="w-4 h-4" />
                     </button>
                   </td>
                 </tr>

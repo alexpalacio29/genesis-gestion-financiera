@@ -781,6 +781,22 @@ async function startServer() {
     }
   });
 
+  app.put("/api/suppliers/:id", async (req: any, res: any) => {
+    const centerId = (req as any).centerId;
+    if (!centerId) return res.status(400).json({ error: "Center ID required" });
+    const { id } = req.params;
+    const { name, rnc, type, phone, address } = req.body;
+    try {
+      await pool.query(
+        "UPDATE suppliers SET name = $1, rnc = $2, type = $3, phone = $4, address = $5 WHERE id = $6 AND center_id = $7",
+        [name, rnc, type, phone, address, id, centerId]
+      );
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // Quotes
 
   app.get("/api/quotes/:id", async (req: any, res: any) => {
