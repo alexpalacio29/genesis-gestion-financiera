@@ -821,6 +821,11 @@ export const generateCashBookReportPDF = (data: any[], startDate: string, endDat
     doc.text(`Periodo: ${formatDate(startDate)} al ${formatDate(endDate)}`, 148.5, 53.0, { align: "center" });
   }
 
+  const totalIncome = data.reduce((sum, row) => sum + (parseFloat(row.income) || 0), 0);
+  const totalExpense = data.reduce((sum, row) => sum + (parseFloat(row.expense) || 0), 0);
+  const totalISR = data.reduce((sum, row) => sum + (parseFloat(row.retention_isr) || 0), 0);
+  const totalITBIS = data.reduce((sum, row) => sum + (parseFloat(row.retention_itbis) || 0), 0);
+
   const tableBody = data.map(row => [
     formatDate(row.date),
     row.reference_no || '',
@@ -837,9 +842,18 @@ export const generateCashBookReportPDF = (data: any[], startDate: string, endDat
     startY: 60.0,
     head: [['FECHA', 'REF/CHQ', 'BENEFICIARIO', 'CONCEPTO', 'INGRESOS', 'EGRESOS', 'DISPONIBLE', 'RET. ISR', 'RET. ITBIS']],
     body: tableBody,
+    foot: [[
+      '', '', '', 'TOTALES RD$',
+      formatCurrency(totalIncome),
+      formatCurrency(totalExpense),
+      '',
+      formatCurrency(totalISR),
+      formatCurrency(totalITBIS)
+    ]],
     theme: 'grid',
     styles: { fontSize: 7, cellPadding: 2 },
-    headStyles: { fillColor: [41, 128, 185], textColor: [255, 255, 255], fontStyle: 'bold' },
+    headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold' },
+    footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold' },
     columnStyles: {
       4: { halign: 'right' },
       5: { halign: 'right' },
