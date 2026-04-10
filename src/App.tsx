@@ -632,7 +632,11 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
 
   const fetchSources = async (type: string) => {
     setSourceType(type);
-    const endpoint = type === 'checks' ? '/api/checks' : '/api/petty-cash';
+    let endpoint = '';
+    if (type === 'checks') endpoint = '/api/checks';
+    else if (type === 'petty') endpoint = '/api/petty-cash';
+    else if (type === 'quotes') endpoint = '/api/quotes';
+    
     const res = await apiFetch(endpoint);
     if (res?.ok) {
       const data = await res.json();
@@ -644,11 +648,11 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
     setVoucherFormData({
       ...voucherFormData,
       supplier_name: item.beneficiary || item.supplier_name || '',
-      supplier_rnc_cedula: item.supplier_rnc || '',
-      amount: (item.amount_net || item.amount || '').toString(),
+      supplier_rnc_cedula: item.supplier_rnc || item.rnc || '',
+      amount: (item.amount_net || item.amount || item.total_amount || '').toString(),
       concept: item.description || item.concept || '',
-      date: item.date || new Date().toISOString().split('T')[0],
-      payment_method: sourceType === 'checks' ? 'Cheque' : 'Efectivo'
+      date: item.date || (item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]),
+      payment_method: sourceType === 'checks' ? 'Cheque' : (sourceType === 'quotes' ? 'Transferencia' : 'Efectivo')
     });
   };
 
@@ -794,8 +798,9 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
              <div className="flex justify-between items-center">
                <h3 className="font-bold text-slate-900">Origen de Datos</h3>
                <div className="flex bg-slate-100 p-1 rounded-lg">
-                 <button onClick={() => fetchSources('checks')} className={cn("px-3 py-1 text-[10px] font-bold rounded-md transition-all", sourceType === 'checks' ? "bg-white shadow text-slate-900" : "text-slate-400")}>Cheques</button>
-                 <button onClick={() => fetchSources('petty')} className={cn("px-3 py-1 text-[10px] font-bold rounded-md transition-all", sourceType === 'petty' ? "bg-white shadow text-slate-900" : "text-slate-400")}>Caja Chica</button>
+                 <button onClick={() => fetchSources('checks')} className={cn("px-2 py-1 text-[9px] font-bold rounded-md transition-all", sourceType === 'checks' ? "bg-white shadow text-slate-900" : "text-slate-400")}>Cheques</button>
+                 <button onClick={() => fetchSources('petty')} className={cn("px-2 py-1 text-[9px] font-bold rounded-md transition-all", sourceType === 'petty' ? "bg-white shadow text-slate-900" : "text-slate-400")}>Caja</button>
+                 <button onClick={() => fetchSources('quotes')} className={cn("px-2 py-1 text-[9px] font-bold rounded-md transition-all", sourceType === 'quotes' ? "bg-white shadow text-slate-900" : "text-slate-400")}>Cotiz.</button>
                </div>
              </div>
              <p className="text-[10px] text-slate-400 font-medium">Pulsa en un registro para auto-completar el comprobante.</p>
