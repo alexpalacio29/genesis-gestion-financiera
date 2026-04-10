@@ -1044,7 +1044,7 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
               <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">NCF</th>
               <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Suplidor</th>
               <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Fecha</th>
-              <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Vencimiento</th>
+              <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Vence NCF</th>
               <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Monto</th>
               <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Acciones</th>
             </tr>

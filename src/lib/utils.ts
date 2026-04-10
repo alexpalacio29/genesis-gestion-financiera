@@ -1386,9 +1386,6 @@ export const generatePurchaseVoucherPDF = (voucher: any, center?: any) => {
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text(`Fecha: ${formatDate(voucher.date)}`, 20, 85);
-  if (voucher.expiration_date) {
-    doc.text(`Vence: ${formatDate(voucher.expiration_date)}`, 190, 85, { align: "right" });
-  }
 
   // Box for Contribuyente
   doc.setDrawColor(200);
