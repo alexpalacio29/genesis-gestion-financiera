@@ -851,6 +851,7 @@ export const generateCashBookReportPDF = (data: any[], startDate: string, endDat
       formatCurrency(totalITBIS)
     ]],
     theme: 'grid',
+    showFoot: 'lastPage',
     styles: { fontSize: 7, cellPadding: 2 },
     headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold' },
     footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold' },
