@@ -3215,14 +3215,18 @@ const CashBook = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: a
             Registrar Transacción
           </button>
           <button
-            onClick={() => generateCashBookReportPDF(entries, entries[entries.length - 1]?.date || '', entries[0]?.date || '', currentCenter)}
+            onClick={() => {
+              const startDate = selectedMonth ? `${selectedMonth}-01` : entries[entries.length - 1]?.date || '';
+              const endDate = selectedMonth ? `${selectedMonth}-31` : entries[0]?.date || ''; // Month end is handled in format as a period usually
+              generateCashBookReportPDF(filteredEntries, startDate, endDate, currentCenter);
+            }}
             className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors"
           >
             <Download className="w-4 h-4" />
             PDF
           </button>
           <button
-            onClick={() => exportCashBookToExcel(entries)}
+            onClick={() => exportCashBookToExcel(filteredEntries)}
             className="bg-white text-slate-900 border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors"
           >
             <FileSpreadsheet className="w-4 h-4" />
