@@ -3004,11 +3004,11 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
         // Scroll to top to show the success panel
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
-        alert('Error al registrar: ' + resData.error);
+        alert('Error al registrar: ' + (resData.error || 'Respuesta inesperada del servidor'));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Error en el proceso de registro.');
+      alert('Error en el proceso de registro: ' + (error.message || 'Error de conexión'));
     } finally {
       setProcessing(false);
     }
@@ -5598,21 +5598,25 @@ export default function App() {
     </>
   );
 
+  const isGlobalSaaS = currentCenter?.id === 0;
+
   const menuItems = [
     ...(isSuperAdmin ? [{ id: 'saas-admin', label: 'Admin SaaS', icon: Lock }] : []),
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'auto-processor', label: 'Procesador Automático', icon: FileSpreadsheet },
-    { id: 'budget', label: 'Presupuesto', icon: PieChart },
-    { id: 'cash-book', label: 'Libro de Caja', icon: Landmark },
-    { id: 'suppliers', label: 'Suplidores', icon: Users },
-    { id: 'inventory', label: 'Inventario', icon: Package },
-    { id: 'quotes', label: 'Cotizaciones', icon: FileText },
-    { id: 'checks', label: 'Cheques', icon: CreditCard },
-    { id: 'bank', label: 'Estado Bancario', icon: Landmark },
-    { id: 'petty-cash', label: 'Caja Chica', icon: Wallet },
-    { id: 'bank-reconciliation', label: 'Conciliación Bancaria', icon: Landmark },
-    { id: 'fiscal-documents', label: 'Comprobantes NCF', icon: FileImage },
-    { id: 'reports', label: 'Reportes', icon: PieChart },
+    ...(!isGlobalSaaS ? [
+      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { id: 'auto-processor', label: 'Procesador Automático', icon: FileSpreadsheet },
+      { id: 'budget', label: 'Presupuesto', icon: PieChart },
+      { id: 'cash-book', label: 'Libro de Caja', icon: Landmark },
+      { id: 'suppliers', label: 'Suplidores', icon: Users },
+      { id: 'inventory', label: 'Inventario', icon: Package },
+      { id: 'quotes', label: 'Cotizaciones', icon: FileText },
+      { id: 'checks', label: 'Cheques', icon: CreditCard },
+      { id: 'bank', label: 'Estado Bancario', icon: Landmark },
+      { id: 'petty-cash', label: 'Caja Chica', icon: Wallet },
+      { id: 'bank-reconciliation', label: 'Conciliación Bancaria', icon: Landmark },
+      { id: 'fiscal-documents', label: 'Comprobantes NCF', icon: FileImage },
+      { id: 'reports', label: 'Reportes', icon: PieChart },
+    ] : []),
     { id: 'configuration', label: 'Configuración', icon: Settings },
   ];
 

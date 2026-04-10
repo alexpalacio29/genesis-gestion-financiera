@@ -1934,7 +1934,9 @@ El JSON debe tener esta estructura exacta:
 
   app.post("/api/process-bulk", async (req: any, res: any) => {
     const centerId = (req as any).centerId;
-    if (!centerId) return res.status(400).json({ error: "Center ID required" });
+    if (centerId === undefined) return res.status(400).json({ error: "No se ha especificado un centro educativo." });
+    if (centerId === 0) return res.status(400).json({ error: "Las acciones contables deben realizarse dentro de una escuela específica, no desde el Panel Global SaaS." });
+    
     const { supplier, quote, requisition, purchase_order, check, bank_transaction, items } = req.body;
 
     const client = await pool.connect();
