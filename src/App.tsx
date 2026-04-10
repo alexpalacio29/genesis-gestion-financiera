@@ -62,7 +62,8 @@ import {
   exportCashBookToExcel,
   generateGeneralReportPDF,
   exportOfficialMinerdReport,
-  generateBankReconciliationPDF
+  generateBankReconciliationPDF,
+  generatePurchaseVoucherPDF
 } from './lib/utils';
 import * as XLSX from 'xlsx';
 import {
@@ -584,6 +585,312 @@ const BankReconciliation = ({ apiFetch, currentCenter }: { apiFetch: any, curren
   );
 };
 
+
+const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: any }) => {
+  const [sequences, setSequences] = useState<any[]>([]);
+  const [vouchers, setVouchers] = useState<any[]>([]);
+  const [showSequenceForm, setShowSequenceForm] = useState(false);
+  const [showVoucherForm, setShowVoucherForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [sourceData, setSourceData] = useState<any[]>([]);
+  const [sourceType, setSourceType] = useState('checks');
+
+  const [seqFormData, setSeqFormData] = useState({
+    prefix: 'B11',
+    start_number: '',
+    end_number: '',
+    expiration_date: ''
+  });
+
+  const [voucherFormData, setVoucherFormData] = useState({
+    supplier_name: '',
+    supplier_rnc_cedula: '',
+    date: new Date().toISOString().split('T')[0],
+    concept: '',
+    amount: '',
+    payment_method: 'Transferencia'
+  });
+
+  const fetchData = useCallback(async () => {
+    const [seqRes, vouRes] = await Promise.all([
+      apiFetch('/api/ncf/sequences'),
+      apiFetch('/api/ncf/vouchers')
+    ]);
+    if (seqRes?.ok) setSequences(await seqRes.json());
+    if (vouRes?.ok) setVouchers(await vouRes.json());
+  }, [apiFetch]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const fetchSources = async (type: string) => {
+    setSourceType(type);
+    const endpoint = type === 'checks' ? '/api/checks' : '/api/petty-cash';
+    const res = await apiFetch(endpoint);
+    if (res?.ok) {
+      const data = await res.json();
+      setSourceData(data);
+    }
+  };
+
+  const handlePullData = (item: any) => {
+    setVoucherFormData({
+      ...voucherFormData,
+      supplier_name: item.beneficiary || item.supplier_name || '',
+      supplier_rnc_cedula: item.supplier_rnc || '',
+      amount: (item.amount_net || item.amount || '').toString(),
+      concept: item.description || item.concept || '',
+      date: item.date || new Date().toISOString().split('T')[0],
+      payment_method: sourceType === 'checks' ? 'Cheque' : 'Efectivo'
+    });
+  };
+
+  const handleCreateSequence = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await apiFetch('/api/ncf/sequences', {
+        method: 'POST',
+        body: JSON.stringify(seqFormData)
+      });
+      if (res.ok) {
+        setShowSequenceForm(false);
+        fetchData();
+        setSeqFormData({ prefix: 'B11', start_number: '', end_number: '', expiration_date: '' });
+      }
+    } catch (e) {
+      alert('Error al registrar secuencia');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateVoucher = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await apiFetch('/api/ncf/vouchers', {
+        method: 'POST',
+        body: JSON.stringify(voucherFormData)
+      });
+      if (res.ok) {
+        const result = await res.json();
+        setShowVoucherForm(false);
+        fetchData();
+        alert('Comprobante generado correctamente');
+        generatePurchaseVoucherPDF(result, currentCenter);
+      } else {
+        const err = await res.json();
+        alert('Error: ' + err.error);
+      }
+    } catch (e) {
+      alert('Error al generar comprobante');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-serif font-bold">Comprobantes Fiscales</h2>
+          <p className="text-slate-500">Gestión de NCF y Comprobantes de Compras (B11)</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowSequenceForm(true)}
+            className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-50 font-bold text-sm"
+          >
+            <Settings className="w-4 h-4" />
+            Configurar Secuencias
+          </button>
+          <button
+            onClick={() => { setShowVoucherForm(true); fetchSources('checks'); }}
+            className="bg-slate-900 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-800 font-bold text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo Comprobante
+          </button>
+        </div>
+      </div>
+
+      {showSequenceForm && (
+        <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="font-bold text-slate-900">Registrar Rangos NCF Autorizados</h3>
+            <button onClick={() => setShowSequenceForm(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5"/></button>
+          </div>
+          <form onSubmit={handleCreateSequence} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Desde (Número)</label>
+              <input required type="number" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.start_number} onChange={e => setSeqFormData({...seqFormData, start_number: e.target.value})} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hasta (Número)</label>
+              <input required type="number" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.end_number} onChange={e => setSeqFormData({...seqFormData, end_number: e.target.value})} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vencimiento</label>
+              <input required type="date" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.expiration_date} onChange={e => setSeqFormData({...seqFormData, expiration_date: e.target.value})} />
+            </div>
+            <button type="submit" disabled={loading} className="bg-slate-900 text-white p-2 rounded-lg font-bold text-sm">Guardar Rango</button>
+          </form>
+          
+          <div className="pt-4">
+             <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">Secuencias Actuales</h4>
+             <div className="space-y-2">
+               {sequences.map(s => (
+                 <div key={s.id} className="bg-white p-3 rounded-xl border border-slate-100 flex justify-between items-center text-sm shadow-sm">
+                   <div>
+                     <span className="font-black text-rose-600">{s.prefix}</span>
+                     <span className="text-slate-400 mx-2">|</span>
+                     <span className="font-medium text-slate-700">Rango: {s.start_number} - {s.end_number}</span>
+                     <span className="text-slate-400 mx-2">|</span>
+                     <span className="text-slate-500">Próximo: <b className="text-slate-900">{s.prefix}{s.current_number.toString().padStart(8, '0')}</b></span>
+                   </div>
+                   <div className="flex items-center gap-4">
+                     <span className="text-[10px] font-bold text-slate-400 uppercase">Vence: {s.expiration_date || 'N/A'}</span>
+                     <span className={cn(
+                       "px-2 py-0.5 rounded-full text-[9px] font-black uppercase",
+                       s.status === 'active' ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                     )}>{s.status === 'active' ? 'Activa' : 'Agotada/Vencida'}</span>
+                   </div>
+                 </div>
+               ))}
+             </div>
+          </div>
+        </div>
+      )}
+
+      {showVoucherForm && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in slide-in-from-top-4 duration-300">
+           <div className="lg:col-span-1 bg-white p-6 rounded-3xl border border-slate-200 shadow-xl space-y-4">
+             <div className="flex justify-between items-center">
+               <h3 className="font-bold text-slate-900">Origen de Datos</h3>
+               <div className="flex bg-slate-100 p-1 rounded-lg">
+                 <button onClick={() => fetchSources('checks')} className={cn("px-3 py-1 text-[10px] font-bold rounded-md transition-all", sourceType === 'checks' ? "bg-white shadow text-slate-900" : "text-slate-400")}>Cheques</button>
+                 <button onClick={() => fetchSources('petty')} className={cn("px-3 py-1 text-[10px] font-bold rounded-md transition-all", sourceType === 'petty' ? "bg-white shadow text-slate-900" : "text-slate-400")}>Caja Chica</button>
+               </div>
+             </div>
+             <p className="text-[10px] text-slate-400 font-medium">Pulsa en un registro para auto-completar el comprobante.</p>
+             <div className="space-y-2 h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+               {sourceData.map(item => (
+                 <button 
+                  key={item.id} 
+                  onClick={() => handlePullData(item)}
+                  className="w-full text-left p-3 rounded-xl border border-slate-50 hover:border-slate-300 hover:bg-slate-50 transition-all group"
+                 >
+                   <div className="flex justify-between mb-1">
+                     <span className="text-[10px] font-mono text-slate-400">{item.date}</span>
+                     <span className="text-xs font-black text-slate-900">{formatCurrency(item.amount_net || item.amount)}</span>
+                   </div>
+                   <p className="text-xs font-bold text-slate-700 truncate group-hover:text-slate-900">{item.beneficiary || item.supplier_name}</p>
+                   <p className="text-[10px] text-slate-400 truncate mt-1 italic">{item.description || item.concept}</p>
+                 </button>
+               ))}
+             </div>
+           </div>
+
+           <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-slate-200 shadow-2xl space-y-6">
+             <div className="flex justify-between items-center">
+               <h3 className="text-xl font-bold flex items-center gap-2">
+                 <FileText className="w-6 h-6 text-slate-400" />
+                 Generar Comprobante B11
+               </h3>
+               <button onClick={() => setShowVoucherForm(false)} className="text-slate-400 hover:text-slate-600"><X className="w-6 h-6"/></button>
+             </div>
+
+             <form onSubmit={handleCreateVoucher} className="space-y-6">
+               <div className="grid grid-cols-2 gap-6">
+                 <div className="space-y-1">
+                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nombre del Suplidor / Contribuyente</label>
+                   <input required className="w-full p-3 border border-slate-300 rounded-xl bg-white outline-none focus:border-slate-900" value={voucherFormData.supplier_name} onChange={e => setVoucherFormData({...voucherFormData, supplier_name: e.target.value})} />
+                 </div>
+                 <div className="space-y-1">
+                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">RNC o Cédula</label>
+                   <input required className="w-full p-3 border border-slate-300 rounded-xl bg-white outline-none focus:border-slate-900" value={voucherFormData.supplier_rnc_cedula} onChange={e => setVoucherFormData({...voucherFormData, supplier_rnc_cedula: e.target.value})} />
+                 </div>
+               </div>
+
+               <div className="grid grid-cols-3 gap-6">
+                 <div className="space-y-1">
+                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fecha Factura</label>
+                   <input required type="date" className="w-full p-3 border border-slate-300 rounded-xl bg-white outline-none focus:border-slate-900" value={voucherFormData.date} onChange={e => setVoucherFormData({...voucherFormData, date: e.target.value})} />
+                 </div>
+                 <div className="space-y-1">
+                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Monto Total RD$</label>
+                   <input required type="number" step="0.01" className="w-full p-3 border border-slate-300 rounded-xl bg-white outline-none focus:border-slate-900" value={voucherFormData.amount} onChange={e => setVoucherFormData({...voucherFormData, amount: e.target.value})} />
+                 </div>
+                 <div className="space-y-1">
+                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Método de Pago</label>
+                   <select className="w-full p-3 border border-slate-300 rounded-xl bg-white outline-none focus:border-slate-900" value={voucherFormData.payment_method} onChange={e => setVoucherFormData({...voucherFormData, payment_method: e.target.value})}>
+                     <option>Transferencia</option>
+                     <option>Cheque</option>
+                     <option>Efectivo</option>
+                   </select>
+                 </div>
+               </div>
+
+               <div className="space-y-1">
+                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Concepto / Detalle del Pago</label>
+                 <textarea required rows={2} className="w-full p-3 border border-slate-300 rounded-xl bg-white outline-none focus:border-slate-900" value={voucherFormData.concept} onChange={e => setVoucherFormData({...voucherFormData, concept: e.target.value})} />
+               </div>
+
+               <div className="flex justify-end gap-4 pt-4">
+                 <button type="button" onClick={() => setShowVoucherForm(false)} className="px-6 py-2 text-slate-400 font-bold uppercase tracking-widest text-xs">Cancelar</button>
+                 <button type="submit" disabled={loading} className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 shadow-xl transition-all">
+                   {loading ? 'Generando...' : 'Generar Comprobante B11'}
+                 </button>
+               </div>
+             </form>
+           </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-100">
+              <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">NCF</th>
+              <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Suplidor</th>
+              <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fecha</th>
+              <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Monto</th>
+              <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {vouchers.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-10 text-center text-slate-400 italic">No hay comprobantes generados aún.</td>
+              </tr>
+            ) : vouchers.map(v => (
+              <tr key={v.id} className="hover:bg-slate-50 transition-colors">
+                <td className="p-4 font-black font-mono text-rose-600">{v.ncf}</td>
+                <td className="p-4">
+                  <p className="font-bold text-slate-900">{v.supplier_name}</p>
+                  <p className="text-[10px] text-slate-400 font-medium">{v.supplier_rnc_cedula}</p>
+                </td>
+                <td className="p-4 text-[11px] text-slate-500 font-medium">{formatDate(v.date)}</td>
+                <td className="p-4 font-bold text-slate-700">{formatCurrency(v.amount)}</td>
+                <td className="p-4 text-right">
+                  <button
+                    onClick={() => generatePurchaseVoucherPDF(v, currentCenter)}
+                    className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-tight hover:bg-emerald-100 inline-flex items-center gap-2 transition-all"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    PDF
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
 
 const Dashboard = ({ onNavigate, apiFetch, currentCenter }: { onNavigate: (tab: string) => void, apiFetch: any, currentCenter: any }) => {
   const [execution, setExecution] = useState<any>(null);
@@ -5076,6 +5383,7 @@ export default function App() {
     { id: 'bank', label: 'Estado Bancario', icon: Landmark },
     { id: 'petty-cash', label: 'Caja Chica', icon: Wallet },
     { id: 'bank-reconciliation', label: 'Conciliación Bancaria', icon: Landmark },
+    { id: 'fiscal-documents', label: 'Comprobantes Fiscales', icon: FileImage },
     { id: 'reports', label: 'Reportes', icon: PieChart },
     { id: 'configuration', label: 'Configuración', icon: Settings },
   ];
@@ -5102,6 +5410,7 @@ export default function App() {
       case 'cash-book': return <CashBook {...props} />;
       case 'bank': return <BankBook {...props} />;
       case 'bank-reconciliation': return <BankReconciliation {...props} />;
+      case 'fiscal-documents': return <FiscalDocuments {...props} />;
       case 'petty-cash': return <PettyCash {...props} />;
       case 'reports': return <Reports {...props} />;
       case 'configuration': return <Configuration {...props} />;

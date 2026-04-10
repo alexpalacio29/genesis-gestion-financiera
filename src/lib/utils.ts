@@ -1347,3 +1347,86 @@ export const generateBankReconciliationPDF = (reconciliation: any, center?: any,
 
   doc.save(`Conciliacion_Bancaria_${reconciliation.period_date.replace(/ /g, '_')}.pdf`);
 };
+
+export const generatePurchaseVoucherPDF = (voucher: any, center?: any) => {
+  const doc = new jsPDF();
+  const centerName = center?.name || "CENTRO EDUCATIVO CRISTIANO GÉNESIS";
+  const centerRNC = center?.rnc || "FALTA RNC";
+  const centerPhone = center?.phone || "FALTA TELÉFONO";
+  const centerAddress = center?.address || "";
+
+  try {
+    doc.addImage(MINERD_LOGO, 'PNG', 85, 5, LOGO_W, LOGO_H);
+  } catch (e) {}
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text("MINISTERIO DE EDUCACIÓN", 105, 30, { align: "center" });
+  doc.text("Dirección General de Gestión Financiera", 105, 35, { align: "center" });
+
+  doc.setFontSize(11);
+  doc.text(centerName.toUpperCase(), 105, 45, { align: "center" });
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(`RNC: ${centerRNC} | TEL: ${centerPhone}`, 105, 50, { align: "center" });
+  if (centerAddress) doc.text(centerAddress, 105, 54, { align: "center" });
+
+  doc.setLineWidth(0.5);
+  doc.line(20, 58, 190, 58);
+
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("FACTURA CON COMPROBANTE DE COMPRAS", 105, 68, { align: "center" });
+  doc.setFontSize(12);
+  doc.setTextColor(220, 38, 38); // Red for NCF
+  doc.text(`NCF: ${voucher.ncf}`, 105, 75, { align: "center" });
+  doc.setTextColor(0);
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Fecha: ${formatDate(voucher.date)}`, 20, 85);
+  if (voucher.expiration_date) {
+    doc.text(`Vence: ${formatDate(voucher.expiration_date)}`, 190, 85, { align: "right" });
+  }
+
+  // Box for Contribuyente
+  doc.setDrawColor(200);
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(20, 90, 170, 25, 3, 3, 'FD');
+  
+  doc.setFont("helvetica", "bold");
+  doc.text("DATOS DEL PROVEEDOR / CONTRIBUYENTE", 25, 96);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Nombre/Razón Social: ${voucher.supplier_name}`, 25, 103);
+  doc.text(`RNC / Cédula: ${voucher.supplier_rnc_cedula}`, 25, 109);
+
+  // Concept and Amount
+  doc.setFont("helvetica", "bold");
+  doc.text("CONCEPTO DEL GASTO:", 20, 125);
+  doc.setFont("helvetica", "normal");
+  doc.text(voucher.concept || "Sin concepto", 20, 131, { maxWidth: 170 });
+
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text("MONTO PAGADO:", 120, 150);
+  doc.text(formatCurrency(voucher.amount), 190, 150, { align: "right" });
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Modo de Pago: ${voucher.payment_method || 'N/A'}`, 120, 156);
+
+  // Signatures
+  let signY = 220;
+  doc.line(20, signY, 80, signY);
+  doc.text("ENTREGADO POR", 50, signY + 5, { align: "center" });
+  doc.setFontSize(8);
+  doc.text("(Firma y Sello Junta)", 50, signY + 10, { align: "center" });
+
+  doc.setFontSize(10);
+  doc.line(130, signY, 190, signY);
+  doc.text("RECIBIDO POR", 160, signY + 5, { align: "center" });
+  doc.setFontSize(8);
+  doc.text("(Firma Proveedor)", 160, signY + 10, { align: "center" });
+
+  doc.save(`Comprobante_Compra_${voucher.ncf}.pdf`);
+};

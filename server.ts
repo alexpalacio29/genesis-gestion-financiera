@@ -124,6 +124,8 @@ async function startServer() {
       CREATE TABLE IF NOT EXISTS minerd_codes (code TEXT PRIMARY KEY, description TEXT);
       CREATE TABLE IF NOT EXISTS quote_evidences (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), quote_id INTEGER NOT NULL REFERENCES quotes(id), file_path TEXT NOT NULL, file_name TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS bank_reconciliations (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), period_date TEXT NOT NULL, bank_balance DECIMAL DEFAULT 0, book_balance DECIMAL DEFAULT 0, deposits_in_transit DECIMAL DEFAULT 0, checks_in_transit DECIMAL DEFAULT 0, deposits_month DECIMAL DEFAULT 0, notes_credit DECIMAL DEFAULT 0, notes_debit DECIMAL DEFAULT 0, bank_commissions DECIMAL DEFAULT 0, prepared_by TEXT, reviewed_by TEXT, authorized_by TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS ncf_sequences (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), type_name TEXT DEFAULT 'Comprobante de Compras', prefix TEXT DEFAULT 'B11', start_number BIGINT NOT NULL, end_number BIGINT NOT NULL, current_number BIGINT NOT NULL, expiration_date TEXT, status TEXT DEFAULT 'active', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS purchase_vouchers (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), supplier_name TEXT NOT NULL, supplier_rnc_cedula TEXT, date TEXT NOT NULL, concept TEXT, amount DECIMAL DEFAULT 0, payment_method TEXT, ncf TEXT UNIQUE NOT NULL, sequence_id INTEGER REFERENCES ncf_sequences(id), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
     `);
   } catch (err: any) {
     console.error("Schema init error (expected if already exists):", err.message);
@@ -1311,6 +1313,104 @@ El JSON debe tener esta estructura exacta:
       res.json({ id: result.rows[0].id });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
+    }
+  });
+
+  // NCF Sequences
+  app.get("/api/ncf/sequences", async (req: any, res: any) => {
+    const centerId = (req as any).centerId;
+    if (!centerId) return res.status(400).json({ error: "Center ID required" });
+    try {
+      const result = await pool.query("SELECT * FROM ncf_sequences WHERE center_id = $1 ORDER BY created_at DESC", [centerId]);
+      res.json(result.rows);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post("/api/ncf/sequences", async (req: any, res: any) => {
+    const centerId = (req as any).centerId;
+    if (!centerId) return res.status(400).json({ error: "Center ID required" });
+    const { prefix, start_number, end_number, expiration_date } = req.body;
+    try {
+      const result = await pool.query(
+        "INSERT INTO ncf_sequences (center_id, prefix, start_number, end_number, current_number, expiration_date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+        [centerId, prefix || 'B11', start_number, end_number, start_number, expiration_date]
+      );
+      res.json({ id: result.rows[0].id });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // Purchase Vouchers
+  app.get("/api/ncf/vouchers", async (req: any, res: any) => {
+    const centerId = (req as any).centerId;
+    if (!centerId) return res.status(400).json({ error: "Center ID required" });
+    try {
+      const result = await pool.query("SELECT * FROM purchase_vouchers WHERE center_id = $1 ORDER BY date DESC, id DESC", [centerId]);
+      res.json(result.rows);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post("/api/ncf/vouchers", async (req: any, res: any) => {
+    const centerId = (req as any).centerId;
+    if (!centerId) return res.status(400).json({ error: "Center ID required" });
+    const { supplier_name, supplier_rnc_cedula, date, concept, amount, payment_method } = req.body;
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // 1. Get active sequence
+      const seqResult = await client.query(
+        "SELECT * FROM ncf_sequences WHERE center_id = $1 AND status = 'active' AND prefix = 'B11' FOR UPDATE",
+        [centerId]
+      );
+
+      if (seqResult.rows.length === 0) {
+        throw new Error("No hay secuencias de NCF activas.");
+      }
+
+      const seq = seqResult.rows[0];
+      const today = new Date().toISOString().split('T')[0];
+      if (seq.expiration_date && seq.expiration_date < today) {
+        await client.query("UPDATE ncf_sequences SET status = 'expired' WHERE id = $1", [seq.id]);
+        throw new Error("La secuencia de NCF ha vencido.");
+      }
+
+      // 2. Format NCF
+      const ncfNum = seq.current_number.toString().padStart(8, '0');
+      const ncf = `${seq.prefix}${ncfNum}`;
+
+      // 3. Create voucher
+      const voucherResult = await client.query(
+        `INSERT INTO purchase_vouchers (center_id, supplier_name, supplier_rnc_cedula, date, concept, amount, payment_method, ncf, sequence_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [centerId, supplier_name, supplier_rnc_cedula, date, concept, amount, payment_method, ncf, seq.id]
+      );
+
+      // 4. Update sequence
+      const nextNum = BigInt(seq.current_number) + BigInt(1);
+      let status = 'active';
+      if (nextNum > BigInt(seq.end_number)) {
+        status = 'exhausted';
+      }
+
+      await client.query(
+        "UPDATE ncf_sequences SET current_number = $1, status = $2 WHERE id = $3",
+        [nextNum.toString(), status, seq.id]
+      );
+
+      await client.query('COMMIT');
+      res.json(voucherResult.rows[0]);
+    } catch (e: any) {
+      await client.query('ROLLBACK');
+      res.status(500).json({ error: e.message });
+    } finally {
+      client.release();
     }
   });
 
