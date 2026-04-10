@@ -485,15 +485,15 @@ const BankReconciliation = ({ apiFetch, currentCenter }: { apiFetch: any, curren
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Periodo (Ej: Marzo 2026)</label>
-                <input required type="text" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none" value={formData.period_date} onChange={e => setFormData({...formData, period_date: e.target.value})} />
+                <input required type="text" className="w-full p-3 bg-white border border-slate-300 rounded-xl outline-none focus:border-slate-900 transition-colors" value={formData.period_date} onChange={e => setFormData({...formData, period_date: e.target.value})} />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Balance según Banco</label>
-                <input required type="number" step="0.01" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none" value={formData.bank_balance} onChange={e => setFormData({...formData, bank_balance: e.target.value})} />
+                <input required type="number" step="0.01" className="w-full p-3 bg-white border border-slate-300 rounded-xl outline-none focus:border-slate-900 transition-colors" value={formData.bank_balance} onChange={e => setFormData({...formData, bank_balance: e.target.value})} />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Balance según Libros</label>
-                <input required type="number" step="0.01" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none" value={formData.book_balance} onChange={e => setFormData({...formData, book_balance: e.target.value})} />
+                <input required type="number" step="0.01" className="w-full p-3 bg-white border border-slate-300 rounded-xl outline-none focus:border-slate-900 transition-colors" value={formData.book_balance} onChange={e => setFormData({...formData, book_balance: e.target.value})} />
               </div>
             </div>
 
@@ -502,11 +502,11 @@ const BankReconciliation = ({ apiFetch, currentCenter }: { apiFetch: any, curren
                 <h4 className="font-black text-slate-900 text-xs uppercase tracking-tight">Ajustes de Banco</h4>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Depósitos en Tránsito (+)</label>
-                  <input type="number" step="0.01" className="w-full p-2 bg-slate-50 border border-slate-100 rounded-lg outline-none" value={formData.deposits_in_transit} onChange={e => setFormData({...formData, deposits_in_transit: e.target.value})} />
+                  <input type="number" step="0.01" className="w-full p-2 bg-white border border-slate-300 rounded-lg outline-none focus:border-slate-900 transition-colors" value={formData.deposits_in_transit} onChange={e => setFormData({...formData, deposits_in_transit: e.target.value})} />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cheques en Tránsito (-)</label>
-                  <input type="number" step="0.01" className="w-full p-2 bg-slate-50 border border-slate-100 rounded-lg outline-none" value={formData.checks_in_transit} onChange={e => setFormData({...formData, checks_in_transit: e.target.value})} />
+                  <input type="number" step="0.01" className="w-full p-2 bg-white border border-slate-300 rounded-lg outline-none focus:border-slate-900 transition-colors" value={formData.checks_in_transit} onChange={e => setFormData({...formData, checks_in_transit: e.target.value})} />
                 </div>
               </div>
               <div className="space-y-4">
@@ -514,24 +514,24 @@ const BankReconciliation = ({ apiFetch, currentCenter }: { apiFetch: any, curren
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Notas de Crédito (+)</label>
-                    <input type="number" step="0.01" className="w-full p-2 bg-slate-50 border border-slate-100 rounded-lg outline-none" value={formData.notes_credit} onChange={e => setFormData({...formData, notes_credit: e.target.value})} />
+                    <input type="number" step="0.01" className="w-full p-2 bg-white border border-slate-300 rounded-lg outline-none focus:border-slate-900 transition-colors" value={formData.notes_credit} onChange={e => setFormData({...formData, notes_credit: e.target.value})} />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Notas de Débito (-)</label>
-                    <input type="number" step="0.01" className="w-full p-2 bg-slate-50 border border-slate-100 rounded-lg outline-none" value={formData.notes_debit} onChange={e => setFormData({...formData, notes_debit: e.target.value})} />
+                    <input type="number" step="0.01" className="w-full p-2 bg-white border border-slate-300 rounded-lg outline-none focus:border-slate-900 transition-colors" value={formData.notes_debit} onChange={e => setFormData({...formData, notes_debit: e.target.value})} />
                   </div>
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Comisiones Bancarias (-)</label>
-                  <input type="number" step="0.01" className="w-full p-2 bg-slate-50 border border-slate-100 rounded-lg outline-none" value={formData.bank_commissions} onChange={e => setFormData({...formData, bank_commissions: e.target.value})} />
+                  <input type="number" step="0.01" className="w-full p-2 bg-white border border-slate-300 rounded-lg outline-none focus:border-slate-900 transition-colors" value={formData.bank_commissions} onChange={e => setFormData({...formData, bank_commissions: e.target.value})} />
                 </div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-100">
-              <input placeholder="Preparado por" className="p-2 border rounded-lg text-[11px] font-medium" value={formData.prepared_by} onChange={e => setFormData({...formData, prepared_by: e.target.value})} />
-              <input placeholder="Revisado por" className="p-2 border rounded-lg text-[11px] font-medium" value={formData.reviewed_by} onChange={e => setFormData({...formData, reviewed_by: e.target.value})} />
-              <input placeholder="Autorizado por" className="p-2 border rounded-lg text-[11px] font-medium" value={formData.authorized_by} onChange={e => setFormData({...formData, authorized_by: e.target.value})} />
+              <input placeholder="Preparado por" className="p-3 border border-slate-300 bg-white rounded-xl text-[11px] font-medium outline-none focus:border-slate-900 transition-colors" value={formData.prepared_by} onChange={e => setFormData({...formData, prepared_by: e.target.value})} />
+              <input placeholder="Revisado por" className="p-3 border border-slate-300 bg-white rounded-xl text-[11px] font-medium outline-none focus:border-slate-900 transition-colors" value={formData.reviewed_by} onChange={e => setFormData({...formData, reviewed_by: e.target.value})} />
+              <input placeholder="Autorizado por" className="p-3 border border-slate-300 bg-white rounded-xl text-[11px] font-medium outline-none focus:border-slate-900 transition-colors" value={formData.authorized_by} onChange={e => setFormData({...formData, authorized_by: e.target.value})} />
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
