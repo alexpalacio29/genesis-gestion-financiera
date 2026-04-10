@@ -158,7 +158,7 @@ const Auth = ({ onLogin }: { onLogin: (user: any, centers: any[]) => void }) => 
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-100 p-8 space-y-6">
         <div className="text-center space-y-2">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden shadow-sm border border-slate-100">
-            <img src="/favicon.png" alt="Edugestion Logo" className="w-full h-full object-cover" />
+            <img src="/favicon.png" alt="Gestify RD Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">
             {isRegister ? 'Crear Cuenta' : 'Bienvenido de Nuevo'}
@@ -5273,7 +5273,7 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">PANEL SAAS GLOBAL</h2>
-          <p className="text-slate-500 font-medium tracking-wide">Control total de la plataforma Edugestion Financiera</p>
+          <p className="text-slate-500 font-medium tracking-wide">Control total de la plataforma Gestify RD</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -5689,7 +5689,7 @@ export default function App() {
               <img src="/favicon.png" alt="Logo" className="w-full h-full object-cover" />
             </div>
             <div>
-              <h1 className="font-serif font-bold text-slate-900 leading-tight">Edugestion Financiera</h1>
+              <h1 className="font-serif font-bold text-slate-900 leading-tight">Gestify RD</h1>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Multi-Centro</p>
             </div>
           </div>
@@ -5752,7 +5752,7 @@ export default function App() {
             </button>
             <div className="flex flex-col">
               <h2 className="text-sm font-bold text-slate-900">
-                {currentCenter ? currentCenter.name : (showSaaSPanel ? 'ADMINISTRACIÓN GLOBAL' : 'Edugestion Financiera')}
+                {currentCenter ? currentCenter.name : (showSaaSPanel ? 'ADMINISTRACIÓN GLOBAL' : 'Gestify RD')}
               </h2>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                 {currentCenter?.rnc === 'SaaS-Global' || showSaaSPanel ? 'Panel de Control SaaS' : (currentCenter ? `RNC: ${currentCenter.rnc}` : 'Gestión Financiera')}

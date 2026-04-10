@@ -1,7 +1,7 @@
 {
-  "name": "Edugestion Financiera",
-  "short_name": "Edugestion",
-  "description": "Sistema de gestión financiera para centros educativos",
+  "name": "Gestify RD",
+  "short_name": "Gestify RD",
+  "description": "Gestión Financiera para Juntas Descentralizadas MINERD",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

@@ -1,6 +1,6 @@
 {
-  "name": "Génesis Gestión Financiera",
-  "description": "Sistema integral de gestión financiera para la Junta Descentralizada del Centro Educativo Cristiano Génesis, automatizando procesos del MINERD.",
+  "name": "Gestify RD",
+  "description": "Gestión Financiera para Juntas Descentralizadas MINERD. Una plataforma moderna para el control financiero escolar.",
   "requestFramePermissions": [
     "camera"
   ]

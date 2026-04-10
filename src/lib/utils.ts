@@ -114,7 +114,7 @@ export function numberToWordsSpanish(n: number): string {
 
 export const generateQuotePDF = (quote: any, supplier: any, items: any[] = [], center?: any, logoBase64?: string) => {
   const doc = new jsPDF();
-  const centerName = center?.name || "Centro Educativo Cristiano Génesis";
+  const centerName = center?.name || "Gestify RD";
   const centerCode = center?.codigo_no || "06907";
 
   try {
@@ -369,7 +369,7 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
 
 export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?: any, logoBase64?: string) => {
   const doc = new jsPDF();
-  const centerName = center?.name || "Centro Educativo Cristiano Génesis";
+  const centerName = center?.name || "Gestify RD";
   const centerCode = center?.codigo_no || "06907";
 
   try {
@@ -473,7 +473,7 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
 
 export const generateRequisitionPDF = (requisition: any, quote: any, items: any[] = [], center?: any, logoBase64?: string) => {
   const doc = new jsPDF();
-  const centerName = center?.name || "Cristiano Génesis";
+  const centerName = center?.name || "Gestify RD";
   const centerCode = center?.codigo_no || "11001619";
 
   try {
@@ -539,7 +539,7 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
 
 export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[] = [], center?: any, logoBase64?: string) => {
   const doc = new jsPDF();
-  const centerName = center?.name || "Cristiano Génesis";
+  const centerName = center?.name || "Gestify RD";
   const centerCode = center?.codigo_no || "11001619";
 
   try {
@@ -644,7 +644,7 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[] = 
 
 export const generateCheckCalculationSheetPDF = (check: any, supplier: any, center?: any, logoBase64?: string) => {
   const doc = new jsPDF();
-  const centerName = center?.name || "CENTRO EDUCATIVO CRISTIANO GÉNESIS";
+  const centerName = center?.name || "GESTIFY RD";
 
   try {
     doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 10, LOGO_W, LOGO_H);
@@ -689,7 +689,7 @@ export const generateCheckCalculationSheetPDF = (check: any, supplier: any, cent
 
 export const generateServiceRequestPDF = (quote: any, supplier: any, center?: any, logoBase64?: string) => {
   const doc = new jsPDF();
-  const centerName = center?.name || "CENTRO EDUCATIVO CRISTIANO GÉNESIS";
+  const centerName = center?.name || "GESTIFY RD";
 
   try {
     doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 10, LOGO_W, LOGO_H);
@@ -729,7 +729,7 @@ export const generateServiceRequestPDF = (quote: any, supplier: any, center?: an
 
 export const generateLaborReceiptPDF = (check: any, supplier: any, center?: any, logoBase64?: string) => {
   const doc = new jsPDF();
-  const centerName = center?.name || "Cristiano Génesis";
+  const centerName = center?.name || "Gestify RD";
   const centerCode = center?.codigo_no || "06907";
 
   try {
@@ -805,7 +805,7 @@ export const generateCashBookReportPDF = (data: any[], startDate: string, endDat
     unit: 'mm',
     format: 'a4'
   });
-  const centerName = center?.name || "CENTRO EDUCATIVO CRISTIANO GÉNESIS";
+  const centerName = center?.name || "GESTIFY RD";
 
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
@@ -873,7 +873,7 @@ export const generateBankBookReportPDF = (data: any[], startDate: string, endDat
     unit: 'mm',
     format: 'a4'
   });
-  const centerName = center?.name || "CENTRO EDUCATIVO CRISTIANO GÉNESIS";
+  const centerName = center?.name || "GESTIFY RD";
 
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
@@ -919,7 +919,7 @@ export const generateBankBookReportPDF = (data: any[], startDate: string, endDat
 
 export const generatePettyCashReportPDF = (data: any[], startDate: string, endDate: string, center?: any) => {
   const doc = new jsPDF();
-  const centerName = center?.name || "CENTRO EDUCATIVO CRISTIANO GÉNESIS";
+  const centerName = center?.name || "GESTIFY RD";
 
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
@@ -965,7 +965,7 @@ export const generatePettyCashReportPDF = (data: any[], startDate: string, endDa
 
 export const generateInventoryReportPDF = (data: any[], startDate: string, endDate: string, center?: any) => {
   const doc = new jsPDF();
-  const centerName = center?.name || "CENTRO EDUCATIVO CRISTIANO GÉNESIS";
+  const centerName = center?.name || "GESTIFY RD";
 
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
@@ -1033,7 +1033,7 @@ export const generateGeneralReportPDF = (data: any, startDate: string, endDate: 
   }
 
   const doc = new jsPDF();
-  const centerName = center?.name || "CENTRO EDUCATIVO CRISTIANO GÉNESIS";
+  const centerName = center?.name || "GESTIFY RD";
 
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
@@ -1259,7 +1259,7 @@ export const exportOfficialMinerdReport = (data: any, center: any, startDate: st
 
 export const generateBankReconciliationPDF = (reconciliation: any, center?: any, logoBase64?: string) => {
   const doc = new jsPDF();
-  const centerName = center?.name || "CENTRO EDUCATIVO CRISTIANO GÉNESIS";
+  const centerName = center?.name || "GESTIFY RD";
   const accountNo = center?.cuenta_no || reconciliation.account_number || "FALTA CUENTA NO.";
 
   try {
@@ -1350,7 +1350,7 @@ export const generateBankReconciliationPDF = (reconciliation: any, center?: any,
 
 export const generatePurchaseVoucherPDF = (voucher: any, center?: any) => {
   const doc = new jsPDF();
-  const centerName = center?.name || "CENTRO EDUCATIVO CRISTIANO GÉNESIS";
+  const centerName = center?.name || "GESTIFY RD";
   const centerRNC = center?.rnc || "FALTA RNC";
   const centerPhone = center?.phone || "FALTA TELÉFONO";
   const centerAddress = center?.address || "";
