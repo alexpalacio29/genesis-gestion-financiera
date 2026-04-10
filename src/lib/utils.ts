@@ -1406,14 +1406,36 @@ export const generatePurchaseVoucherPDF = (voucher: any, center?: any) => {
   doc.setFont("helvetica", "normal");
   doc.text(voucher.concept || "Sin concepto", 20, 131, { maxWidth: 170 });
 
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("MONTO PAGADO:", 120, 150);
-  doc.text(formatCurrency(voucher.amount), 190, 150, { align: "right" });
-
+  // Financial Breakdown Table
+  const tableY = 145;
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Modo de Pago: ${voucher.payment_method || 'N/A'}`, 120, 156);
+  
+  doc.text("Subtotal (Base Imponible):", 120, tableY);
+  doc.text(formatCurrency(voucher.amount_gross || 0), 190, tableY, { align: "right" });
+  
+  doc.text("(+) ITBIS (18%):", 120, tableY + 6);
+  doc.text(formatCurrency(voucher.itbis_amount || 0), 190, tableY + 6, { align: "right" });
+  
+  doc.setTextColor(220, 38, 38);
+  doc.text("(-) Retención ISR (5%):", 120, tableY + 12);
+  doc.text("-" + formatCurrency(voucher.retention_isr || 0), 190, tableY + 12, { align: "right" });
+  
+  doc.text("(-) Retención ITBIS (100%):", 120, tableY + 18);
+  doc.text("-" + formatCurrency(voucher.retention_itbis || 0), 190, tableY + 18, { align: "right" });
+  
+  doc.setTextColor(0);
+  doc.setLineWidth(0.2);
+  doc.line(120, tableY + 22, 190, tableY + 22);
+  
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.text("MONTO NETO PAGADO:", 120, tableY + 28);
+  doc.text(formatCurrency(voucher.amount), 190, tableY + 28, { align: "right" });
+
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "italic");
+  doc.text(`Modo de Pago: ${voucher.payment_method || 'N/A'}`, 120, tableY + 34);
 
   // Signatures
   let signY = 220;

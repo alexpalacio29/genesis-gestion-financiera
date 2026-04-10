@@ -609,6 +609,10 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
     date: new Date().toISOString().split('T')[0],
     concept: '',
     amount: '',
+    amount_gross: '',
+    retention_isr: '',
+    retention_itbis: '',
+    itbis_amount: '',
     payment_method: 'Transferencia'
   });
 
@@ -645,11 +649,22 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
   };
 
   const handlePullData = (item: any) => {
+    // Priority: If item has amount_gross (like checks), use it. 
+    // Otherwise, assume the amount is the subtotal and calculate.
+    const gross = parseFloat(item.amount_gross || item.amount || item.total_amount || '0');
+    const isr = parseFloat(item.retention_isr || (gross * 0.05).toString());
+    const itbis = parseFloat(item.retention_itbis || item.itbis_amount || (gross * 0.18).toString());
+    const net = parseFloat(item.amount_net || (gross - isr).toString());
+
     setVoucherFormData({
       ...voucherFormData,
       supplier_name: item.beneficiary || item.supplier_name || '',
       supplier_rnc_cedula: item.rnc || item.supplier_rnc || item.supplier_rnc_cedula || '',
-      amount: (item.amount_net || item.amount || item.total_amount || '').toString(),
+      amount: net.toString(),
+      amount_gross: gross.toString(),
+      retention_isr: isr.toString(),
+      retention_itbis: itbis.toString(),
+      itbis_amount: itbis.toString(),
       concept: item.description || item.concept || '',
       date: item.date || (item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]),
       payment_method: sourceType === 'checks' ? 'Cheque' : (sourceType === 'quotes' ? 'Transferencia' : 'Efectivo')
@@ -861,24 +876,79 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
                  </div>
                </div>
 
-               <div className="grid grid-cols-3 gap-6">
-                 <div className="space-y-1">
-                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fecha Factura</label>
-                   <input required type="date" className="w-full p-3 border border-slate-300 rounded-xl bg-white outline-none focus:border-slate-900" value={voucherFormData.date} onChange={e => setVoucherFormData({...voucherFormData, date: e.target.value})} />
-                 </div>
-                 <div className="space-y-1">
-                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Monto Total RD$</label>
-                   <input required type="number" step="0.01" className="w-full p-3 border border-slate-300 rounded-xl bg-white outline-none focus:border-slate-900" value={voucherFormData.amount} onChange={e => setVoucherFormData({...voucherFormData, amount: e.target.value})} />
-                 </div>
-                 <div className="space-y-1">
-                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Método de Pago</label>
-                   <select className="w-full p-3 border border-slate-300 rounded-xl bg-white outline-none focus:border-slate-900" value={voucherFormData.payment_method} onChange={e => setVoucherFormData({...voucherFormData, payment_method: e.target.value})}>
-                     <option>Transferencia</option>
-                     <option>Cheque</option>
-                     <option>Efectivo</option>
-                   </select>
-                 </div>
-               </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-6">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-emerald-600">Subtotal (Bruto)</label>
+                    <input 
+                      required 
+                      type="number" 
+                      step="0.01" 
+                      className="w-full p-3 border border-emerald-200 rounded-xl bg-white outline-none focus:border-emerald-500 font-bold text-emerald-700" 
+                      value={voucherFormData.amount_gross} 
+                      onChange={e => {
+                        const gross = parseFloat(e.target.value) || 0;
+                        const isr = gross * 0.05;
+                        const itbis = gross * 0.18;
+                        const net = gross - isr;
+                        setVoucherFormData({
+                          ...voucherFormData, 
+                          amount_gross: e.target.value,
+                          retention_isr: isr.toFixed(2),
+                          retention_itbis: itbis.toFixed(2),
+                          itbis_amount: itbis.toFixed(2),
+                          amount: net.toFixed(2)
+                        });
+                      }} 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ITBIS (18%)</label>
+                    <input readOnly className="w-full p-3 border border-slate-200 rounded-xl bg-slate-100 outline-none text-slate-500" value={voucherFormData.itbis_amount} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-rose-500">Retención ISR (5%)</label>
+                    <input readOnly className="w-full p-3 border border-rose-100 rounded-xl bg-rose-50 outline-none text-rose-600 font-medium" value={voucherFormData.retention_isr} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-slate-900">Monto Neto a Pagar</label>
+                    <input 
+                      required 
+                      type="number" 
+                      step="0.01" 
+                      className="w-full p-3 border border-slate-900 rounded-xl bg-white outline-none focus:ring-2 focus:ring-slate-900 font-black" 
+                      value={voucherFormData.amount} 
+                      onChange={e => {
+                        const net = parseFloat(e.target.value) || 0;
+                        const gross = net / 0.95;
+                        const isr = gross * 0.05;
+                        const itbis = gross * 0.18;
+                        setVoucherFormData({
+                          ...voucherFormData, 
+                          amount: e.target.value,
+                          amount_gross: gross.toFixed(2),
+                          retention_isr: isr.toFixed(2),
+                          retention_itbis: itbis.toFixed(2),
+                          itbis_amount: itbis.toFixed(2)
+                        });
+                      }} 
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6 mt-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fecha Comprobante</label>
+                    <input required type="date" className="w-full p-3 border border-slate-300 rounded-xl bg-white outline-none focus:border-slate-900" value={voucherFormData.date} onChange={e => setVoucherFormData({...voucherFormData, date: e.target.value})} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Método de Pago</label>
+                    <select className="w-full p-3 border border-slate-300 rounded-xl bg-white outline-none focus:border-slate-900" value={voucherFormData.payment_method} onChange={e => setVoucherFormData({...voucherFormData, payment_method: e.target.value})}>
+                      <option>Transferencia</option>
+                      <option>Cheque</option>
+                      <option>Efectivo</option>
+                    </select>
+                  </div>
+                </div>
 
                <div className="space-y-1">
                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Concepto / Detalle del Pago</label>

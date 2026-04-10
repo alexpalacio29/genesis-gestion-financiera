@@ -141,8 +141,12 @@ async function startServer() {
     "ALTER TABLE purchase_orders ADD COLUMN description TEXT;", "ALTER TABLE checks ADD COLUMN description TEXT",
     "ALTER TABLE centers ADD COLUMN director_name TEXT;", "ALTER TABLE centers ADD COLUMN president_name TEXT;",
     "ALTER TABLE centers ADD COLUMN treasurer_name TEXT;", "ALTER TABLE centers ADD COLUMN district TEXT;",
-    "ALTER TABLE centers ADD COLUMN regional TEXT;", "ALTER TABLE centers ADD COLUMN secretary_name TEXT;",
-    "ALTER TABLE quotes ADD COLUMN quote_number TEXT;"
+    "ALTER TABLE centers ADD COLUMN secretary_name TEXT;",
+    "ALTER TABLE quotes ADD COLUMN quote_number TEXT;",
+    "ALTER TABLE purchase_vouchers ADD COLUMN amount_gross DECIMAL DEFAULT 0;",
+    "ALTER TABLE purchase_vouchers ADD COLUMN retention_isr DECIMAL DEFAULT 0;",
+    "ALTER TABLE purchase_vouchers ADD COLUMN retention_itbis DECIMAL DEFAULT 0;",
+    "ALTER TABLE purchase_vouchers ADD COLUMN itbis_amount DECIMAL DEFAULT 0;"
   ];
 
   for (const m of migrations) {
@@ -1402,10 +1406,23 @@ El JSON debe tener esta estructura exacta:
       const ncf = `${seq.prefix}${ncfNum}`;
 
       // 3. Create voucher
+      const { 
+        supplier_name, supplier_rnc_cedula, date, concept, amount, payment_method,
+        amount_gross, retention_isr, retention_itbis, itbis_amount 
+      } = req.body;
+      
       const voucherResult = await client.query(
-        `INSERT INTO purchase_vouchers (center_id, supplier_name, supplier_rnc_cedula, date, concept, amount, payment_method, ncf, sequence_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-        [centerId, supplier_name, supplier_rnc_cedula, date, concept, amount, payment_method, ncf, seq.id]
+        `INSERT INTO purchase_vouchers (
+          center_id, supplier_name, supplier_rnc_cedula, date, concept, amount, 
+          payment_method, ncf, sequence_id, amount_gross, retention_isr, 
+          retention_itbis, itbis_amount
+        )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+        [
+          centerId, supplier_name, supplier_rnc_cedula, date, concept, amount, 
+          payment_method, ncf, seq.id, amount_gross || 0, retention_isr || 0, 
+          retention_itbis || 0, itbis_amount || 0
+        ]
       );
 
       // 4. Update sequence
