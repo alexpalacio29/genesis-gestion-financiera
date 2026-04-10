@@ -125,7 +125,7 @@ async function startServer() {
       CREATE TABLE IF NOT EXISTS quote_evidences (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), quote_id INTEGER NOT NULL REFERENCES quotes(id), file_path TEXT NOT NULL, file_name TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS bank_reconciliations (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), period_date TEXT NOT NULL, bank_balance DECIMAL DEFAULT 0, book_balance DECIMAL DEFAULT 0, deposits_in_transit DECIMAL DEFAULT 0, checks_in_transit DECIMAL DEFAULT 0, deposits_month DECIMAL DEFAULT 0, notes_credit DECIMAL DEFAULT 0, notes_debit DECIMAL DEFAULT 0, bank_commissions DECIMAL DEFAULT 0, prepared_by TEXT, reviewed_by TEXT, authorized_by TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS ncf_sequences (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), type_name TEXT DEFAULT 'Comprobante de Compras', prefix TEXT DEFAULT 'B11', start_number BIGINT NOT NULL, end_number BIGINT NOT NULL, current_number BIGINT NOT NULL, expiration_date TEXT, status TEXT DEFAULT 'active', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS purchase_vouchers (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), supplier_name TEXT NOT NULL, supplier_rnc_cedula TEXT, date TEXT NOT NULL, concept TEXT, amount DECIMAL DEFAULT 0, payment_method TEXT, ncf TEXT UNIQUE NOT NULL, sequence_id INTEGER REFERENCES ncf_sequences(id), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS purchase_vouchers (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), supplier_name TEXT NOT NULL, supplier_rnc_cedula TEXT, date TEXT NOT NULL, concept TEXT, amount DECIMAL DEFAULT 0, payment_method TEXT, ncf TEXT UNIQUE NOT NULL, sequence_id INTEGER REFERENCES ncf_sequences(id), amount_gross DECIMAL DEFAULT 0, retention_isr DECIMAL DEFAULT 0, retention_itbis DECIMAL DEFAULT 0, itbis_amount DECIMAL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
     `);
   } catch (err: any) {
     console.error("Schema init error (expected if already exists):", err.message);
@@ -138,7 +138,7 @@ async function startServer() {
     "ALTER TABLE quote_items ADD COLUMN center_id INTEGER;", "ALTER TABLE cash_book ADD COLUMN center_id INTEGER;", "ALTER TABLE centers ADD COLUMN junta_name TEXT;",
     "ALTER TABLE centers ADD COLUMN codigo_no TEXT;", "ALTER TABLE centers ADD COLUMN codigo_dependencia TEXT;", "ALTER TABLE centers ADD COLUMN cuenta_no TEXT;",
     "ALTER TABLE quote_evidences ADD COLUMN center_id INTEGER;", "ALTER TABLE quotes ADD COLUMN description TEXT;", "ALTER TABLE requisitions ADD COLUMN description TEXT;",
-    "ALTER TABLE purchase_orders ADD COLUMN description TEXT;", "ALTER TABLE checks ADD COLUMN description TEXT",
+    "ALTER TABLE purchase_orders ADD COLUMN description TEXT;", "ALTER TABLE checks ADD COLUMN description TEXT;",
     "ALTER TABLE centers ADD COLUMN director_name TEXT;", "ALTER TABLE centers ADD COLUMN president_name TEXT;",
     "ALTER TABLE centers ADD COLUMN treasurer_name TEXT;", "ALTER TABLE centers ADD COLUMN district TEXT;",
     "ALTER TABLE centers ADD COLUMN secretary_name TEXT;",
