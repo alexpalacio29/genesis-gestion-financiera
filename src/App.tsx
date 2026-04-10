@@ -648,7 +648,7 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
     setVoucherFormData({
       ...voucherFormData,
       supplier_name: item.beneficiary || item.supplier_name || '',
-      supplier_rnc_cedula: item.supplier_rnc || item.rnc || '',
+      supplier_rnc_cedula: item.rnc || item.supplier_rnc || item.supplier_rnc_cedula || '',
       amount: (item.amount_net || item.amount || item.total_amount || '').toString(),
       concept: item.description || item.concept || '',
       date: item.date || (item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]),
