@@ -34,7 +34,9 @@ import {
   Settings,
   Image as ImageIcon,
   Edit,
+  Edit2,
   FileImage,
+
   Upload,
   Shield,
   Lock,
