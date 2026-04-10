@@ -656,17 +656,19 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
   };
 
   const handlePullData = (item: any) => {
-    // Priority: If item has amount_gross (like checks), use it. 
+    // Priority: If item has subtotal (quotes) or amount_gross (checks), use it. 
     // Otherwise, assume the amount is the total (including ITBIS) and extract gross.
-    let gross = parseFloat(item.amount_gross || '0');
+    let gross = parseFloat(item.subtotal || item.amount_gross || '0');
     if (!gross) {
       const total = parseFloat(item.amount || item.total_amount || '0');
       gross = total / 1.18; // Extract subtotal from total with 18% ITBIS
     }
     
+    // In B11 (informal), the buyer retains 100% of ITBIS and a % of ISR.
+    // The payment to the supplier is usually Subtotal - ISR.
     const isr = parseFloat(item.retention_isr || (gross * 0.05).toString());
     const itbis = parseFloat(item.retention_itbis || (gross * 0.18).toString());
-    const net = gross - isr; // Net paid is Subtotal - 5% ISR (ITBIS is 100% retained)
+    const net = gross - isr; // Net paid is Subtotal - 5% ISR (ITBIS is withheld 100%)
 
     setVoucherFormData({
       ...voucherFormData,
