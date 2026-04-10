@@ -598,11 +598,15 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
   const [sourceData, setSourceData] = useState<any[]>([]);
   const [sourceType, setSourceType] = useState('checks');
 
+  const [editingSeqId, setEditingSeqId] = useState<number | null>(null);
+  const [editingVoucherId, setEditingVoucherId] = useState<number | null>(null);
+
   const [seqFormData, setSeqFormData] = useState({
     prefix: 'B11',
     start_number: '',
     end_number: '',
-    expiration_date: ''
+    expiration_date: '',
+    status: 'active'
   });
 
   const [voucherFormData, setVoucherFormData] = useState({
@@ -615,7 +619,8 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
     retention_isr: '',
     retention_itbis: '',
     itbis_amount: '',
-    payment_method: 'Transferencia'
+    payment_method: 'Transferencia',
+    ncf: ''
   });
 
   const fetchData = useCallback(async () => {
@@ -682,17 +687,20 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await apiFetch('/api/ncf/sequences', {
-        method: 'POST',
+      const url = editingSeqId ? `/api/ncf/sequences/${editingSeqId}` : '/api/ncf/sequences';
+      const method = editingSeqId ? 'PUT' : 'POST';
+      const res = await apiFetch(url, {
+        method,
         body: JSON.stringify(seqFormData)
       });
       if (res.ok) {
+        setSeqFormData({ prefix: 'B11', start_number: '', end_number: '', expiration_date: '', status: 'active' });
+        setEditingSeqId(null);
         setShowSequenceForm(false);
         fetchData();
-        setSeqFormData({ prefix: 'B11', start_number: '', end_number: '', expiration_date: '' });
       }
     } catch (e) {
-      alert('Error al registrar secuencia');
+      console.error(e);
     } finally {
       setLoading(false);
     }
@@ -702,25 +710,71 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await apiFetch('/api/ncf/vouchers', {
-        method: 'POST',
+      const url = editingVoucherId ? `/api/ncf/vouchers/${editingVoucherId}` : '/api/ncf/vouchers';
+      const method = editingVoucherId ? 'PUT' : 'POST';
+      const res = await apiFetch(url, {
+        method,
         body: JSON.stringify(voucherFormData)
       });
       if (res.ok) {
         const result = await res.json();
+        setVoucherFormData({
+          supplier_name: '',
+          supplier_rnc_cedula: '',
+          date: new Date().toISOString().split('T')[0],
+          concept: '',
+          amount: '',
+          amount_gross: '',
+          retention_isr: '',
+          retention_itbis: '',
+          itbis_amount: '',
+          payment_method: 'Transferencia',
+          ncf: ''
+        });
+        setEditingVoucherId(null);
         setShowVoucherForm(false);
         fetchData();
-        alert('Comprobante generado correctamente');
-        generatePurchaseVoucherPDF(result, currentCenter);
+        if (method === 'POST') generatePurchaseVoucherPDF(result, currentCenter);
+        else alert('Comprobante actualizado correctamente');
       } else {
         const err = await res.json();
         alert('Error: ' + err.error);
       }
     } catch (e) {
-      alert('Error al generar comprobante');
+      console.error(e);
     } finally {
       setLoading(false);
     }
+  };
+
+  const startEditSequence = (seq: any) => {
+    setEditingSeqId(seq.id);
+    setSeqFormData({
+      prefix: seq.prefix,
+      start_number: seq.start_number,
+      end_number: seq.end_number,
+      expiration_date: seq.expiration_date?.split('T')[0] || '',
+      status: seq.status
+    });
+    setShowSequenceForm(true);
+  };
+
+  const startEditVoucher = (v: any) => {
+    setEditingVoucherId(v.id);
+    setVoucherFormData({
+      supplier_name: v.supplier_name,
+      supplier_rnc_cedula: v.supplier_rnc_cedula,
+      date: v.date?.split('T')[0] || new Date().toISOString().split('T')[0],
+      concept: v.concept,
+      amount: v.amount.toString(),
+      amount_gross: v.amount_gross?.toString() || '',
+      retention_isr: v.retention_isr?.toString() || '',
+      retention_itbis: v.retention_itbis?.toString() || '',
+      itbis_amount: v.itbis_amount?.toString() || '',
+      payment_method: v.payment_method,
+      ncf: v.ncf
+    });
+    setShowVoucherForm(true);
   };
 
   return (
@@ -754,24 +808,35 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
             <h3 className="font-bold text-slate-900">Registrar Rangos NCF Autorizados</h3>
             <button onClick={() => setShowSequenceForm(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5"/></button>
           </div>
-          <form onSubmit={handleCreateSequence} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+          <form onSubmit={handleCreateSequence} className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Prefijo</label>
               <input required type="text" className="w-full p-2 border border-slate-300 rounded-lg text-sm font-bold text-rose-600" value={seqFormData.prefix} onChange={e => setSeqFormData({...seqFormData, prefix: e.target.value.toUpperCase()})} placeholder="Ej: B11" />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Desde (Número)</label>
-              <input required type="number" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.start_number} onChange={e => setSeqFormData({...seqFormData, start_number: e.target.value})} placeholder="Ej: 1" />
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Desde</label>
+              <input required type="number" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.start_number} onChange={e => setSeqFormData({...seqFormData, start_number: e.target.value})} />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hasta (Número)</label>
-              <input required type="number" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.end_number} onChange={e => setSeqFormData({...seqFormData, end_number: e.target.value})} placeholder="Ej: 5" />
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hasta</label>
+              <input required type="number" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.end_number} onChange={e => setSeqFormData({...seqFormData, end_number: e.target.value})} />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vencimiento</label>
               <input required type="date" className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.expiration_date} onChange={e => setSeqFormData({...seqFormData, expiration_date: e.target.value})} />
             </div>
-            <button type="submit" disabled={loading} className="bg-slate-900 text-white p-2 rounded-lg font-bold text-sm h-[38px]">Guardar Rango</button>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Estado</label>
+              <select className="w-full p-2 border border-slate-300 rounded-lg text-sm" value={seqFormData.status} onChange={e => setSeqFormData({...seqFormData, status: e.target.value})}>
+                <option value="active">Activa</option>
+                <option value="exhausted">Agotada</option>
+                <option value="expired">Vencida</option>
+              </select>
+            </div>
+            <button type="submit" disabled={loading} className="bg-slate-900 text-white p-2 rounded-lg font-bold text-sm h-[38px] flex items-center justify-center gap-2">
+              <Save className="w-4 h-4" />
+              {editingSeqId ? 'Actualizar' : 'Guardar'}
+            </button>
           </form>
           
           <div className="pt-4">
@@ -795,7 +860,10 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
                      <span className={cn(
                        "px-2 py-0.5 rounded-full text-[9px] font-black uppercase",
                        s.status === 'active' ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
-                     )}>{s.status === 'active' ? 'Activa' : 'Agotada/Vencida'}</span>
+                     )}>{s.status === 'active' ? 'Activa' : 'Inactiva'}</span>
+                     <button onClick={() => startEditSequence(s)} className="text-slate-400 hover:text-slate-900 transition-colors">
+                        <Edit2 className="w-4 h-4" />
+                     </button>
                    </div>
                  </div>
                ))}
@@ -836,10 +904,10 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
 
            <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-slate-200 shadow-2xl space-y-6">
              <div className="flex justify-between items-center">
-               <h3 className="text-xl font-bold flex items-center gap-2">
-                 <FileText className="w-6 h-6 text-slate-400" />
-                 Generar Comprobante B11
-               </h3>
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <FileText className="w-6 h-6 text-slate-400" />
+                  {editingVoucherId ? 'Editar Comprobante B11' : 'Generar Comprobante B11'}
+                </h3>
                <button onClick={() => setShowVoucherForm(false)} className="text-slate-400 hover:text-slate-600"><X className="w-6 h-6"/></button>
              </div>
 
@@ -873,6 +941,12 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
                  </div>
                </div>
 
+                {editingVoucherId && (
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-rose-600">Número de NCF (Modo Edición)</label>
+                    <input required className="w-full p-3 border border-rose-200 rounded-xl bg-rose-50 outline-none focus:border-rose-500 font-black text-rose-700" value={voucherFormData.ncf} onChange={e => setVoucherFormData({...voucherFormData, ncf: e.target.value})} />
+                  </div>
+                )}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-6">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-emerald-600">Subtotal (Bruto)</label>
@@ -990,7 +1064,14 @@ const FiscalDocuments = ({ apiFetch, currentCenter }: { apiFetch: any, currentCe
                 <td className="p-4 text-[11px] text-slate-500 font-bold text-center">{formatDate(v.date)}</td>
                 <td className="p-4 text-[11px] text-rose-600 font-bold text-center">{v.expiration_date ? formatDate(v.expiration_date) : 'N/A'}</td>
                 <td className="p-4 font-bold text-slate-700">{formatCurrency(v.amount)}</td>
-                <td className="p-4 text-right">
+                <td className="p-4 text-right flex items-center justify-end gap-2">
+                  <button
+                    onClick={() => startEditVoucher(v)}
+                    className="p-2 text-slate-400 hover:text-slate-900 transition-colors"
+                    title="Editar Comprobante"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={() => generatePurchaseVoucherPDF(v, currentCenter)}
                     className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-tight hover:bg-emerald-100 inline-flex items-center gap-2 transition-all"

@@ -1348,6 +1348,22 @@ El JSON debe tener esta estructura exacta:
     }
   });
 
+  app.put("/api/ncf/sequences/:id", async (req: any, res: any) => {
+    const centerId = (req as any).centerId;
+    if (!centerId) return res.status(400).json({ error: "Center ID required" });
+    const { id } = req.params;
+    const { prefix, start_number, end_number, expiration_date, status } = req.body;
+    try {
+      await pool.query(
+        "UPDATE ncf_sequences SET prefix = $1, start_number = $2, end_number = $3, expiration_date = $4, status = $5 WHERE id = $6 AND center_id = $7",
+        [prefix, start_number, end_number, expiration_date, status || 'active', id, centerId]
+      );
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   app.post("/api/ncf/sequences", async (req: any, res: any) => {
     const centerId = (req as any).centerId;
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
@@ -1459,6 +1475,32 @@ El JSON debe tener esta estructura exacta:
       res.status(500).json({ error: e.message });
     } finally {
       client.release();
+    }
+  });
+
+  app.put("/api/ncf/vouchers/:id", async (req: any, res: any) => {
+    const centerId = (req as any).centerId;
+    if (!centerId) return res.status(400).json({ error: "Center ID required" });
+    const { id } = req.params;
+    const { 
+      supplier_name, supplier_rnc_cedula, date, concept, amount, payment_method,
+      amount_gross, retention_isr, retention_itbis, itbis_amount, ncf 
+    } = req.body;
+    try {
+      await pool.query(
+        `UPDATE purchase_vouchers SET 
+          supplier_name = $1, supplier_rnc_cedula = $2, date = $3, concept = $4, 
+          amount = $5, payment_method = $6, amount_gross = $7, retention_isr = $8, 
+          retention_itbis = $9, itbis_amount = $10, ncf = $11
+         WHERE id = $12 AND center_id = $13`,
+        [
+          supplier_name, supplier_rnc_cedula, date, concept, amount, payment_method,
+          amount_gross, retention_isr, retention_itbis, itbis_amount, ncf, id, centerId
+        ]
+      );
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
     }
   });
 
