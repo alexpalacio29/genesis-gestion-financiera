@@ -238,25 +238,25 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
     console.error("Error adding logo:", e);
   }
 
-  doc.setFontSize(14);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 20, { align: "center" });
-  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 27, { align: "center" });
-  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 34, { align: "center" });
-  doc.text(`RNC: ${centerRNC}`, 105, 41, { align: "center" });
+  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 45, { align: "center" });
+  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 50, { align: "center" });
+  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 55, { align: "center" });
+  doc.text(`RNC: ${centerRNC}`, 105, 60, { align: "center" });
 
   doc.setFontSize(14);
   const certTitle = (check.retention_itbis || 0) > 0 ? "CERTIFICACIÓN DE RETENCIÓN DE IMPUESTOS (ISR E ITBIS)" : "CERTIFICACIÓN DE RETENCIÓN DE IMPUESTOS (ISR)";
-  doc.text(certTitle, 105, 80, { align: "center" });
+  doc.text(certTitle, 105, 75, { align: "center" });
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text(`DD 12-01 Núm..: ${check.check_number}-2026`, 20, 65);
+  doc.text(`DD 12-01 Núm..: ${check.check_number}-2026`, 20, 85);
 
   const text = `Quien suscribe, ${center?.director_name || 'Nombre del Director(a)'}, directora de la Junta de centro Educativo ${centerCode} ${centerName} del Distrito ${center?.district || '12-01 de Higüey'}, Republica Dominicana, CERTIFICA: Que de acuerdo a lo establecido en el Art. 309 (y sus modificaciones) de la Ley 11-92, que establece el código Tributario Dominicano, en la Norma General 02-05 (y sus modificaciones), Decreto 293-11, la Ley 253-12, la Resolución Núm.. 41-2014, de la Dirección General de Impuestos Internos (DGII), en lo referente, hemos efectuado las retenciones de lugar aplicadas al pago de:`;
 
   const splitText = doc.splitTextToSize(text, 170);
-  doc.text(splitText, 20, 75);
+  doc.text(splitText, 20, 95);
 
   doc.setFont("helvetica", "bold");
   doc.text(`Beneficiario: ${supplier.name.toUpperCase()}`, 20, 115);
@@ -311,15 +311,15 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
     console.error("Error adding logo:", e);
   }
 
-  doc.setFontSize(14);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 20, { align: "center" });
-  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 27, { align: "center" });
-  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 34, { align: "center" });
-  doc.text(`RNC: ${centerRNC}`, 105, 41, { align: "center" });
+  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 45, { align: "center" });
+  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 50, { align: "center" });
+  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 55, { align: "center" });
+  doc.text(`RNC: ${centerRNC}`, 105, 60, { align: "center" });
 
   doc.setFontSize(16);
-  doc.text("CERTIFICACIÓN DE RETENCIÓN DE ITBIS", 105, 55, { align: "center" });
+  doc.text("CERTIFICACIÓN DE RETENCIÓN DE ITBIS", 105, 75, { align: "center" });
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
@@ -378,13 +378,13 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
     console.error("Error adding logo:", e);
   }
 
-  doc.setFontSize(12);
-  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 20, { align: "center" });
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 26, { align: "center" });
+  doc.setFontSize(10);
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 45, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 50, { align: "center" });
 
-  doc.setFontSize(18);
+  doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text(centerName, 105, 40, { align: "center" });
+  doc.text(centerName, 105, 60, { align: "center" });
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -738,12 +738,12 @@ export const generateLaborReceiptPDF = (check: any, supplier: any, center?: any,
     console.error("Error adding logo:", e);
   }
 
-  doc.setFontSize(12);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text(`Junta de Centro ${centerCode} ${centerName}`, 105, 20, { align: "center" });
+  doc.text(`Junta de Centro ${centerCode} ${centerName}`, 105, 45, { align: "center" });
 
   doc.setFontSize(16);
-  doc.text("RECIBO DE PAGO", 105, 30, { align: "center" });
+  doc.text("RECIBO DE PAGO", 105, 55, { align: "center" });
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
@@ -1359,17 +1359,17 @@ export const generatePurchaseVoucherPDF = (voucher: any, center?: any) => {
     doc.addImage(MINERD_LOGO, 'PNG', 85, 5, LOGO_W, LOGO_H);
   } catch (e) {}
 
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text("MINISTERIO DE EDUCACIÓN", 105, 30, { align: "center" });
-  doc.text("Dirección General de Gestión Financiera", 105, 35, { align: "center" });
+  doc.text("MINISTERIO DE EDUCACIÓN", 105, 40, { align: "center" });
+  doc.text("Dirección General de Gestión Financiera", 105, 44, { align: "center" });
 
   doc.setFontSize(11);
-  doc.text(centerName.toUpperCase(), 105, 45, { align: "center" });
+  doc.text(centerName.toUpperCase(), 105, 52, { align: "center" });
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(`RNC: ${centerRNC} | TEL: ${centerPhone}`, 105, 50, { align: "center" });
-  if (centerAddress) doc.text(centerAddress, 105, 54, { align: "center" });
+  doc.text(`RNC: ${centerRNC} | TEL: ${centerPhone}`, 105, 57, { align: "center" });
+  if (centerAddress) doc.text(centerAddress, 105, 61, { align: "center" });
 
   doc.setLineWidth(0.5);
   doc.line(20, 58, 190, 58);
