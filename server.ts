@@ -998,7 +998,6 @@ async function startServer() {
 
     try {
       const ai = new GoogleGenAI({ apiKey: aiKey });
-      const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       const systemPrompt = `Eres "Soporte en línea", el asistente inteligente de GestiFy RD.
 Tu personalidad es experta y profesional pero muy cercana y amable.
@@ -1026,9 +1025,11 @@ Historial de conversación:
 ${(messages || []).map((m: any) => `${m.role === 'user' ? 'Usuario' : 'Soporte'}: ${m.content}`).join('\n')}
 Soporte:`;
 
-      const result = await model.generateContent(systemPrompt);
-      const response = await result.response;
-      res.json({ text: response.text() });
+      const response = await ai.models.generateContent({
+        model: "gemini-1.5-flash",
+        contents: systemPrompt
+      });
+      res.json({ text: response.text });
     } catch (error) {
       console.error("Chat Error:", error);
       res.status(500).json({ error: "Error al procesar el mensaje" });
