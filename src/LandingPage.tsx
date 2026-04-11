@@ -147,11 +147,9 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#inicio" className="text-sm font-bold text-slate-500 hover:text-emerald-600 transition-colors uppercase tracking-wider">Plataforma</a>
-            <a href="#funciones" className="text-sm font-bold text-slate-500 hover:text-emerald-600 transition-colors uppercase tracking-wider">Funciones</a>
-            <a href="#reportes" className="text-sm font-bold text-slate-500 hover:text-emerald-600 transition-colors uppercase tracking-wider">Reportes</a>
-            <a href="#funciones" className="text-sm font-bold text-slate-500 hover:text-emerald-600 transition-colors uppercase tracking-wider">Seguridad</a>
-            <a href="#planes" className="text-sm font-bold text-slate-500 hover:text-emerald-600 transition-colors uppercase tracking-wider">Planes</a>
+            {['Inicio', 'Funciones', 'Reportes', 'Tutorial', 'Planes', 'Contacto'].map(item => (
+              <a key={item} href={`#${item.toLowerCase()}`} className="text-sm font-bold text-slate-500 hover:text-emerald-600 transition-colors">{item}</a>
+            ))}
           </nav>
 
           <div className="flex items-center gap-4">
