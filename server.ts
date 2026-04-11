@@ -148,7 +148,9 @@ async function startServer() {
     "ALTER TABLE purchase_vouchers ADD COLUMN retention_itbis DECIMAL DEFAULT 0;",
     "ALTER TABLE purchase_vouchers ADD COLUMN itbis_amount DECIMAL DEFAULT 0;",
     "ALTER TABLE purchase_vouchers DROP CONSTRAINT IF EXISTS purchase_vouchers_ncf_key;",
-    "ALTER TABLE purchase_vouchers ADD CONSTRAINT purchase_vouchers_ncf_center_unique UNIQUE (center_id, ncf);"
+    "ALTER TABLE purchase_vouchers ADD CONSTRAINT purchase_vouchers_ncf_center_unique UNIQUE (center_id, ncf);",
+    "CREATE TABLE IF NOT EXISTS products (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), name TEXT NOT NULL, category TEXT, unit_price DECIMAL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);",
+    "ALTER TABLE products ADD COLUMN center_id INTEGER;"
   ];
 
   for (const m of migrations) {
@@ -666,14 +668,20 @@ async function startServer() {
   app.put("/api/centers/:id", async (req: any, res: any) => {
     const centerId = (req as any).centerId;
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
+    
+    // Security: Ensure users can only update the center they are currently logged into
     const { id } = req.params;
+    if (parseInt(id) !== centerId) {
+      return res.status(403).json({ error: "No tienes permiso para actualizar esta institución." });
+    }
+
     const { name, rnc, address, phone, email, junta_name, codigo_no, codigo_dependencia, cuenta_no, director_name, president_name, treasurer_name, district, regional, secretary_name } = req.body;
     try {
       await pool.query(`
         UPDATE centers 
         SET name = $1, rnc = $2, address = $3, phone = $4, email = $5, junta_name = $6, codigo_no = $7, codigo_dependencia = $8, cuenta_no = $9, director_name = $10, president_name = $11, treasurer_name = $12, district = $13, regional = $14, secretary_name = $15
         WHERE id = $16
-      `, [name, rnc, address, phone, email, junta_name, codigo_no, codigo_dependencia, cuenta_no, director_name, president_name, treasurer_name, district, regional, secretary_name, id]);
+      `, [name, rnc, address, phone, email, junta_name, codigo_no, codigo_dependencia, cuenta_no, director_name, president_name, treasurer_name, district, regional, secretary_name, centerId]);
       res.json({ success: true });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
@@ -890,6 +898,13 @@ async function startServer() {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
     try {
+      // 1. Authorization check: ensure quote belongs to center
+      const quoteCheck = await pool.query("SELECT 1 FROM quotes WHERE id = $1 AND center_id = $2", [id, centerId]);
+      if (quoteCheck.rows.length === 0) {
+        return res.status(403).json({ error: "No tienes permiso para subir evidencia a esta cotización." });
+      }
+
+      // 2. Insert evidence record
       const result = await pool.query(
         "INSERT INTO quote_evidences (center_id, quote_id, file_path, file_name) VALUES ($1, $2, $3, $4) RETURNING id",
         [centerId, id, req.file.path, req.file.originalname]
@@ -1232,8 +1247,10 @@ El JSON debe tener esta estructura exacta:
 
   // Products
   app.get("/api/products", async (req: any, res: any) => {
+    const centerId = (req as any).centerId;
+    if (!centerId) return res.status(400).json({ error: "Center ID required" });
     try {
-      const result = await pool.query("SELECT * FROM products");
+      const result = await pool.query("SELECT * FROM products WHERE center_id = $1", [centerId]);
       res.json(result.rows);
     } catch (e: any) {
       res.status(500).json({ error: e.message });
@@ -1241,9 +1258,11 @@ El JSON debe tener esta estructura exacta:
   });
 
   app.post("/api/products", async (req: any, res: any) => {
+    const centerId = (req as any).centerId;
+    if (!centerId) return res.status(400).json({ error: "Center ID required" });
     const { name, category, unit_price } = req.body;
     try {
-      const result = await pool.query("INSERT INTO products (name, category, unit_price) VALUES ($1, $2, $3) RETURNING id", [name, category, unit_price]);
+      const result = await pool.query("INSERT INTO products (center_id, name, category, unit_price) VALUES ($1, $2, $3, $4) RETURNING id", [centerId, name, category, unit_price]);
       res.json({ id: result.rows[0].id });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
