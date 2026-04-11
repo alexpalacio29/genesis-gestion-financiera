@@ -131,10 +131,6 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
             viewport={{ once: true }}
             className="space-y-8"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-xs font-black uppercase tracking-widest border border-emerald-100">
-               <Shield className="w-3.5 h-3.5" />
-               Oficialmente MINERD Ready
-            </div>
             <h1 className="text-5xl md:text-6xl font-black text-slate-900 leading-[1.1] tracking-tight">
               La plataforma inteligente de <span className="text-emerald-600">gestión financiera</span> para centros públicos
             </h1>
@@ -166,7 +162,7 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
             className="relative"
           >
             <div className="relative z-10 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 bg-white">
-              <img src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=2011" alt="App Preview" className="w-full h-auto opacity-90" />
+              <img src="/hero-image.png" alt="App Preview" className="w-full h-auto" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent" />
             </div>
             {/* Decostyle elements */}
