@@ -123,24 +123,25 @@ export const generateQuotePDF = (quote: any, supplier: any, items: any[] = [], c
     console.error("Error adding logo:", e);
   }
 
-  doc.setFontSize(12);
-  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 45, { align: "center" });
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 51, { align: "center" });
+  doc.setFontSize(9);
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 42, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 47, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("MANTENIMIENTO ESCOLAR", 105, 60, { align: "center" });
-  doc.text(quote.type === 'labor' ? "Cotización de Mano de Obra Especializada" : "Cotización de Materiales", 105, 67, { align: "center" });
+  doc.text("MANTENIMIENTO ESCOLAR", 105, 58, { align: "center" });
+  doc.text(quote.type === 'labor' ? "Cotización de Mano de Obra Especializada" : "Cotización de Materiales", 105, 65, { align: "center" });
 
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   const centerText = `Nombre del Centro: ${centerName}`;
   const centerLines = doc.splitTextToSize(centerText, 170);
-  doc.text(centerLines, 20, 80);
+  doc.text(centerLines, 20, 78);
 
-  doc.text("SERVICIOS COTIZADOS", 105, 90 + (centerLines.length > 1 ? (centerLines.length - 1) * 7 : 0), { align: "center" });
+  const servicesY = 85 + (centerLines.length * 6);
+  doc.text("SERVICIOS COTIZADOS", 105, servicesY, { align: "center" });
 
-  const tableStartY = 95 + (centerLines.length > 1 ? (centerLines.length - 1) * 7 : 0);
+  const tableStartY = servicesY + 5;
   const tableBody = (items && items.length > 0)
     ? items.map((item, index) => [
       (index + 1).toString(),
@@ -218,9 +219,10 @@ export const generateCheckPDF = (check: any, center?: any, logoBase64?: string) 
   doc.text(formatDate(check.date), 20, 20);
   doc.text(`Ck ${check.check_number}`, 150, 20);
 
-  doc.setFontSize(11);
-  doc.text(`JUNTA DE CENTRO EDUCATIVO: ${centerCode}`, 80, 25);
   doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(`JUNTA DE CENTRO EDUCATIVO: ${centerCode}`, 80, 25);
+  doc.setFontSize(8);
   doc.text(`Concepto: ${check.description || "PAGO SEGÚN ORDEN DE COMPRA"}`, 80, 30, { maxWidth: 80 });
 
   doc.setFontSize(12);
@@ -249,35 +251,36 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
     console.error("Error adding logo:", e);
   }
 
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 45, { align: "center" });
-  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 50, { align: "center" });
-  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 55, { align: "center" });
-  doc.text(`RNC: ${centerRNC}`, 105, 60, { align: "center" });
+  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 42, { align: "center" });
+  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 47, { align: "center" });
+  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 52, { align: "center" });
+  doc.text(`RNC: ${centerRNC}`, 105, 57, { align: "center" });
 
   doc.setFontSize(14);
   const certTitle = (check.retention_itbis || 0) > 0 ? "CERTIFICACIÓN DE RETENCIÓN DE IMPUESTOS (ISR E ITBIS)" : "CERTIFICACIÓN DE RETENCIÓN DE IMPUESTOS (ISR)";
-  doc.text(certTitle, 105, 75, { align: "center" });
+  doc.text(certTitle, 105, 68, { align: "center" });
 
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`DD 12-01 Núm..: ${check.check_number}-2026`, 20, 85);
+  doc.text(`DD 12-01 Núm..: ${check.check_number}-2026`, 20, 78);
 
   const text = `Quien suscribe, ${center?.director_name || 'Nombre del Director(a)'}, directora de la Junta de centro Educativo ${centerCode} ${centerName} del Distrito ${center?.district || '12-01 de Higüey'}, Republica Dominicana, CERTIFICA: Que de acuerdo a lo establecido en el Art. 309 (y sus modificaciones) de la Ley 11-92, que establece el código Tributario Dominicano, en la Norma General 02-05 (y sus modificaciones), Decreto 293-11, la Ley 253-12, la Resolución Núm.. 41-2014, de la Dirección General de Impuestos Internos (DGII), en lo referente, hemos efectuado las retenciones de lugar aplicadas al pago de:`;
 
   const splitText = doc.splitTextToSize(text, 170);
-  doc.text(splitText, 20, 95);
-
+  doc.text(splitText, 20, 85);
+  
+  let currentY = 85 + (splitText.length * 6) + 10;
   doc.setFont("helvetica", "bold");
-  doc.text(`Beneficiario: ${supplier.name.toUpperCase()}`, 20, 115);
-  doc.text(`RNC o Cedula: ${supplier.rnc}`, 20, 122);
+  doc.text(`Beneficiario: ${supplier.name.toUpperCase()}`, 20, currentY);
+  doc.text(`RNC o Cedula: ${supplier.rnc}`, 20, currentY + 7);
 
   doc.setFont("helvetica", "normal");
-  doc.text("Valores en RD$", 150, 135);
+  doc.text("Valores en RD$", 150, currentY + 15);
 
   autoTable(doc, {
-    startY: 140,
+    startY: currentY + 20,
     head: [['Cheque No.', 'FECHA', 'MONTO BRUTO', 'ITBIS', 'Retención del 5%', 'TOTAL RETENIDO', 'MONTO NETO']],
     body: [[
       check.check_number,
@@ -334,34 +337,35 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
     console.error("Error adding logo:", e);
   }
 
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 45, { align: "center" });
-  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 50, { align: "center" });
-  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 55, { align: "center" });
-  doc.text(`RNC: ${centerRNC}`, 105, 60, { align: "center" });
+  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 42, { align: "center" });
+  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 47, { align: "center" });
+  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 52, { align: "center" });
+  doc.text(`RNC: ${centerRNC}`, 105, 57, { align: "center" });
 
-  doc.setFontSize(16);
-  doc.text("CERTIFICACIÓN DE RETENCIÓN DE ITBIS", 105, 75, { align: "center" });
+  doc.setFontSize(14);
+  doc.text("CERTIFICACIÓN DE RETENCIÓN DE ITBIS", 105, 68, { align: "center" });
 
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`DD 12-01 Núm..: ${check.check_number}-2026`, 20, 65);
+  doc.text(`DD 12-01 Núm..: ${check.check_number}-2026`, 20, 78);
 
   const text = `Quien suscribe, ${center?.director_name || 'Nombre del Director(a)'}, directora de la Junta de centro Educativo ${centerCode} ${centerName} del Distrito ${center?.district || '12-01 de Higüey'}, Republica Dominicana, CERTIFICA: Que de acuerdo a lo establecido en la Norma General 02-05 de la Dirección General de Impuestos Internos (DGII) sobre Proveedores Informales, hemos efectuado la retención del 100% del ITBIS facturado aplicado al pago de:`;
 
   const splitText = doc.splitTextToSize(text, 170);
-  doc.text(splitText, 20, 75);
+  doc.text(splitText, 20, 85);
 
+  let currentY = 85 + (splitText.length * 6) + 10;
   doc.setFont("helvetica", "bold");
-  doc.text(`Beneficiario: ${supplier.name.toUpperCase()}`, 20, 105);
-  doc.text(`Cédula: ${supplier.rnc}`, 20, 112);
+  doc.text(`Beneficiario: ${supplier.name.toUpperCase()}`, 20, currentY);
+  doc.text(`Cédula: ${supplier.rnc}`, 20, currentY + 7);
 
   doc.setFont("helvetica", "normal");
-  doc.text("Valores en RD$", 150, 125);
+  doc.text("Valores en RD$", 150, currentY + 15);
 
   autoTable(doc, {
-    startY: 130,
+    startY: currentY + 20,
     head: [['Cheque No.', 'FECHA', 'MONTO BRUTO', 'ITBIS FACTURADO', 'ITBIS RETENIDO (100%)']],
     body: [[
       check.check_number,
@@ -404,7 +408,7 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
 
 export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?: any, logoBase64?: string) => {
   const doc = new jsPDF();
-  const centerName = center?.name || "Gestify RD";
+  const centerName = center?.name || "CENTRO EDUCATIVO";
   const centerCode = center?.codigo_no || "06907";
 
   try {
@@ -413,21 +417,21 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
     console.error("Error adding logo:", e);
   }
 
-  doc.setFontSize(10);
-  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 45, { align: "center" });
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 51, { align: "center" });
+  doc.setFontSize(8);
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 42, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 47, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text(centerName, 105, 62, { align: "center" });
+  doc.text(centerName, 105, 58, { align: "center" });
 
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   const addressText = center?.address || "Eliseo Pérez Sánchez # 27, Sector Juan P. Duarte. Higüey, República Dominicana";
   const addressLines = doc.splitTextToSize(addressText, 160);
-  doc.text(addressLines, 105, 68, { align: "center" });
+  doc.text(addressLines, 105, 64, { align: "center" });
   
-  const emailY = 68 + (addressLines.length * 5);
+  const emailY = 64 + (addressLines.length * 5);
   doc.text(`${center?.email || "colegiocristianogenesis@hotmail.com"}`, 105, emailY, { align: "center" });
   doc.text(`Teléfono ${center?.phone || "809-554-0329"}`, 105, emailY + 5, { align: "center" });
 
@@ -523,26 +527,26 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
     console.error("Error adding logo:", e);
   }
 
-  doc.setFontSize(12);
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 20, { align: "center" });
+  doc.setFontSize(9);
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 42, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("REQUISICIÓN DE MATERIALES O SERVICIOS", 105, 30, { align: "center" });
+  doc.text("REQUISICIÓN DE MATERIALES O SERVICIOS", 105, 52, { align: "center" });
 
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Fecha: ${formatDate(requisition.created_at)}`, 20, 45);
-  doc.text(`Junta de Centro Educativo: ${centerName}`, 20, 52);
-  doc.text(`Código: ${centerCode}`, 120, 52);
-  doc.text(`POA: ${requisition.poa_year || '2026'}`, 20, 62);
+  doc.text(`Fecha: ${formatDate(requisition.created_at)}`, 20, 65);
+  doc.text(`Junta de Centro Educativo: ${centerName}`, 20, 72);
+  doc.text(`Código: ${centerCode}`, 120, 72);
+  doc.text(`POA: ${requisition.poa_year || '2026'}`, 20, 80);
 
   doc.setFont("helvetica", "bold");
-  const conceptText = `CONCEPCO: ${quote.description || 'Materiales didácticos nivel inicial, primaria y secundaria'}`;
+  const conceptText = `CONCEPTO: ${quote.description || 'Materiales didácticos nivel inicial, primaria y secundaria'}`;
   const conceptLines = doc.splitTextToSize(conceptText, 170);
-  doc.text(conceptLines, 20, 72);
+  doc.text(conceptLines, 20, 90);
 
-  const tableStartY = 72 + (conceptLines.length * 6) + 10;
+  const tableStartY = 95 + (conceptLines.length * 6) + 5;
   doc.text("DESCRIPCIÓN", 105, tableStartY - 5, { align: "center" });
 
   const tableBody = (items && items.length > 0)
@@ -597,27 +601,27 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[] = 
     console.error("Error adding logo:", e);
   }
 
-  doc.setFontSize(12);
-  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 20, { align: "center" });
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 26, { align: "center" });
+  doc.setFontSize(9);
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 42, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 47, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("ORDEN DE COMPRA O SERVICIOS", 105, 35, { align: "center" });
+  doc.text("ORDEN DE COMPRA O SERVICIOS", 105, 58, { align: "center" });
 
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text("Salvaleón de Higüey, RD.", 20, 45);
+  doc.text("Salvaleón de Higüey, RD.", 20, 68);
 
   doc.setFont("helvetica", "bold");
-  doc.text(`FECHA: ${formatDate(po.created_at)}`, 20, 55);
+  doc.text(`FECHA: ${formatDate(po.created_at)}`, 20, 78);
   
-  doc.text(`PROVEEDOR:`, 20, 62);
+  doc.text(`PROVEEDOR:`, 20, 85);
   doc.setFont("helvetica", "normal");
   const supplierLines = doc.splitTextToSize(supplier.name.toUpperCase(), 140);
-  doc.text(supplierLines, 50, 62);
+  doc.text(supplierLines, 50, 85);
   
-  let currentY = 62 + (supplierLines.length * 6);
+  let currentY = 85 + (supplierLines.length * 6);
 
   doc.setFont("helvetica", "bold");
   doc.text(`RNC :`, 20, currentY);
@@ -708,16 +712,18 @@ export const generateCheckCalculationSheetPDF = (check: any, supplier: any, cent
   }
 
   doc.setFontSize(14);
-  doc.text(centerName.toUpperCase(), 105, 20, { align: "center" });
-  doc.text("PLANILLA DE CÁLCULOS PARA EMISIÓN DE CHEQUE", 105, 30, { align: "center" });
+  doc.setFont("helvetica", "bold");
+  doc.text(centerName.toUpperCase(), 105, 58, { align: "center" });
+  doc.text("PLANILLA DE CÁLCULOS PARA EMISIÓN DE CHEQUE", 105, 68, { align: "center" });
 
-  doc.setFontSize(10);
-  doc.text(`Fecha: ${formatDate(check.date)}`, 20, 45);
-  doc.text(`Beneficiario: ${supplier.name}`, 20, 50);
-  doc.text(`RNC/Cédula: ${supplier.rnc}`, 20, 55);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Fecha: ${formatDate(check.date)}`, 20, 80);
+  doc.text(`Beneficiario: ${supplier.name}`, 20, 87);
+  doc.text(`RNC/Cédula: ${supplier.rnc}`, 20, 94);
 
   autoTable(doc, {
-    startY: 65,
+    startY: 100,
     head: [['Concepto', 'Monto']],
     body: [
       ['Monto Bruto (Sub-Total)', formatCurrency(check.subtotal || check.amount_gross - (check.itbis_total || 0))],
