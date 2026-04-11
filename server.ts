@@ -105,8 +105,8 @@ async function startServer() {
   // Initialize Database Schema (PostgreSQL Syntax)
   try {
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, name TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS centers (id SERIAL PRIMARY KEY, name TEXT NOT NULL, rnc TEXT, address TEXT, phone TEXT, email TEXT, logo_url TEXT, junta_name TEXT, codigo_no TEXT, codigo_dependencia TEXT, cuenta_no TEXT, status TEXT DEFAULT 'active', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, name TEXT, plan TEXT DEFAULT 'multi', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS centers (id SERIAL PRIMARY KEY, name TEXT NOT NULL, rnc TEXT, address TEXT, phone TEXT, email TEXT, logo_url TEXT, junta_name TEXT, codigo_no TEXT, codigo_dependencia TEXT, cuenta_no TEXT, status TEXT DEFAULT 'active', plan TEXT DEFAULT 'multi', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS registration_codes (id SERIAL PRIMARY KEY, code TEXT UNIQUE NOT NULL, is_used INTEGER DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, used_by_user_id INTEGER REFERENCES users(id));
       CREATE TABLE IF NOT EXISTS budgets (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), year TEXT NOT NULL, total_amount DECIMAL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, UNIQUE(center_id, year));
       CREATE TABLE IF NOT EXISTS budget_allocations (id SERIAL PRIMARY KEY, budget_id INTEGER NOT NULL REFERENCES budgets(id), category TEXT NOT NULL, allocated_amount DECIMAL DEFAULT 0, UNIQUE(budget_id, category));
@@ -150,7 +150,9 @@ async function startServer() {
     "ALTER TABLE purchase_vouchers DROP CONSTRAINT IF EXISTS purchase_vouchers_ncf_key;",
     "ALTER TABLE purchase_vouchers ADD CONSTRAINT purchase_vouchers_ncf_center_unique UNIQUE (center_id, ncf);",
     "CREATE TABLE IF NOT EXISTS products (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), name TEXT NOT NULL, category TEXT, unit_price DECIMAL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);",
-    "ALTER TABLE products ADD COLUMN center_id INTEGER;"
+    "ALTER TABLE products ADD COLUMN center_id INTEGER;",
+    "ALTER TABLE centers ADD COLUMN plan TEXT DEFAULT 'multi';",
+    "ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'multi';"
   ];
 
   for (const m of migrations) {
@@ -259,6 +261,36 @@ async function startServer() {
       res.json(result.rows);
     } catch (e: any) {
       console.error("SaaS Centers Error:", e);
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get("/api/saas/centers/:id", isSuperAdminCheck, async (req: any, res: any) => {
+    try {
+      const result = await pool.query("SELECT * FROM centers WHERE id = $1", [req.params.id]);
+      if (result.rows.length === 0) return res.status(404).json({ error: "Centro no encontrado" });
+      res.json(result.rows[0]);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post("/api/saas/centers/:id/plan", isSuperAdminCheck, async (req: any, res: any) => {
+    try {
+      const { plan } = req.body;
+      await pool.query("UPDATE centers SET plan = $1 WHERE id = $2", [plan, req.params.id]);
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post("/api/saas/users/:id/plan", isSuperAdminCheck, async (req: any, res: any) => {
+    try {
+      const { plan } = req.body;
+      await pool.query("UPDATE users SET plan = $1 WHERE id = $2", [plan, req.params.id]);
+      res.json({ success: true });
+    } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
   });

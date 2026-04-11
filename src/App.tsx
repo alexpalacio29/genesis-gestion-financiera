@@ -278,17 +278,25 @@ const CenterSelector = ({ user, centers, onSelect, onAdd, onLogout }: { user: an
             </button>
           ))}
 
-          <button
-            onClick={onAdd}
-            className="bg-slate-50 p-6 rounded-3xl border-2 border-dashed border-slate-200 hover:border-slate-400 hover:bg-white transition-all text-center group"
-          >
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center group-hover:bg-slate-900 transition-colors shadow-sm">
-                <Plus className="w-6 h-6 text-slate-400 group-hover:text-white" />
+          {/* Creation Restriction for Individual Plan */}
+          {!(user?.plan === 'individual' && centers.length >= 1) ? (
+            <button
+              onClick={onAdd}
+              className="bg-slate-50 p-6 rounded-3xl border-2 border-dashed border-slate-200 hover:border-slate-400 hover:bg-white transition-all text-center group"
+            >
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center group-hover:bg-slate-900 transition-colors shadow-sm">
+                  <Plus className="w-6 h-6 text-slate-400 group-hover:text-white" />
+                </div>
+                <span className="font-bold text-slate-500 group-hover:text-slate-900">Agregar Nuevo Centro</span>
               </div>
-              <span className="font-bold text-slate-500 group-hover:text-slate-900">Agregar Nuevo Centro</span>
-            </div>
-          </button>
+            </button>
+          ) : (
+             <div className="bg-slate-100 p-6 rounded-3xl border-2 border-dashed border-slate-200 opacity-60 flex flex-col items-center gap-2">
+                <Lock className="w-8 h-8 text-slate-400" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Plan Individual: Límite de 1 institución alcanzado</span>
+             </div>
+          )}
         </div>
       </div>
     </div>
@@ -5165,7 +5173,7 @@ const Configuration = ({ apiFetch, currentCenter, user }: { apiFetch: any, curre
 
 // --- Main Application ---
 // --- SaaS Admin Panel (Global Control for Alex) ---
-const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
+const SaaSAdminPanel = ({ apiFetch, onSelectCenter }: { apiFetch: any, onSelectCenter: (center: any) => void }) => {
   const [centers, setCenters] = useState<any[]>([]);
   const [codes, setCodes] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
@@ -5227,6 +5235,32 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
       fetchData();
     } catch (e) {
       alert('Error al cambiar estado');
+    }
+  };
+
+  const handleUpdateCenterPlan = async (id: number, plan: string) => {
+    try {
+      await apiFetch(`/api/saas/centers/${id}/plan`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan })
+      });
+      fetchData();
+    } catch (e) {
+      alert('Error al actualizar plan');
+    }
+  };
+
+  const handleUpdateUserPlan = async (id: number, plan: string) => {
+    try {
+      await apiFetch(`/api/saas/users/${id}/plan`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan })
+      });
+      fetchData();
+    } catch (e) {
+      alert('Error al actualizar plan del usuario');
     }
   };
 
@@ -5350,7 +5384,16 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
                     <p className="text-xs text-slate-400 font-mono tracking-tighter">{c.rnc}</p>
                   </td>
                   <td className="p-4 text-xs font-medium text-slate-600">{c.manager_email || 'N/A'}</td>
-                  <td className="p-4"><span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black">{c.user_count}</span></td>
+                  <td className="p-4">
+                    <select
+                      value={c.plan || 'multi'}
+                      onChange={(e) => handleUpdateCenterPlan(c.id, e.target.value)}
+                      className="text-[10px] font-black uppercase tracking-tight bg-slate-100 rounded-lg px-2 py-1 outline-none border-none cursor-pointer"
+                    >
+                      <option value="individual">Individual</option>
+                      <option value="multi">Multicentro</option>
+                    </select>
+                  </td>
                   <td className="p-4">
                     <span className={cn(
                       "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest",
@@ -5360,15 +5403,24 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
                     </span>
                   </td>
                   <td className="p-4 text-right">
-                    <button
-                      onClick={() => handleToggleStatus(c.id)}
-                      className={cn(
-                        "text-[11px] font-bold px-4 py-2 rounded-xl transition-all",
-                        c.status === 'active' ? "text-rose-600 bg-rose-50 hover:bg-rose-100" : "text-emerald-600 bg-emerald-50 hover:bg-emerald-100"
-                      )}
-                    >
-                      {c.status === 'active' ? 'Suspender' : 'Activar'}
-                    </button>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => onSelectCenter(c)}
+                        className="text-[11px] font-bold px-3 py-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-all flex items-center gap-1"
+                      >
+                         <LayoutDashboard className="w-3.5 h-3.5" />
+                         Gestionar
+                      </button>
+                      <button
+                        onClick={() => handleToggleStatus(c.id)}
+                        className={cn(
+                          "text-[11px] font-bold px-3 py-2 rounded-xl transition-all",
+                          c.status === 'active' ? "text-rose-600 bg-rose-50 hover:bg-rose-100" : "text-emerald-600 bg-emerald-50 hover:bg-emerald-100"
+                        )}
+                      >
+                        {c.status === 'active' ? 'Suspender' : 'Activar'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -5434,13 +5486,23 @@ const SaaSAdminPanel = ({ apiFetch }: { apiFetch: any }) => {
                   <td className="p-4 font-mono text-xs">{u.id}</td>
                   <td className="p-4 font-bold text-slate-900">{u.name || 'Sin Nombre'}</td>
                   <td className="p-4 text-xs font-medium text-slate-600">{u.email}</td>
+                  <td className="p-4">
+                    <select
+                      value={u.plan || 'multi'}
+                      onChange={(e) => handleUpdateUserPlan(u.id, e.target.value)}
+                      className="text-[10px] font-black uppercase tracking-tight bg-slate-100 rounded-lg px-2 py-1 outline-none border-none cursor-pointer"
+                    >
+                      <option value="individual">Individual</option>
+                      <option value="multi">Multicentro</option>
+                    </select>
+                  </td>
                   <td className="p-4 text-[11px] text-slate-500">{new Date(u.created_at).toLocaleDateString()}</td>
                   <td className="p-4 text-right">
                     <button
                       onClick={() => handleResetPassword(u.id, u.name || u.email)}
-                      className="text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-2 rounded-xl transition-all"
+                      className="text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-2 rounded-xl transition-all font-mono"
                     >
-                      Restablecer Contraseña
+                      Restablecer Pass
                     </button>
                   </td>
                 </tr>
@@ -5646,7 +5708,7 @@ export default function App() {
       case 'petty-cash': return <PettyCash {...props} />;
       case 'reports': return <Reports {...props} />;
       case 'configuration': return <Configuration {...props} />;
-      case 'saas-admin': return <SaaSAdminPanel apiFetch={apiFetch} />;
+      case 'saas-admin': return <SaaSAdminPanel apiFetch={apiFetch} onSelectCenter={handleSelectCenter} />;
       default: return <Dashboard onNavigate={setActiveTab} apiFetch={apiFetch} currentCenter={currentCenter} />;
     }
   };
