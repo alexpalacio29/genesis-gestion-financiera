@@ -224,14 +224,6 @@ async function startServer() {
     }
   });
 
-  app.get("/api/centers", async (req, res) => {
-    try {
-      const result = await pool.query("SELECT * FROM centers ORDER BY name ASC");
-      res.json(result.rows);
-    } catch (e: any) {
-      res.status(500).json({ error: e.message });
-    }
-  });
 
   // SaaS Admin Middleware
   const isSuperAdminCheck = async (req: any, res: any, next: any) => {
@@ -335,31 +327,54 @@ async function startServer() {
   });
   const uploadDisk = multer({ storage: storage });
 
-  // Middleware to extract center_id and check status
+  // Middleware to extract center_id and check status + authorization
   app.use(async (req, res, next) => {
+    const userIdHeader = req.headers['x-user-id'];
     const centerIdHeader = req.headers['x-center-id'];
+    
+    // Skip auth for login/register and public routes
+    const publicRoutes = ['/api/auth/login', '/api/auth/register', '/api/saas/center-info'];
+    if (publicRoutes.includes(req.path)) return next();
+
     if (centerIdHeader) {
       const centerId = parseInt(centerIdHeader as string);
+      const userId = userIdHeader ? parseInt(userIdHeader as string) : null;
       (req as any).centerId = centerId;
+      (req as any).userId = userId;
 
-      // Suspension check
       try {
+        // 1. Fetch center and user info
         const centerRes = await pool.query("SELECT status FROM centers WHERE id = $1", [centerId]);
         const center = centerRes.rows[0];
-        if (center && center.status === 'suspended') {
-          const userId = req.headers['x-user-id'];
+
+        // 2. Authorization Check (Skip for mock center 0 or specific admin routes handled later)
+        if (centerId !== 0 && userId) {
           const userRes = await pool.query("SELECT email FROM users WHERE id = $1", [userId]);
           const user = userRes.rows[0];
-          
-          // Super Admin exception (Case-insensitive)
-          if (!user || user.email.toLowerCase() !== 'alexpalacio29@gmail.com') {
+          const isSuperAdmin = user?.email.toLowerCase() === 'alexpalacio29@gmail.com';
+
+          // If not super admin, check user_centers membership
+          if (!isSuperAdmin) {
+            const membershipRes = await pool.query(
+              "SELECT 1 FROM user_centers WHERE user_id = $1 AND center_id = $2",
+              [userId, centerId]
+            );
+            if (membershipRes.rows.length === 0) {
+              return res.status(403).json({ error: "No tienes permiso para acceder a esta institución." });
+            }
+          }
+
+          // 3. Suspension check (Allow super admin to see even if suspended)
+          if (center && center.status === 'suspended' && !isSuperAdmin) {
             return res.status(403).json({ 
               error: "Institución Suspendida. Contacte al administrador de la plataforma.",
               suspended: true
             });
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error("Auth middleware error:", e);
+      }
     }
     next();
   });
@@ -567,21 +582,28 @@ async function startServer() {
   // Centers (Consolidated)
   app.get("/api/centers", async (req: any, res: any) => {
     const userId = req.headers['x-user-id'];
-    if (!userId) {
-      try {
+    if (!userId) return res.status(401).json({ error: "No autorizado" });
+
+    try {
+      // Check if user is Super Admin
+      const userRes = await pool.query("SELECT email FROM users WHERE id = $1", [userId]);
+      const user = userRes.rows[0];
+      const isSuperAdmin = user?.email.toLowerCase() === 'alexpalacio29@gmail.com';
+
+      if (isSuperAdmin) {
+        // Super Admin sees everything
         const result = await pool.query("SELECT * FROM centers ORDER BY name ASC");
         return res.json(result.rows);
-      } catch (e: any) {
-        return res.status(500).json({ error: e.message });
+      } else {
+        // Regular users only see their own centers
+        const result = await pool.query(`
+          SELECT c.* FROM centers c
+          JOIN user_centers uc ON c.id = uc.center_id
+          WHERE uc.user_id = $1
+          ORDER BY c.name ASC
+        `, [userId]);
+        return res.json(result.rows);
       }
-    }
-    try {
-      const result = await pool.query(`
-        SELECT c.* FROM centers c
-        JOIN user_centers uc ON c.id = uc.center_id
-        WHERE uc.user_id = $1
-      `, [userId]);
-      res.json(result.rows);
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
