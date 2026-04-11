@@ -420,7 +420,7 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-16">
            <div className="lg:w-1/2 space-y-12">
               <div className="space-y-6">
-                <h2 className="text-4xl font-black text-slate-900 leading-tight">¿Hablamos de tu <span className="text-emerald-600">centro educativo</span>?</h2>
+                <h2 className="text-4xl font-black text-slate-900 leading-tight">¿Háblanos de tu <span className="text-emerald-600">centro educativo</span>?</h2>
                 <p className="text-lg text-slate-500 font-medium leading-relaxed">Estamos listos para ayudarte a transformar tu gestión económica. Completa el formulario y responderemos en menos de 24 horas.</p>
               </div>
 
