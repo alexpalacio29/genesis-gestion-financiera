@@ -55,6 +55,16 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
     { name: "Distrito Educativo", desc: "Solución Multi-centro", price: "Consulta", features: ["Multi-centro", "Panel de Supervisión", "Gestión de Distrito", "Capacitación Incluida"] }
   ];
 
+  const slides = ["/hero-image.png", "/dashboard-preview.png"];
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 scroll-smooth">
       {/* Header */}
@@ -155,16 +165,39 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
             </div>
           </motion.div>
 
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="relative"
-          >
-            <div className="relative z-10 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 bg-white">
-              <img src="/hero-image.png" alt="App Preview" className="w-full h-auto" />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent" />
-            </div>
+          <div className="relative">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="relative z-10 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 bg-white aspect-[4/3] lg:aspect-auto"
+            >
+              <motion.img 
+                key={currentSlide}
+                src={slides[currentSlide]} 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.5 }}
+                alt="App Preview" 
+                className="w-full h-full object-cover" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 via-transparent to-transparent pointer-events-none" />
+              
+              {/* Carousel Indicators */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+                {slides.map((_, i) => (
+                  <button 
+                    key={i}
+                    onClick={() => setCurrentSlide(i)}
+                    className={cn(
+                      "w-2 h-2 rounded-full transition-all",
+                      currentSlide === i ? "bg-emerald-600 w-6" : "bg-white/50 hover:bg-white"
+                    )}
+                  />
+                ))}
+              </div>
+            </motion.div>
             
             {/* MINERD Compliance badge below image */}
             <div className="relative z-10 mt-6 flex items-center justify-center lg:justify-start gap-4">
@@ -175,10 +208,11 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
                   Conforme a los estándares del <span className="text-emerald-600">MINERD</span>
                </p>
             </div>
+
             {/* Decostyle elements */}
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-100 rounded-full blur-3xl opacity-50" />
             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-100 rounded-full blur-3xl opacity-50" />
-          </motion.div>
+          </div>
         </div>
       </section>
 
