@@ -1187,9 +1187,6 @@ const Dashboard = ({ onNavigate, apiFetch, currentCenter }: { onNavigate: (tab: 
 
       {!isBasic && execution && execution.total_budgeted > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-           {/* ... existing execution charts ... */}
-        </div>
-      )}
           <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-lg font-bold text-slate-900">Ejecución Presupuestaria {currentYear}</h3>
