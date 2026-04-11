@@ -124,21 +124,21 @@ export const generateQuotePDF = (quote: any, supplier: any, items: any[] = [], c
   }
 
   doc.setFontSize(9);
-  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 45, { align: "center" });
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 50, { align: "center" });
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 55, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 60, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("MANTENIMIENTO ESCOLAR", 105, 60, { align: "center" });
-  doc.text(quote.type === 'labor' ? "Cotización de Mano de Obra Especializada" : "Cotización de Materiales", 105, 67, { align: "center" });
+  doc.text("MANTENIMIENTO ESCOLAR", 105, 72, { align: "center" });
+  doc.text(quote.type === 'labor' ? "Cotización de Mano de Obra Especializada" : "Cotización de Materiales", 105, 79, { align: "center" });
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   const centerText = `Nombre del Centro: ${centerName}`;
   const centerLines = doc.splitTextToSize(centerText, 170);
-  doc.text(centerLines, 20, 78);
+  doc.text(centerLines, 20, 95);
 
-  const servicesY = 85 + (centerLines.length * 6);
+  const servicesY = 105 + (centerLines.length * 6);
   doc.text("SERVICIOS COTIZADOS", 105, servicesY, { align: "center" });
 
   const tableStartY = servicesY + 5;
@@ -253,18 +253,18 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 45, { align: "center" });
-  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 50, { align: "center" });
-  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 55, { align: "center" });
-  doc.text(`RNC: ${centerRNC}`, 105, 60, { align: "center" });
+  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 55, { align: "center" });
+  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 60, { align: "center" });
+  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 65, { align: "center" });
+  doc.text(`RNC: ${centerRNC}`, 105, 70, { align: "center" });
 
   doc.setFontSize(14);
   const certTitle = (check.retention_itbis || 0) > 0 ? "CERTIFICACIÓN DE RETENCIÓN DE IMPUESTOS (ISR E ITBIS)" : "CERTIFICACIÓN DE RETENCIÓN DE IMPUESTOS (ISR)";
-  doc.text(certTitle, 105, 75, { align: "center" });
+  doc.text(certTitle, 105, 82, { align: "center" });
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`DD 12-01 Núm..: ${check.check_number}-2026`, 20, 78);
+  doc.text(`DD 12-01 Núm..: ${check.check_number}-2026`, 20, 92);
 
   const text = `Quien suscribe, ${center?.director_name || 'Nombre del Director(a)'}, directora de la Junta de centro Educativo ${centerCode} ${centerName} del Distrito ${center?.district || '12-01 de Higüey'}, Republica Dominicana, CERTIFICA: Que de acuerdo a lo establecido en el Art. 309 (y sus modificaciones) de la Ley 11-92, que establece el código Tributario Dominicano, en la Norma General 02-05 (y sus modificaciones), Decreto 293-11, la Ley 253-12, la Resolución Núm.. 41-2014, de la Dirección General de Impuestos Internos (DGII), en lo referente, hemos efectuado las retenciones de lugar aplicadas al pago de:`;
 
@@ -339,17 +339,17 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 45, { align: "center" });
-  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 50, { align: "center" });
-  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 55, { align: "center" });
-  doc.text(`RNC: ${centerRNC}`, 105, 60, { align: "center" });
+  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 55, { align: "center" });
+  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 60, { align: "center" });
+  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 65, { align: "center" });
+  doc.text(`RNC: ${centerRNC}`, 105, 70, { align: "center" });
 
   doc.setFontSize(14);
-  doc.text("CERTIFICACIÓN DE RETENCIÓN DE ITBIS", 105, 75, { align: "center" });
+  doc.text("CERTIFICACIÓN DE RETENCIÓN DE ITBIS", 105, 82, { align: "center" });
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`DD 12-01 Núm..: ${check.check_number}-2026`, 20, 78);
+  doc.text(`DD 12-01 Núm..: ${check.check_number}-2026`, 20, 92);
 
   const text = `Quien suscribe, ${center?.director_name || 'Nombre del Director(a)'}, directora de la Junta de centro Educativo ${centerCode} ${centerName} del Distrito ${center?.district || '12-01 de Higüey'}, Republica Dominicana, CERTIFICA: Que de acuerdo a lo establecido en la Norma General 02-05 de la Dirección General de Impuestos Internos (DGII) sobre Proveedores Informales, hemos efectuado la retención del 100% del ITBIS facturado aplicado al pago de:`;
 
@@ -587,14 +587,6 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
 
   doc.text(`Visto por la Dirección Distrital Educativa ${center?.district || '12-01, Higüey'}: ________________________________`, 20, currentY + 50);
 
-  doc.save(`Requisicion_${requisition.id}.pdf`);
-};
-
-export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[] = [], center?: any, logoBase64?: string) => {
-  const doc = new jsPDF();
-  const centerName = center?.name || "Gestify RD";
-  const centerCode = center?.codigo_no || "11001619";
-
   try {
     doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 2, LOGO_W, LOGO_H);
   } catch (e) {
@@ -602,16 +594,16 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[] = 
   }
 
   doc.setFontSize(9);
-  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 46, { align: "center" });
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 51, { align: "center" });
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 55, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 60, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("ORDEN DE COMPRA O SERVICIOS", 105, 62, { align: "center" });
+  doc.text("ORDEN DE COMPRA O SERVICIOS", 105, 72, { align: "center" });
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text("Salvaleón de Higüey, RD.", 20, 68);
+  doc.text("Salvaleón de Higüey, RD.", 20, 82);
 
   doc.setFont("helvetica", "bold");
   doc.text(`FECHA: ${formatDate(po.created_at)}`, 20, 78);
