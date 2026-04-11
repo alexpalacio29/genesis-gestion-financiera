@@ -50,9 +50,39 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
   ];
 
   const plans = [
-    { name: "Básico", desc: "Gestión para centros sin junta propia", price: "Consulta", features: ["1 Centro", "Generador de Cotizaciones", "Ordenes de Compra y Requisiciones", "Acceso a Suplidores"] },
-    { name: "Profesional", desc: "Para centros completos con junta", price: "Consulta", features: ["1 Centro Full Access", "Comprobantes NCF", "Conciliación Bancaria", "Libro de Caja y Banco", "Inventario y Caja Chica"] },
-    { name: "Multicentro", desc: "Solución para Distritos Educativos", price: "Consulta", features: ["Centros Ilimitados", "Supervisión Global", "Panel SaaS de Gestión", "Capacitación y Soporte VIP"] }
+    { 
+      name: "Básico", 
+      desc: "Ideal para centros públicos sin juntas descentralizadas", 
+      price: "Consulta", 
+      features: [
+        "1 Centro educativo", "Generador de Cotizaciones", "Ordenes de Compra y Requisiciones", 
+        "Acceso a Suplidores", "Presupuesto", "Libro de Caja", "Soporte Limitado"
+      ] 
+    },
+    { 
+      name: "Profesional", 
+      desc: "Ideal para centros públicos con juntas descentralizadas", 
+      price: "Consulta", 
+      features: [
+        "1 Centro educativo Full Access", "Certificaciones de Retención", 
+        "Solicitudes, Cheques y más", "Gestión de Suplidores", "Presupuesto", 
+        "Libro de Caja y Banco", "Inventario", "Estado Bancario", 
+        "Gestión de Caja Chica", "Conciliación Bancaria", "Comprobantes NCF", 
+        "Generador de reportes", "Soporte Tecnico Avanzado (< 24h)"
+      ] 
+    },
+    { 
+      name: "Multicentro", 
+      desc: "Ideal para Distritos Educativos", 
+      price: "Consulta", 
+      features: [
+        "Multicentros Ilimitados Full Access", "Certificaciones de Retención", 
+        "Solicitudes, Cheques y más", "Gestión de Suplidores", "Presupuesto", 
+        "Libro de Caja y Banco", "Inventario", "Estado Bancario", 
+        "Gestión de Caja Chica", "Conciliación Bancaria", "Comprobantes NCF", 
+        "Generador de reportes", "Soporte Tecnico Especializado (< 12h)"
+      ] 
+    }
   ];
 
   const slides = ["/hero-image.png", "/dashboard-preview.png", "/ai-processor.png", "/minerd-compliance.png"];
