@@ -97,6 +97,35 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
 
   const slides = ["/hero-image.png", "/dashboard-preview.png", "/ai-processor.png", "/minerd-compliance.png"];
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    center_name: '',
+    district: '',
+    email: '',
+    message: ''
+  });
+
+  const handleSubmitContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      setSubmitted(true);
+      setFormData({ name: '', phone: '', center_name: '', district: '', email: '', message: '' });
+    } catch (error) {
+      console.error('Error submitting inquiry:', error);
+      alert('Hubo un error al enviar tu solicitud. Por favor inténtalo de nuevo.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   React.useEffect(() => {
     const timer = setInterval(() => {
@@ -452,40 +481,105 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
            </div>
 
            <div className="lg:w-1/2 bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 relative">
-              <form className="space-y-6">
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre Completo</label>
-                       <input type="text" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" placeholder="Ej: Juan Pérez" />
+               {submitted ? (
+                 <motion.div 
+                   initial={{ opacity: 0, scale: 0.9 }}
+                   animate={{ opacity: 1, scale: 1 }}
+                   className="h-full flex flex-col items-center justify-center text-center space-y-6 py-12"
+                 >
+                    <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
+                       <CheckCircle className="w-10 h-10" />
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900">¡Solicitud Enviada!</h3>
+                    <p className="text-slate-500 font-medium max-w-xs">Gracias por tu interés. Nuestro equipo revisará tu mensaje y te contactará a la brevedad posible.</p>
+                    <button 
+                      onClick={() => setSubmitted(false)}
+                      className="text-emerald-600 font-bold hover:underline"
+                    >
+                      Enviar otro mensaje
+                    </button>
+                 </motion.div>
+               ) : (
+                 <form onSubmit={handleSubmitContact} className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre Completo</label>
+                          <input 
+                            required
+                            type="text" 
+                            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" 
+                            placeholder="Ej: Juan Pérez"
+                            value={formData.name}
+                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                          />
+                       </div>
+                       <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Teléfono</label>
+                          <input 
+                            required
+                            type="text" 
+                            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" 
+                            placeholder="809-000-0000"
+                            value={formData.phone}
+                            onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                          />
+                       </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Centro Educativo</label>
+                          <input 
+                            required
+                            type="text" 
+                            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" 
+                            placeholder="Ej: Escuela México"
+                            value={formData.center_name}
+                            onChange={e => setFormData({ ...formData, center_name: e.target.value })}
+                          />
+                       </div>
+                       <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Distrito</label>
+                          <input 
+                            required
+                            type="text" 
+                            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" 
+                            placeholder="Ej: 15-02"
+                            value={formData.district}
+                            onChange={e => setFormData({ ...formData, district: e.target.value })}
+                          />
+                       </div>
                     </div>
                     <div className="space-y-1.5">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Teléfono</label>
-                       <input type="text" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" placeholder="809-000-0000" />
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Correo Institucional</label>
+                       <input 
+                         required
+                         type="email" 
+                         className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" 
+                         placeholder="ejemplo@minerd.gob.do"
+                         value={formData.email}
+                         onChange={e => setFormData({ ...formData, email: e.target.value })}
+                       />
                     </div>
-                 </div>
-                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Centro Educativo</label>
-                       <input type="text" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" placeholder="Ej: Escuela México" />
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">¿En qué podemos ayudarte?</label>
+                       <textarea 
+                         required
+                         className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl h-32 focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm resize-none" 
+                         placeholder="Escribe tu mensaje aquí..."
+                         value={formData.message}
+                         onChange={e => setFormData({ ...formData, message: e.target.value })}
+                       ></textarea>
                     </div>
-                    <div className="space-y-1.5">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Distrito</label>
-                       <input type="text" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" placeholder="Ej: 15-02" />
-                    </div>
-                 </div>
-                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Correo Institucional</label>
-                    <input type="email" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" placeholder="ejemplo@minerd.gob.do" />
-                 </div>
-                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">¿En qué podemos ayudarte?</label>
-                    <textarea className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl h-32 focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm resize-none" placeholder="Escribe tu mensaje aquí..."></textarea>
-                 </div>
-                 <button className="w-full bg-emerald-600 text-white p-5 rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 flex items-center justify-center gap-2 text-lg">
-                    Enviar solicitud <ArrowRight className="w-5 h-5" />
-                 </button>
-              </form>
-           </div>
+                    <button 
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full bg-emerald-600 text-white p-5 rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 flex items-center justify-center gap-2 text-lg disabled:opacity-50"
+                    >
+                      {isSubmitting ? 'Enviando...' : 'Enviar solicitud'} <ArrowRight className="w-5 h-5" />
+                    </button>
+                 </form>
+               )}
+            </div>
         </div>
       </section>
 

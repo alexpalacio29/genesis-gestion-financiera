@@ -42,6 +42,8 @@ import {
   Shield,
   Lock,
   RefreshCw,
+  Mail,
+  MessageCircle,
 } from 'lucide-react';
 import {
   cn,
@@ -5199,6 +5201,7 @@ const SaaSAdminPanel = ({ apiFetch, onSelectCenter }: { apiFetch: any, onSelectC
   const [centers, setCenters] = useState<any[]>([]);
   const [codes, setCodes] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [inquiries, setInquiries] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('centers');
 
@@ -5223,6 +5226,8 @@ const SaaSAdminPanel = ({ apiFetch, onSelectCenter }: { apiFetch: any, onSelectC
           if (codesRes && codesRes.ok) setCodes(await codesRes.json());
           const usersRes = await apiFetch('/api/saas/users');
           if (usersRes && usersRes.ok) setUsers(await usersRes.json());
+          const inqRes = await apiFetch('/api/saas/inquiries');
+          if (inqRes && inqRes.ok) setInquiries(await inqRes.json());
         } else {
           setError("Respuesta del servidor no es una lista válida");
         }
@@ -5324,6 +5329,29 @@ const SaaSAdminPanel = ({ apiFetch, onSelectCenter }: { apiFetch: any, onSelectC
     }
   };
 
+  const handleUpdateInquiryStatus = async (id: number, status: string) => {
+    try {
+      await apiFetch(`/api/saas/inquiries/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      fetchData();
+    } catch (e) {
+      alert('Error al actualizar estado');
+    }
+  };
+
+  const handleDeleteInquiry = async (id: number) => {
+    if (!confirm('¿Deseas eliminar este mensaje?')) return;
+    try {
+      await apiFetch(`/api/saas/inquiries/${id}`, { method: 'DELETE' });
+      fetchData();
+    } catch (e) {
+      alert('Error al eliminar mensaje');
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-6xl mx-auto">
       <div className="flex justify-between items-center">
@@ -5375,6 +5403,12 @@ const SaaSAdminPanel = ({ apiFetch, onSelectCenter }: { apiFetch: any, onSelectC
           className={cn("pb-2 font-bold text-sm transition-colors relative", activeTab === 'users' ? "text-slate-900 border-b-2 border-slate-900" : "text-slate-400 hover:text-slate-600")}
         >
           Usuarios ({users.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('inquiries')}
+          className={cn("pb-2 font-bold text-sm transition-colors relative", activeTab === 'inquiries' ? "text-slate-900 border-b-2 border-slate-900" : "text-slate-400 hover:text-slate-600")}
+        >
+          Buzón de Mensajes ({inquiries.filter(i => i.status === 'pending').length} nuevos)
         </button>
       </div>
 
@@ -5447,6 +5481,84 @@ const SaaSAdminPanel = ({ apiFetch, onSelectCenter }: { apiFetch: any, onSelectC
                   </td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        </div>
+      ) : activeTab === 'inquiries' ? (
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-1/4">Remitente / Centro</th>
+                <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-1/2">Inquietud / Mensaje</th>
+                <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Estado</th>
+                <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Contactar</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {inquiries.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-12 text-center text-slate-400 italic font-medium">
+                    No hay inquietudes registradas.
+                  </td>
+                </tr>
+              ) : (
+                inquiries.map((inq: any) => (
+                  <tr key={inq.id} className={cn("hover:bg-slate-50 transition-colors", inq.status === 'pending' && "bg-emerald-50/30")}>
+                    <td className="p-4">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-slate-900">{inq.name}</span>
+                        <span className="text-xs text-slate-500">{inq.center_name} - {inq.district}</span>
+                        <span className="text-[10px] text-slate-400 mt-1">{new Date(inq.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <p className="text-sm text-slate-600 line-clamp-3 hover:line-clamp-none cursor-pointer transition-all">{inq.message}</p>
+                    </td>
+                    <td className="p-4">
+                      <select 
+                        value={inq.status}
+                        onChange={(e) => handleUpdateInquiryStatus(inq.id, e.target.value)}
+                        className={cn(
+                          "text-[10px] font-black uppercase px-2 py-1 rounded-full border-none focus:ring-1",
+                          inq.status === 'pending' ? "bg-amber-100 text-amber-700" : 
+                          inq.status === 'read' ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-500"
+                        )}
+                      >
+                        <option value="pending">Pendiente</option>
+                        <option value="read">Leído / Atendido</option>
+                        <option value="archived">Archivado</option>
+                      </select>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex justify-end gap-2">
+                        <a 
+                          href={`https://wa.me/${inq.phone.replace(/\D/g, '')}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="p-2 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-200 transition-colors"
+                          title="WhatsApp"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </a>
+                        <a 
+                          href={`mailto:${inq.email}`} 
+                          className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                          title="Email"
+                        >
+                          <Mail className="w-4 h-4" />
+                        </a>
+                        <button 
+                          onClick={() => handleDeleteInquiry(inq.id)}
+                          className="p-2 bg-rose-100 text-rose-600 rounded-lg hover:bg-rose-200 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -126,6 +126,7 @@ async function startServer() {
       CREATE TABLE IF NOT EXISTS bank_reconciliations (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), period_date TEXT NOT NULL, bank_balance DECIMAL DEFAULT 0, book_balance DECIMAL DEFAULT 0, deposits_in_transit DECIMAL DEFAULT 0, checks_in_transit DECIMAL DEFAULT 0, deposits_month DECIMAL DEFAULT 0, notes_credit DECIMAL DEFAULT 0, notes_debit DECIMAL DEFAULT 0, bank_commissions DECIMAL DEFAULT 0, prepared_by TEXT, reviewed_by TEXT, authorized_by TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS ncf_sequences (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), type_name TEXT DEFAULT 'Comprobante de Compras', prefix TEXT DEFAULT 'B11', start_number BIGINT NOT NULL, end_number BIGINT NOT NULL, current_number BIGINT NOT NULL, expiration_date TEXT, status TEXT DEFAULT 'active', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS purchase_vouchers (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), supplier_name TEXT NOT NULL, supplier_rnc_cedula TEXT, date TEXT NOT NULL, concept TEXT, amount DECIMAL DEFAULT 0, payment_method TEXT, ncf TEXT NOT NULL, sequence_id INTEGER REFERENCES ncf_sequences(id), amount_gross DECIMAL DEFAULT 0, retention_isr DECIMAL DEFAULT 0, retention_itbis DECIMAL DEFAULT 0, itbis_amount DECIMAL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, UNIQUE(center_id, ncf));
+      CREATE TABLE IF NOT EXISTS support_inquiries (id SERIAL PRIMARY KEY, name TEXT NOT NULL, phone TEXT, center_name TEXT, district TEXT, email TEXT NOT NULL, message TEXT NOT NULL, status TEXT DEFAULT 'pending', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
     `);
   } catch (err: any) {
     console.error("Schema init error (expected if already exists):", err.message);
@@ -247,6 +248,48 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   };
+
+  // SUPPORT INQUIRIES API
+  app.post("/api/inquiries", async (req, res) => {
+    const { name, phone, center_name, district, email, message } = req.body;
+    try {
+      await pool.query(
+        "INSERT INTO support_inquiries (name, phone, center_name, district, email, message) VALUES ($1, $2, $3, $4, $5, $6)",
+        [name, phone, center_name, district, email, message]
+      );
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get("/api/saas/inquiries", isSuperAdminCheck, async (req: any, res: any) => {
+    try {
+      const result = await pool.query("SELECT * FROM support_inquiries ORDER BY created_at DESC");
+      res.json(result.rows);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.patch("/api/saas/inquiries/:id", isSuperAdminCheck, async (req: any, res: any) => {
+    const { status } = req.body;
+    try {
+      await pool.query("UPDATE support_inquiries SET status = $1 WHERE id = $2", [status, req.params.id]);
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.delete("/api/saas/inquiries/:id", isSuperAdminCheck, async (req: any, res: any) => {
+    try {
+      await pool.query("DELETE FROM support_inquiries WHERE id = $1", [req.params.id]);
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
 
   app.get("/api/saas/centers", isSuperAdminCheck, async (req: any, res: any) => {
     try {
