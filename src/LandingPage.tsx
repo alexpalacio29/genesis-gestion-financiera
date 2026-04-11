@@ -99,6 +99,7 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -136,6 +137,95 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 scroll-smooth">
+      {/* Profile Modal */}
+      <AnimatePresence>
+        {showProfile && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowProfile(false)}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden"
+            >
+              <button 
+                onClick={() => setShowProfile(false)}
+                className="absolute top-6 right-6 w-10 h-10 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors z-20"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex flex-col md:flex-row">
+                <div className="md:w-1/3 bg-emerald-50 p-10 flex flex-col items-center text-center space-y-4">
+                  <div className="w-32 h-32 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white">
+                    <img 
+                      src="/alex-profile.png" 
+                      alt="Alexander Palacio" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=Alexander+Palacio&background=059669&color=fff&size=200`;
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900 leading-tight">Alexander Palacio Espiritusanto</h3>
+                    <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mt-2">Fundador</p>
+                  </div>
+                </div>
+                
+                <div className="md:w-2/3 p-10 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                       <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">Trayectoria Profecional</h4>
+                       <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                         Alexander Palacio Espiritusanto es un educador dominicano y especialista en gestión educativa, enfocado en el desarrollo de soluciones modernas que fortalecen la administración escolar y elevan la eficiencia institucional.
+                       </p>
+                    </div>
+
+                    <div className="space-y-2">
+                       <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">Formación Académica</h4>
+                       <div className="space-y-3">
+                         <div className="flex gap-3">
+                           <div className="w-2 h-2 mt-1.5 bg-emerald-500 rounded-full" />
+                           <p className="text-sm text-slate-700 font-bold">Máster en Educación (Gestión Educativa) <span className="text-slate-400 text-xs font-medium ml-1">2023</span></p>
+                         </div>
+                         <div className="flex gap-3">
+                           <div className="w-2 h-2 mt-1.5 bg-emerald-500 rounded-full" />
+                           <p className="text-sm text-slate-700 font-bold">Licenciado en Teología <span className="text-slate-400 text-xs font-medium ml-1">2012</span></p>
+                         </div>
+                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                       <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">Experiencia y Visión</h4>
+                       <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                         Con más de catorce años de experiencia en el área educativa, ha trabajado como docente y formador en distintos centros educativos. Actualmente desempeña el cargo de subdirector administrativo en el Centro Educativo Cristiano Génesis (Distrito 12-01).
+                       </p>
+                       <p className="text-sm text-slate-600 leading-relaxed font-medium mt-3 italic">
+                         "Mi propósito es mejorar la calidad educativa mediante herramientas prácticas y tecnológicas que aporten eficiencia y transparencia al sector."
+                       </p>
+                    </div>
+
+                    <div className="pt-4 flex items-center justify-between border-t border-slate-100">
+                       <div className="flex gap-3">
+                          <Sparkles className="w-5 h-5 text-amber-500" />
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Alexander Palacio E.</span>
+                       </div>
+                       <img src="/logo-gestify.png" alt="GestiFy" className="h-6 opacity-30 grayscale" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100 h-20">
         <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
@@ -629,7 +719,7 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
            <div>
               <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-6">Compañía</h4>
               <ul className="space-y-4">
-                 <li><a href="#inicio" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Sobre Nosotros</a></li><li><a href="#contacto" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Contacto</a></li><li><a href="#tutorial" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Tutorial</a></li><li><a href="#contacto" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Ayuda</a></li>
+                 <li><button onClick={() => setShowProfile(true)} className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Sobre Nosotros</button></li><li><a href="#contacto" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Contacto</a></li><li><a href="#tutorial" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Tutorial</a></li><li><a href="#contacto" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Ayuda</a></li>
               </ul>
            </div>
            <div className="space-y-6">
