@@ -50,9 +50,9 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
   ];
 
   const plans = [
-    { name: "Básico", desc: "Para centros pequeños", price: "Consulta", features: ["1 Centro", "Gestión de Cotizaciones", "Reportes PDF"] },
-    { name: "Profesional", desc: "Para centros completos", price: "Consulta", features: ["Centro Full Access", "NCF Automatizado", "Conciliación Bancaria", "Soporte Prioritario"] },
-    { name: "Distrito Educativo", desc: "Solución Multi-centro", price: "Consulta", features: ["Multi-centro", "Panel de Supervisión", "Gestión de Distrito", "Capacitación Incluida"] }
+    { name: "Básico", desc: "Gestión para centros sin junta propia", price: "Consulta", features: ["1 Centro", "Generador de Cotizaciones", "Ordenes de Compra y Requisiciones", "Acceso a Suplidores"] },
+    { name: "Profesional", desc: "Para centros completos con junta", price: "Consulta", features: ["1 Centro Full Access", "Comprobantes NCF", "Conciliación Bancaria", "Libro de Caja y Banco", "Inventario y Caja Chica"] },
+    { name: "Multicentro", desc: "Solución para Distritos Educativos", price: "Consulta", features: ["Centros Ilimitados", "Supervisión Global", "Panel SaaS de Gestión", "Capacitación y Soporte VIP"] }
   ];
 
   const slides = ["/hero-image.png", "/dashboard-preview.png", "/ai-processor.png", "/minerd-compliance.png"];
@@ -170,7 +170,7 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
               initial={{ opacity: 0, scale: 0.8 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              className="relative z-10 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 bg-white aspect-[4/3] lg:aspect-auto"
+              className="relative z-10 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 bg-white aspect-video"
             >
               <motion.img 
                 key={currentSlide}

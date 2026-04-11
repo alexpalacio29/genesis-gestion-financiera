@@ -84,19 +84,26 @@ import {
 
 // --- Components ---
 
-const SidebarItem = ({ icon: Icon, label, active, onClick }: { icon: any, label: string, active?: boolean, onClick: () => void, key?: string | number }) => (
+const SidebarItem = ({ icon: Icon, label, active, onClick, locked }: { icon: any, label: string, active?: boolean, onClick: () => void, key?: string | number, locked?: boolean }) => (
   <button
-    onClick={onClick}
+    onClick={locked ? undefined : onClick}
     className={cn(
-      "w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all duration-200 rounded-lg",
+      "w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all duration-200 rounded-lg relative group",
       active
         ? "bg-slate-900 text-white shadow-lg shadow-slate-200"
-        : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        : (locked ? "opacity-50 cursor-not-allowed" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900")
     )}
   >
     <Icon className={cn("w-5 h-5", active ? "text-white" : "text-slate-400")} />
     <span>{label}</span>
-    {active && <ChevronRight className="w-4 h-4 ml-auto" />}
+    {locked && <Lock className="w-3.5 h-3.5 ml-auto text-slate-400" />}
+    {active && !locked && <ChevronRight className="w-4 h-4 ml-auto" />}
+    
+    {locked && (
+      <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
+        Función disponible en Plan Profesional
+      </div>
+    )}
   </button>
 );
 
@@ -279,8 +286,8 @@ const CenterSelector = ({ user, centers, onSelect, onAdd, onLogout }: { user: an
             </button>
           ))}
 
-          {/* Creation Restriction for Individual Plan */}
-          {!(user?.plan === 'individual' && centers.length >= 1) ? (
+          {/* Creation Restriction for Basic and Professional Plans */}
+          {!(user?.plan === 'basic' || user?.plan === 'individual') || centers.length === 0 ? (
             <button
               onClick={onAdd}
               className="bg-slate-50 p-6 rounded-3xl border-2 border-dashed border-slate-200 hover:border-slate-400 hover:bg-white transition-all text-center group"
@@ -1122,6 +1129,8 @@ const Dashboard = ({ onNavigate, apiFetch, currentCenter }: { onNavigate: (tab: 
 
   const COLORS = ['#0f172a', '#334155', '#475569', '#64748b'];
 
+  const isBasic = currentCenter?.plan === 'basic';
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-end">
@@ -1130,42 +1139,57 @@ const Dashboard = ({ onNavigate, apiFetch, currentCenter }: { onNavigate: (tab: 
           <p className="text-slate-500">Vista general del estado de la Junta Descentralizada</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={async () => {
-              if (confirm('¿Deseas descargar una copia de seguridad completa con todos los datos de este centro educativo?')) {
-                try {
-                  const res = await apiFetch('/api/export-center-data');
-                  const data = await res.json();
-                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `Respaldo_${currentCenter?.name || 'Centro'}_${new Date().toISOString().split('T')[0]}.json`;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                } catch (e) {
-                  alert('Error al exportar datos');
-                }
-              }
-            }}
-            className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20"
-          >
-            <Download className="w-4 h-4" />
-            Copia de Seguridad (JSON)
-          </button>
-          <button
-            onClick={() => onNavigate('reports')}
-            className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            Exportar Reporte
-          </button>
+          {isBasic ? (
+            <button
+              onClick={() => onNavigate('auto-processor')}
+              className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100"
+            >
+              <Plus className="w-4 h-4" />
+              Nueva Cotización con IA
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={async () => {
+                  if (confirm('¿Deseas descargar una copia de seguridad completa con todos los datos de este centro educativo?')) {
+                    try {
+                      const res = await apiFetch('/api/export-center-data');
+                      const data = await res.json();
+                      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `Respaldo_${currentCenter?.name || 'Centro'}_${new Date().toISOString().split('T')[0]}.json`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    } catch (e) {
+                      alert('Error al exportar datos');
+                    }
+                  }
+                }}
+                className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20"
+              >
+                <Download className="w-4 h-4" />
+                Copia de Seguridad (JSON)
+              </button>
+              <button
+                onClick={() => onNavigate('reports')}
+                className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Exportar Reporte
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {execution && execution.total_budgeted > 0 && (
+      {!isBasic && execution && execution.total_budgeted > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+           {/* ... existing execution charts ... */}
+        </div>
+      )}
           <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-lg font-bold text-slate-900">Ejecución Presupuestaria {currentYear}</h3>
@@ -1232,8 +1256,8 @@ const Dashboard = ({ onNavigate, apiFetch, currentCenter }: { onNavigate: (tab: 
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard label="Balance Actual (Banco)" value={formatCurrency(stats?.balance || 0)} icon={Landmark} color="bg-slate-900" />
-        <StatCard label="Balance Caja Chica" value={formatCurrency(stats?.pettyCashBalance || 0)} icon={Wallet} color="bg-indigo-600" />
+        {!isBasic && <StatCard label="Balance Actual (Banco)" value={formatCurrency(stats?.balance || 0)} icon={Landmark} color="bg-slate-900" />}
+        {!isBasic && <StatCard label="Balance Caja Chica" value={formatCurrency(stats?.pettyCashBalance || 0)} icon={Wallet} color="bg-indigo-600" />}
         <StatCard label="Ingresos Totales" value={formatCurrency(stats?.income || 0)} icon={TrendingUp} color="bg-emerald-600" />
         <StatCard label="Egresos Totales" value={formatCurrency(stats?.expense || 0)} icon={TrendingDown} color="bg-rose-600" />
       </div>
@@ -5391,7 +5415,8 @@ const SaaSAdminPanel = ({ apiFetch, onSelectCenter }: { apiFetch: any, onSelectC
                       onChange={(e) => handleUpdateCenterPlan(c.id, e.target.value)}
                       className="text-[10px] font-black uppercase tracking-tight bg-slate-100 rounded-lg px-2 py-1 outline-none border-none cursor-pointer"
                     >
-                      <option value="individual">Individual</option>
+                      <option value="basic">Básico</option>
+                      <option value="individual">Profesional</option>
                       <option value="multi">Multicentro</option>
                     </select>
                   </td>
@@ -5493,7 +5518,8 @@ const SaaSAdminPanel = ({ apiFetch, onSelectCenter }: { apiFetch: any, onSelectC
                       onChange={(e) => handleUpdateUserPlan(u.id, e.target.value)}
                       className="text-[10px] font-black uppercase tracking-tight bg-slate-100 rounded-lg px-2 py-1 outline-none border-none cursor-pointer"
                     >
-                      <option value="individual">Individual</option>
+                      <option value="basic">Básico</option>
+                      <option value="individual">Profesional</option>
                       <option value="multi">Multicentro</option>
                     </select>
                   </td>
@@ -5676,24 +5702,25 @@ export default function App() {
 
   const isGlobalSaaS = currentCenter?.id === 0;
 
+  const isBasicPlan = currentCenter?.plan === 'basic';
   const menuItems = [
-    ...(isSuperAdmin ? [{ id: 'saas-admin', label: 'Admin SaaS', icon: Lock }] : []),
+    ...(isSuperAdmin ? [{ id: 'saas-admin', label: 'Admin SaaS', icon: Shield, locked: false }] : []),
     ...(!isGlobalSaaS ? [
-      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-      { id: 'auto-processor', label: 'Procesador Automático', icon: FileSpreadsheet },
-      { id: 'budget', label: 'Presupuesto', icon: PieChart },
-      { id: 'cash-book', label: 'Libro de Caja', icon: Landmark },
-      { id: 'suppliers', label: 'Suplidores', icon: Users },
-      { id: 'inventory', label: 'Inventario', icon: Package },
-      { id: 'quotes', label: 'Cotizaciones', icon: FileText },
-      { id: 'checks', label: 'Cheques', icon: CreditCard },
-      { id: 'bank', label: 'Estado Bancario', icon: Landmark },
-      { id: 'petty-cash', label: 'Caja Chica', icon: Wallet },
-      { id: 'bank-reconciliation', label: 'Conciliación Bancaria', icon: Landmark },
-      { id: 'fiscal-documents', label: 'Comprobantes NCF', icon: FileImage },
-      { id: 'reports', label: 'Reportes', icon: PieChart },
+      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, locked: false },
+      { id: 'auto-processor', label: 'Procesador IA', icon: FileSpreadsheet, locked: false },
+      { id: 'quotes', label: 'Cotizaciones', icon: FileText, locked: false },
+      { id: 'suppliers', label: 'Suplidores', icon: Users, locked: false },
+      { id: 'budget', label: 'Presupuesto', icon: PieChart, locked: isBasicPlan },
+      { id: 'cash-book', label: 'Libro de Caja', icon: Landmark, locked: isBasicPlan },
+      { id: 'inventory', label: 'Inventario', icon: Package, locked: isBasicPlan },
+      { id: 'checks', label: 'Cheques', icon: CreditCard, locked: isBasicPlan },
+      { id: 'bank', label: 'Estado Bancario', icon: Landmark, locked: isBasicPlan },
+      { id: 'petty-cash', label: 'Caja Chica', icon: Wallet, locked: isBasicPlan },
+      { id: 'bank-reconciliation', label: 'Conciliación Bancaria', icon: Landmark, locked: isBasicPlan },
+      { id: 'fiscal-documents', label: 'Comprobantes NCF', icon: FileImage, locked: isBasicPlan },
+      { id: 'reports', label: 'Reportes', icon: PieChart, locked: isBasicPlan },
     ] : []),
-    { id: 'configuration', label: 'Configuración', icon: Settings },
+    { id: 'configuration', label: 'Configuración', icon: Settings, locked: false },
   ];
 
 
@@ -5777,6 +5804,7 @@ export default function App() {
                 icon={item.icon}
                 label={item.label}
                 active={activeTab === item.id}
+                locked={item.locked}
                 onClick={() => {
                   setActiveTab(item.id);
                   if (window.innerWidth < 1024) setIsSidebarOpen(false);
