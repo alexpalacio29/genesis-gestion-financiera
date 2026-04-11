@@ -300,7 +300,7 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
                    'Cotización', 'Requisición', 'Orden de compra', 
                    'Solicitud de cheque', 'Solicitud de mano de obra', 
                    'Registro de caja chica', 'Registro bancario', 
-                   'Inventario', 'Reportes en Excel y PDF'
+                   'Inventario', 'Comprobantes NCF', 'Reportes en Excel y PDF'
                  ].map((item, i) => (
                    <div key={i} className="flex items-center gap-3 bg-emerald-800/40 p-3 rounded-xl border border-emerald-700/50">
                       <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center shrink-0">
