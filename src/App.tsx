@@ -5708,7 +5708,7 @@ export default function App() {
       { id: 'quotes', label: 'Cotizaciones', icon: FileText, locked: false },
       { id: 'suppliers', label: 'Suplidores', icon: Users, locked: false },
       { id: 'budget', label: 'Presupuesto', icon: PieChart, locked: isBasicPlan },
-      { id: 'cash-book', label: 'Libro de Caja', icon: Landmark, locked: isBasicPlan },
+      { id: 'cash-book', label: 'Libro de Caja', icon: Landmark, locked: false },
       { id: 'inventory', label: 'Inventario', icon: Package, locked: isBasicPlan },
       { id: 'checks', label: 'Cheques', icon: CreditCard, locked: isBasicPlan },
       { id: 'bank', label: 'Estado Bancario', icon: Landmark, locked: isBasicPlan },
@@ -5823,13 +5823,15 @@ export default function App() {
                 Panel Global SaaS
               </button>
             )}
-            <button
-              onClick={() => setCurrentCenter(null)}
-              className="w-full flex items-center gap-3 p-3 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-all"
-            >
-              <Building2 className="w-4 h-4" />
-              Cambiar Centro
-            </button>
+            {currentCenter?.plan === 'multi' && (
+              <button
+                onClick={() => setCurrentCenter(null)}
+                className="w-full flex items-center gap-3 p-3 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-all"
+              >
+                <Building2 className="w-4 h-4" />
+                Cambiar Centro
+              </button>
+            )}
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 p-3 text-xs font-bold text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
