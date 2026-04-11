@@ -118,19 +118,19 @@ export const generateQuotePDF = (quote: any, supplier: any, items: any[] = [], c
   const centerCode = center?.codigo_no || "06907";
 
   try {
-    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 5, LOGO_W, LOGO_H);
+    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 2, LOGO_W, LOGO_H);
   } catch (e) {
     console.error("Error adding logo:", e);
   }
 
   doc.setFontSize(9);
-  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 42, { align: "center" });
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 47, { align: "center" });
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 45, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 50, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("MANTENIMIENTO ESCOLAR", 105, 58, { align: "center" });
-  doc.text(quote.type === 'labor' ? "Cotización de Mano de Obra Especializada" : "Cotización de Materiales", 105, 65, { align: "center" });
+  doc.text("MANTENIMIENTO ESCOLAR", 105, 60, { align: "center" });
+  doc.text(quote.type === 'labor' ? "Cotización de Mano de Obra Especializada" : "Cotización de Materiales", 105, 67, { align: "center" });
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -246,21 +246,21 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
   const centerCode = center?.codigo_no || "06907";
 
   try {
-    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 10, LOGO_W, LOGO_H);
+    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 2, LOGO_W, LOGO_H);
   } catch (e) {
     console.error("Error adding logo:", e);
   }
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 42, { align: "center" });
-  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 47, { align: "center" });
-  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 52, { align: "center" });
-  doc.text(`RNC: ${centerRNC}`, 105, 57, { align: "center" });
+  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 45, { align: "center" });
+  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 50, { align: "center" });
+  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 55, { align: "center" });
+  doc.text(`RNC: ${centerRNC}`, 105, 60, { align: "center" });
 
   doc.setFontSize(14);
   const certTitle = (check.retention_itbis || 0) > 0 ? "CERTIFICACIÓN DE RETENCIÓN DE IMPUESTOS (ISR E ITBIS)" : "CERTIFICACIÓN DE RETENCIÓN DE IMPUESTOS (ISR)";
-  doc.text(certTitle, 105, 68, { align: "center" });
+  doc.text(certTitle, 105, 75, { align: "center" });
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -332,20 +332,20 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
   const centerCode = center?.codigo_no || "06907";
 
   try {
-    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 10, LOGO_W, LOGO_H);
+    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 2, LOGO_W, LOGO_H);
   } catch (e) {
     console.error("Error adding logo:", e);
   }
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 42, { align: "center" });
-  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 47, { align: "center" });
-  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 52, { align: "center" });
-  doc.text(`RNC: ${centerRNC}`, 105, 57, { align: "center" });
+  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 45, { align: "center" });
+  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 50, { align: "center" });
+  doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 55, { align: "center" });
+  doc.text(`RNC: ${centerRNC}`, 105, 60, { align: "center" });
 
   doc.setFontSize(14);
-  doc.text("CERTIFICACIÓN DE RETENCIÓN DE ITBIS", 105, 68, { align: "center" });
+  doc.text("CERTIFICACIÓN DE RETENCIÓN DE ITBIS", 105, 75, { align: "center" });
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -412,14 +412,14 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
   const centerCode = center?.codigo_no || "06907";
 
   try {
-    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 10, LOGO_W, LOGO_H);
+    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 2, LOGO_W, LOGO_H);
   } catch (e) {
     console.error("Error adding logo:", e);
   }
 
   doc.setFontSize(8);
-  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 42, { align: "center" });
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 47, { align: "center" });
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 45, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 50, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -522,17 +522,17 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
   const centerCode = center?.codigo_no || "11001619";
 
   try {
-    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 10, LOGO_W, LOGO_H);
+    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 2, LOGO_W, LOGO_H);
   } catch (e) {
     console.error("Error adding logo:", e);
   }
 
   doc.setFontSize(9);
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 42, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 45, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("REQUISICIÓN DE MATERIALES O SERVICIOS", 105, 52, { align: "center" });
+  doc.text("REQUISICIÓN DE MATERIALES O SERVICIOS", 105, 55, { align: "center" });
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -596,18 +596,18 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[] = 
   const centerCode = center?.codigo_no || "11001619";
 
   try {
-    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 10, LOGO_W, LOGO_H);
+    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 2, LOGO_W, LOGO_H);
   } catch (e) {
     console.error("Error adding logo:", e);
   }
 
   doc.setFontSize(9);
-  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 42, { align: "center" });
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 47, { align: "center" });
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 46, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 51, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("ORDEN DE COMPRA O SERVICIOS", 105, 58, { align: "center" });
+  doc.text("ORDEN DE COMPRA O SERVICIOS", 105, 62, { align: "center" });
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -706,15 +706,15 @@ export const generateCheckCalculationSheetPDF = (check: any, supplier: any, cent
   const centerName = center?.name || "GESTIFY RD";
 
   try {
-    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 10, LOGO_W, LOGO_H);
+    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 2, LOGO_W, LOGO_H);
   } catch (e) {
     console.error("Error adding logo:", e);
   }
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text(centerName.toUpperCase(), 105, 58, { align: "center" });
-  doc.text("PLANILLA DE CÁLCULOS PARA EMISIÓN DE CHEQUE", 105, 68, { align: "center" });
+  doc.text(centerName.toUpperCase(), 105, 65, { align: "center" });
+  doc.text("PLANILLA DE CÁLCULOS PARA EMISIÓN DE CHEQUE", 105, 75, { align: "center" });
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
