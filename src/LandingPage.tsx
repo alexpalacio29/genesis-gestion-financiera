@@ -53,7 +53,9 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
     { 
       name: "Básico", 
       desc: "Ideal para centros públicos sin juntas descentralizadas", 
-      price: "Consulta", 
+      price: "RD$ 699.99 /mes",
+      priceYearly: "RD$ 7,999.99 /año",
+      link: "#contacto",
       features: [
         "1 Centro educativo", "Generador de Cotizaciones", "Ordenes de Compra y Requisiciones", 
         "Acceso a Suplidores", "Presupuesto", "Libro de Caja", "Soporte Limitado"
@@ -62,7 +64,9 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
     { 
       name: "Profesional", 
       desc: "Ideal para centros públicos con juntas descentralizadas", 
-      price: "Consulta", 
+      price: "RD$ 1,199.99 /mes",
+      priceYearly: "RD$ 13,999.99 /año",
+      link: "#contacto",
       features: [
         "1 Centro educativo Full Access", "Certificaciones de Retención", 
         "Solicitudes, Cheques y más", "Gestión de Suplidores", "Presupuesto", 
@@ -74,7 +78,9 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
     { 
       name: "Multicentro", 
       desc: "Ideal para Distritos Educativos", 
-      price: "Consulta", 
+      price: "Pedir cotización",
+      priceYearly: "",
+      link: "#contacto",
       features: [
         "Multicentros Ilimitados Full Access", "Certificaciones de Retención", 
         "Solicitudes, Cheques y más", "Gestión de Suplidores", "Presupuesto", 
@@ -374,7 +380,16 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
                 {i === 1 && <span className="bg-emerald-600 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-full self-start mb-6 tracking-widest">Recomendado</span>}
                 <h4 className="text-2xl font-black text-slate-900 mb-2">{plan.name}</h4>
                 <p className="text-sm font-medium text-slate-400 mb-8">{plan.desc}</p>
-                <div className="text-4xl font-black text-slate-900 mb-8">{plan.price}</div>
+                <div className="space-y-1 mb-8">
+                  <div className={cn("font-black text-slate-900", plan.price === "Pedir cotización" ? "text-2xl" : "text-3xl")}>
+                    {plan.price}
+                  </div>
+                  {plan.priceYearly && (
+                    <div className="text-sm font-bold text-emerald-600 italic">
+                      o {plan.priceYearly}
+                    </div>
+                  )}
+                </div>
                 
                 <div className="space-y-4 mb-10 flex-1">
                    {plan.features.map((f, j) => (
@@ -385,12 +400,15 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
                    ))}
                 </div>
 
-                <button className={cn(
-                  "w-full py-4 rounded-2xl font-bold transition-all shadow-lg",
-                  i === 1 ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-100" : "bg-slate-900 text-white hover:bg-slate-800"
-                )}>
-                  Solicitar licencia
-                </button>
+                <a 
+                  href={plan.link}
+                  className={cn(
+                    "w-full py-4 rounded-2xl font-bold transition-all shadow-lg text-center",
+                    plan.name === "Profesional" ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-100" : "bg-slate-900 text-white hover:bg-slate-800"
+                  )}
+                >
+                  {plan.price === "Pedir cotización" ? "Contactar Ventas" : "Solicitar licencia"}
+                </a>
               </motion.div>
             ))}
           </div>
