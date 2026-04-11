@@ -307,7 +307,7 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
   const dateText = `Dada a solicitud de la parte interesada, para los fines correspondiente, en Higüey, Provincia La Altagracia, Republica Dominicana, el día ${new Date().getDate()} mes de ${new Date().toLocaleString('es-DO', { month: 'long' })} del año ${new Date().getFullYear()}.`;
   const dateLines = doc.splitTextToSize(dateText, 170);
   
-  let currentY = lastTableY;
+  currentY = lastTableY;
   const pageHeight = doc.internal.pageSize.height;
 
   if (currentY + (dateLines.length * 7) + 40 > pageHeight - 20) {
@@ -388,7 +388,7 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
   const dateText = `Dada a solicitud de la parte interesada, para los fines correspondiente, en Higüey, Provincia La Altagracia, Republica Dominicana, el día ${new Date().getDate()} mes de ${new Date().toLocaleString('es-DO', { month: 'long' })} del año ${new Date().getFullYear()}.`;
   const dateLines = doc.splitTextToSize(dateText, 170);
   
-  let currentY = lastTableY;
+  currentY = lastTableY;
   const pageHeight = doc.internal.pageSize.height;
 
   if (currentY + (dateLines.length * 7) + 40 > pageHeight - 20) {
@@ -587,6 +587,14 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
 
   doc.text(`Visto por la Dirección Distrital Educativa ${center?.district || '12-01, Higüey'}: ________________________________`, 20, currentY + 50);
 
+  doc.save(`Solicitud_Cheque_${check.check_number}.pdf`);
+};
+
+export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[], center?: any, logoBase64?: string) => {
+  const doc = new jsPDF();
+  const centerName = center?.name || "CENTRO EDUCATIVO";
+  const centerCode = center?.codigo_no || "06907";
+
   try {
     doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 2, LOGO_W, LOGO_H);
   } catch (e) {
@@ -613,7 +621,7 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
   const supplierLines = doc.splitTextToSize(supplier.name.toUpperCase(), 140);
   doc.text(supplierLines, 50, 85);
   
-  let currentY = 85 + (supplierLines.length * 6);
+  currentY = 85 + (supplierLines.length * 6);
 
   doc.setFont("helvetica", "bold");
   doc.text(`RNC :`, 20, currentY);
@@ -678,7 +686,7 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
   doc.setFont("helvetica", "normal");
   doc.text(`VALOR EN LETRAS: ${amountInWords}`, 20, lastTableFinalY + 10, { maxWidth: 170 });
 
-  let finalY = lastTableFinalY + 35;
+  finalY = lastTableFinalY + 35;
   if (finalY + 20 > doc.internal.pageSize.height - 10) {
     doc.addPage();
     finalY = 35;

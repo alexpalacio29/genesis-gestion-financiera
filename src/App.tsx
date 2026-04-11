@@ -5525,6 +5525,7 @@ export default function App() {
   const [quoteToEdit, setQuoteToEdit] = useState<number | null>(null);
   const [isSuspended, setIsSuspended] = useState(false);
   const [minerdCodes, setMinerdCodes] = useState<any[]>([]);
+  const [isAuthMode, setIsAuthMode] = useState(false);
 
   // Global fetch wrapper with center context
   const apiFetch = useCallback(async (url: string, options: any = {}) => {
@@ -5639,7 +5640,19 @@ export default function App() {
   // If super admin and no center, we can still show the global panel
   const showSaaSPanel = isSuperAdmin && (!currentCenter || currentCenter.rnc === 'SaaS-Global');
 
-  if (!user) return <Auth onLogin={handleLogin} />;
+  // Always show Landing Page if not in Auth Mode (Request: "siempre vea el landing page")
+  if (!isAuthMode) {
+    return (
+      <LandingPage 
+        onLogin={() => setIsAuthMode(true)} 
+        isLoggedIn={!!user} 
+        onGoToDashboard={() => setIsAuthMode(true)}
+      />
+    );
+  }
+
+  // If in auth mode but not logged in, show Auth
+  if (!user && isAuthMode) return <Auth onLogin={handleLogin} />;
 
   if (!currentCenter && !showSaaSPanel) return (
     <>
@@ -5823,6 +5836,18 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4">
+             {/* Return to Landing Button */}
+            <button
+              onClick={() => {
+                setIsAuthMode(false);
+                if (currentCenter) setCurrentCenter(null);
+              }}
+              className="hidden md:flex items-center gap-2 text-slate-500 hover:text-slate-900 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+            >
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              Ver Landing Page
+            </button>
+
             {isSuperAdmin && (
               <button
                 onClick={() => setActiveTab('saas-admin')}
