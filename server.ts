@@ -125,7 +125,7 @@ async function startServer() {
       CREATE TABLE IF NOT EXISTS quote_evidences (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), quote_id INTEGER NOT NULL REFERENCES quotes(id), file_path TEXT NOT NULL, file_name TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS bank_reconciliations (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), period_date TEXT NOT NULL, bank_balance DECIMAL DEFAULT 0, book_balance DECIMAL DEFAULT 0, deposits_in_transit DECIMAL DEFAULT 0, checks_in_transit DECIMAL DEFAULT 0, deposits_month DECIMAL DEFAULT 0, notes_credit DECIMAL DEFAULT 0, notes_debit DECIMAL DEFAULT 0, bank_commissions DECIMAL DEFAULT 0, prepared_by TEXT, reviewed_by TEXT, authorized_by TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS ncf_sequences (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), type_name TEXT DEFAULT 'Comprobante de Compras', prefix TEXT DEFAULT 'B11', start_number BIGINT NOT NULL, end_number BIGINT NOT NULL, current_number BIGINT NOT NULL, expiration_date TEXT, status TEXT DEFAULT 'active', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS purchase_vouchers (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), supplier_name TEXT NOT NULL, supplier_rnc_cedula TEXT, date TEXT NOT NULL, concept TEXT, amount DECIMAL DEFAULT 0, payment_method TEXT, ncf TEXT UNIQUE NOT NULL, sequence_id INTEGER REFERENCES ncf_sequences(id), amount_gross DECIMAL DEFAULT 0, retention_isr DECIMAL DEFAULT 0, retention_itbis DECIMAL DEFAULT 0, itbis_amount DECIMAL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS purchase_vouchers (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), supplier_name TEXT NOT NULL, supplier_rnc_cedula TEXT, date TEXT NOT NULL, concept TEXT, amount DECIMAL DEFAULT 0, payment_method TEXT, ncf TEXT NOT NULL, sequence_id INTEGER REFERENCES ncf_sequences(id), amount_gross DECIMAL DEFAULT 0, retention_isr DECIMAL DEFAULT 0, retention_itbis DECIMAL DEFAULT 0, itbis_amount DECIMAL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, UNIQUE(center_id, ncf));
     `);
   } catch (err: any) {
     console.error("Schema init error (expected if already exists):", err.message);
@@ -146,7 +146,9 @@ async function startServer() {
     "ALTER TABLE purchase_vouchers ADD COLUMN amount_gross DECIMAL DEFAULT 0;",
     "ALTER TABLE purchase_vouchers ADD COLUMN retention_isr DECIMAL DEFAULT 0;",
     "ALTER TABLE purchase_vouchers ADD COLUMN retention_itbis DECIMAL DEFAULT 0;",
-    "ALTER TABLE purchase_vouchers ADD COLUMN itbis_amount DECIMAL DEFAULT 0;"
+    "ALTER TABLE purchase_vouchers ADD COLUMN itbis_amount DECIMAL DEFAULT 0;",
+    "ALTER TABLE purchase_vouchers DROP CONSTRAINT IF EXISTS purchase_vouchers_ncf_key;",
+    "ALTER TABLE purchase_vouchers ADD CONSTRAINT purchase_vouchers_ncf_center_unique UNIQUE (center_id, ncf);"
   ];
 
   for (const m of migrations) {
@@ -339,41 +341,52 @@ async function startServer() {
     if (centerIdHeader) {
       const centerId = parseInt(centerIdHeader as string);
       const userId = userIdHeader ? parseInt(userIdHeader as string) : null;
+      
       (req as any).centerId = centerId;
       (req as any).userId = userId;
 
+      // Special case for centerId 0 (initial state/template)
+      if (centerId === 0) return next();
+
       try {
-        // 1. Fetch center and user info
+        // 1. Requirement: center-specific requests MUST have a userId
+        if (!userId) {
+          return res.status(401).json({ error: "No autorizado. Se requiere identificación de usuario." });
+        }
+
+        // 2. Fetch center and user info
+        const userRes = await pool.query("SELECT email FROM users WHERE id = $1", [userId]);
+        const user = userRes.rows[0];
+        
+        if (!user) {
+          return res.status(401).json({ error: "Usuario no encontrado." });
+        }
+
+        const isSuperAdmin = user.email.toLowerCase() === 'alexpalacio29@gmail.com';
+
+        // 3. Authorization Check (Membership)
+        if (!isSuperAdmin) {
+          const membershipRes = await pool.query(
+            "SELECT 1 FROM user_centers WHERE user_id = $1 AND center_id = $2",
+            [userId, centerId]
+          );
+          if (membershipRes.rows.length === 0) {
+            return res.status(403).json({ error: "No tienes permiso para acceder a esta institución." });
+          }
+        }
+
+        // 4. Suspension check
         const centerRes = await pool.query("SELECT status FROM centers WHERE id = $1", [centerId]);
         const center = centerRes.rows[0];
-
-        // 2. Authorization Check (Skip for mock center 0 or specific admin routes handled later)
-        if (centerId !== 0 && userId) {
-          const userRes = await pool.query("SELECT email FROM users WHERE id = $1", [userId]);
-          const user = userRes.rows[0];
-          const isSuperAdmin = user?.email.toLowerCase() === 'alexpalacio29@gmail.com';
-
-          // If not super admin, check user_centers membership
-          if (!isSuperAdmin) {
-            const membershipRes = await pool.query(
-              "SELECT 1 FROM user_centers WHERE user_id = $1 AND center_id = $2",
-              [userId, centerId]
-            );
-            if (membershipRes.rows.length === 0) {
-              return res.status(403).json({ error: "No tienes permiso para acceder a esta institución." });
-            }
-          }
-
-          // 3. Suspension check (Allow super admin to see even if suspended)
-          if (center && center.status === 'suspended' && !isSuperAdmin) {
-            return res.status(403).json({ 
-              error: "Institución Suspendida. Contacte al administrador de la plataforma.",
-              suspended: true
-            });
-          }
+        if (center && center.status === 'suspended' && !isSuperAdmin) {
+          return res.status(403).json({ 
+            error: "Institución Suspendida. Contacte al administrador de la plataforma.",
+            suspended: true
+          });
         }
       } catch (e) {
         console.error("Auth middleware error:", e);
+        return res.status(500).json({ error: "Error de servidor en validación de acceso." });
       }
     }
     next();
