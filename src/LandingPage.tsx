@@ -38,14 +38,14 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
     { icon: <BarChart3 className="w-6 h-6" />, text: "Estado financiero en un solo vistazo, con información clara y organizada." },
     { icon: <FileText className="w-6 h-6" />, text: "Documentación para cotizaciones y compras con solo unos clics." },
     { icon: <BookOpen className="w-6 h-6" />, text: "Permite presupuestar y planificar a partir del POA." },
-    { icon: <History className="w-6 h-6" />, text: "Libro de caja y registro de movimientos bancarios automáticos." },
+    { icon: <History className="w-6 h-6" />, text: "Libro de caja y registro de movimientos bancarios." },
     { icon: <Users className="w-6 h-6" />, text: "Lista de suplidores con historial completo de compras." },
-    { icon: <Package className="w-6 h-6" />, text: "Inventario inteligente con códigos oficiales de compra." },
+    { icon: <Package className="w-6 h-6" />, text: "Inventario inteligente con códigos oficiales de compra del MINERD." },
     { icon: <Lock className="w-6 h-6" />, text: "Documentación almacenada de forma segura para consulta y edición." },
     { icon: <CreditCard className="w-6 h-6" />, text: "Creación y control de cheques y manejo de chequera." },
     { icon: <Wallet className="w-6 h-6" />, text: "Gestión de caja chica con historial y balance actualizado." },
     { icon: <Shield className="w-6 h-6" />, text: "Simplifica la conciliación bancaria mensual." },
-    { icon: <FileImage className="w-6 h-6" />, text: "Generación de comprobantes fiscales (NCF) automatizada." },
+    { icon: <FileImage className="w-6 h-6" />, text: "Generación de comprobantes (NCF) automatizada." },
     { icon: <Download className="w-6 h-6" />, text: "Reportes en Excel y PDF listos para entregar o archivar." }
   ];
 
@@ -55,7 +55,7 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
     { name: "Distrito Educativo", desc: "Solución Multi-centro", price: "Consulta", features: ["Multi-centro", "Panel de Supervisión", "Gestión de Distrito", "Capacitación Incluida"] }
   ];
 
-  const slides = ["/hero-image.png", "/dashboard-preview.png"];
+  const slides = ["/hero-image.png", "/dashboard-preview.png", "/ai-processor.png", "/minerd-compliance.png"];
   const [currentSlide, setCurrentSlide] = useState(0);
 
   React.useEffect(() => {
@@ -151,9 +151,9 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
               Desarrollada para responder de manera precisa a las necesidades reales de los gestores financieros, permitiendo automatizar los procesos exigidos por el MINERD de forma rápida y segura.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="flex items-center justify-center gap-2 bg-emerald-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 text-lg">
+              <a href="#contacto" className="flex items-center justify-center gap-2 bg-emerald-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 text-lg">
                 ✅ Solicitar Demo
-              </button>
+              </a>
               <a href="#funciones" className="flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-bold hover:bg-slate-50 transition-all text-lg shadow-sm">
                 🧾 Ver Funciones
               </a>
@@ -199,16 +199,6 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
               </div>
             </motion.div>
             
-            {/* MINERD Compliance badge below image */}
-            <div className="relative z-10 mt-6 flex items-center justify-center lg:justify-start gap-4">
-               <div className="w-16 h-12 flex items-center justify-center p-1 bg-white rounded-lg shadow-sm border border-slate-100">
-                  <img src="/minerd_logo.png" alt="Logo MINERD" className="max-w-full max-h-full object-contain" />
-               </div>
-               <p className="text-sm font-black uppercase tracking-widest text-slate-400">
-                  Conforme a los estándares del <span className="text-emerald-600">MINERD</span>
-               </p>
-            </div>
-
             {/* Decostyle elements */}
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-100 rounded-full blur-3xl opacity-50" />
             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-100 rounded-full blur-3xl opacity-50" />
@@ -278,10 +268,10 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
               </p>
               <div className="grid grid-cols-2 gap-4">
                  {[
-                   { t: 'Paso 1', d: 'Carga de Cotización' },
+                   { t: 'Paso 1', d: 'Carga de Cotización (Excel, Pdf, JPG o Manual)' },
                    { t: 'Paso 2', d: 'Procesamiento IA' },
-                   { t: 'Paso 3', d: 'Generación NCF' },
-                   { t: 'Paso 4', d: 'Libro de Caja' }
+                   { t: 'Paso 3', d: 'Descarga los archivos generados' },
+                   { t: 'Paso 4', d: 'Revisa todos los registros ya actualizados' }
                  ].map((s,i) => (
                    <div key={i} className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       <p className="text-[10px] font-black uppercase text-emerald-600 mb-1">{s.t}</p>
@@ -289,9 +279,7 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
                    </div>
                  ))}
               </div>
-              <button className="flex items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all shadow-lg">
-                ▶️ Ver tutorial completo en YouTube
-              </button>
+
            </div>
         </div>
       </section>
@@ -325,8 +313,8 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-               <img src="https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&q=80&w=800" className="rounded-3xl shadow-2xl translate-y-8" alt="Doc 1" />
-               <img src="https://images.unsplash.com/photo-1543286386-713bdd548da4?auto=format&fit=crop&q=80&w=800" className="rounded-3xl shadow-2xl -translate-y-8 border-4 border-white/20" alt="Doc 2" />
+               <img src="/report-view-1.png" className="rounded-3xl shadow-2xl translate-y-8 border-4 border-white/10" alt="Vista Monitor" />
+               <img src="/report-view-2.png" className="rounded-3xl shadow-2xl -translate-y-8 border-4 border-white/10" alt="Vista Laptop" />
             </div>
           </div>
         </div>
@@ -456,7 +444,7 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
                <h2 className="text-4xl md:text-5xl font-black">¿Listo para modernizar tu centro?</h2>
                <p className="text-lg text-slate-400 font-medium">Únete a los cientos de gestores que ya confían en GestiFy RD.</p>
                <div className="pt-6 flex flex-col sm:flex-row gap-4 justify-center">
-                  <button className="bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black hover:bg-emerald-700 transition-all text-xl shadow-2xl shadow-emerald-900/40">Solicitar Demo Ahora</button>
+                  <a href="#contacto" className="bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black hover:bg-emerald-700 transition-all text-xl shadow-2xl shadow-emerald-900/40">Solicitar Demo Ahora</a>
                   <button onClick={onLogin} className="bg-white text-slate-900 px-10 py-5 rounded-2xl font-black hover:bg-slate-100 transition-all text-xl">Acceder a mi Cuenta</button>
                </div>
             </div>
