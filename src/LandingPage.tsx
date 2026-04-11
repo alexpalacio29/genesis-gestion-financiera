@@ -95,7 +95,7 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
     }
   ];
 
-  const slides = ["/hero-image.png", "/dashboard-preview.png", "/ai-processor.png", "/minerd_logo.png"];
+  const slides = ["/hero-image.png", "/dashboard-preview.png", "/ai-processor.png", "/minerd-official.png"];
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
