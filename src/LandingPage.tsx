@@ -165,11 +165,11 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
                 <div className="md:w-1/3 bg-emerald-50 p-10 flex flex-col items-center text-center space-y-4">
                   <div className="w-32 h-32 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white">
                     <img 
-                      src="/alex-profile.png" 
+                      src="/alex-palacio.jpg" 
                       alt="Alexander Palacio" 
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=Alexander+Palacio&background=059669&color=fff&size=200`;
+                        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=Alexander+Palacio+Espiritusanto&background=059669&color=fff&size=200`;
                       }}
                     />
                   </div>
