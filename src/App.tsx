@@ -5707,7 +5707,7 @@ export default function App() {
       { id: 'auto-processor', label: 'Procesador IA', icon: FileSpreadsheet, locked: false },
       { id: 'quotes', label: 'Cotizaciones', icon: FileText, locked: false },
       { id: 'suppliers', label: 'Suplidores', icon: Users, locked: false },
-      { id: 'budget', label: 'Presupuesto', icon: PieChart, locked: isBasicPlan },
+      { id: 'budget', label: 'Presupuesto', icon: PieChart, locked: false },
       { id: 'cash-book', label: 'Libro de Caja', icon: Landmark, locked: false },
       { id: 'inventory', label: 'Inventario', icon: Package, locked: isBasicPlan },
       { id: 'checks', label: 'Cheques', icon: CreditCard, locked: isBasicPlan },
