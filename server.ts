@@ -991,50 +991,6 @@ async function startServer() {
   });
 
 
-  app.post("/api/landing/chat", async (req, res) => {
-    const aiKey = process.env.GEMINI_API_KEY;
-    if (!aiKey) return res.status(500).json({ error: "Gemini API Key not configured" });
-    const { messages } = req.body;
-
-    try {
-      const ai = new GoogleGenAI({ apiKey: aiKey });
-
-      const systemPrompt = `Eres "Soporte en línea", el asistente inteligente de GestiFy RD.
-Tu personalidad es experta y profesional pero muy cercana y amable.
-Tu objetivo es ayudar a visitantes con dudas de ventas y a directores con ayuda técnica.
-
-Información Clave de GestiFy RD:
-- Misión: Optimizar la gestión financiera de centros públicos y distritos educativos en República Dominicana.
-- Planes de Precios:
-  * Básico: RD$ 699.99/mes o RD$ 7,999.99/año. Incluyecentro educativo, Generador de Cotizaciones, Ordenes de Compra y Requisiciones, Presupuesto y Libro de Caja.
-  * Profesional: RD$ 1,199.99/mes o RD$ 13,999.99/año. Incluye todo lo del básico más Procesamiento IA (extrae datos de fotos/PDF), Certificaciones de Retención, Cheques, Inventario MINERD, Conciliación Bancaria y NCF.
-  * Multicentro: Precio bajo cotización. Todo lo anterior para distritos con múltiples centros ilimitados.
-
-Capacidades Técnicas:
-- Procesador IA: El usuario sube un Excel, PDF o foto y la IA extrae los datos automáticamente.
-- Reportes: Genera Requisiciones, Órdenes de Compra, Certificaciones de Retención y más formatos oficiales del MINERD.
-- Inventario: Usa los códigos oficiales del MINERD.
-
-Instrucciones:
-- Responde siempre en español.
-- Sé conciso pero útil.
-- Si el usuario tiene un problema que no puedes resolver, sugiérele contactar por WhatsApp (829-410-8036) o email (alexpalacio29@gmail.com).
-- Si preguntan por precios, dales los montos exactos mencionados arriba.
-
-Historial de conversación:
-${(messages || []).map((m: any) => `${m.role === 'user' ? 'Usuario' : 'Soporte'}: ${m.content}`).join('\n')}
-Soporte:`;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash",
-        contents: systemPrompt
-      });
-      res.json({ text: response.text });
-    } catch (error) {
-      console.error("Chat Error:", error);
-      res.status(500).json({ error: "Error al procesar el mensaje" });
-    }
-  });
 
   app.post("/api/quotes/parse-image", upload.single("image"), async (req, res) => {
     const aiKey = process.env.GEMINI_API_KEY;
