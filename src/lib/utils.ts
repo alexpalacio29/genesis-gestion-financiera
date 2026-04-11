@@ -165,18 +165,29 @@ export const generateQuotePDF = (quote: any, supplier: any, items: any[] = [], c
     footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold' }
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 20;
+  const finalY = (doc as any).lastAutoTable.finalY + 15;
   const supplierText = `Nombre del Oferente: ${supplier.name}`;
   const supplierLines = doc.splitTextToSize(supplierText, 170);
-  doc.text(supplierLines, 20, finalY);
   
-  const nextY = finalY + (supplierLines.length * 7);
-  doc.text(`Cédula No. ${supplier.rnc}`, 20, nextY);
-  doc.text(`Teléfono: ${supplier.phone || 'N/A'}`, 120, nextY);
-  doc.text(`N. Cotización: ${quote.quote_number || quote.id}`, 20, nextY + 7);
-  doc.text(`Fecha: ${formatDate(quote.created_at)}`, 120, nextY + 7);
+  // Check page break for supplier info and signature
+  const pageHeight = doc.internal.pageSize.height;
+  let currentY = finalY;
+  
+  if (currentY + (supplierLines.length * 7) + 30 > pageHeight - 20) {
+    doc.addPage();
+    currentY = 20;
+  }
 
-  doc.text("Firma del oferente__________________________", 60, nextY + 23);
+  doc.text(supplierLines, 20, currentY);
+  currentY += (supplierLines.length * 7);
+  
+  doc.text(`Cédula No. ${supplier.rnc}`, 20, currentY);
+  doc.text(`Teléfono: ${supplier.phone || 'N/A'}`, 120, currentY);
+  currentY += 7;
+  doc.text(`N. Cotización: ${quote.quote_number || quote.id}`, 20, currentY);
+  doc.text(`Fecha: ${formatDate(quote.created_at)}`, 120, currentY);
+
+  doc.text("Firma del oferente__________________________", 60, currentY + 20);
 
   doc.save(`Cotizacion_${quote.quote_number || quote.id}.pdf`);
 };
@@ -289,12 +300,24 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
     }
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 15;
-  doc.text(`Dada a solicitud de la parte interesada, para los fines correspondiente, en Higüey, Provincia La Altagracia, Republica Dominicana, el día ${new Date().getDate()} mes de ${new Date().toLocaleString('es-DO', { month: 'long' })} del año ${new Date().getFullYear()}.`, 20, finalY, { maxWidth: 170 });
+  const lastTableY = (doc as any).lastAutoTable.finalY + 15;
+  const dateText = `Dada a solicitud de la parte interesada, para los fines correspondiente, en Higüey, Provincia La Altagracia, Republica Dominicana, el día ${new Date().getDate()} mes de ${new Date().toLocaleString('es-DO', { month: 'long' })} del año ${new Date().getFullYear()}.`;
+  const dateLines = doc.splitTextToSize(dateText, 170);
+  
+  let currentY = lastTableY;
+  const pageHeight = doc.internal.pageSize.height;
+
+  if (currentY + (dateLines.length * 7) + 40 > pageHeight - 20) {
+    doc.addPage();
+    currentY = 20;
+  }
+
+  doc.text(dateLines, 20, currentY);
+  currentY += (dateLines.length * 7) + 30;
 
   doc.setFont("helvetica", "bold");
-  doc.text(center?.director_name || "Nombre del Director(a)", 20, finalY + 40);
-  doc.text(`Directora de la Junta de centro Educativo ${centerCode} ${centerName}`, 20, finalY + 47);
+  doc.text(center?.director_name || "Nombre del Director(a)", 20, currentY);
+  doc.text(`Directora de la Junta de centro Educativo ${centerCode} ${centerName}`, 20, currentY + 7);
 
   doc.save(`Certificacion_Retencion_Conjunta_${check.check_number}.pdf`);
 };
@@ -357,12 +380,24 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
     }
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 15;
-  doc.text(`Dada a solicitud de la parte interesada, para los fines correspondiente, en Higüey, Provincia La Altagracia, Republica Dominicana, el día ${new Date().getDate()} mes de ${new Date().toLocaleString('es-DO', { month: 'long' })} del año ${new Date().getFullYear()}.`, 20, finalY, { maxWidth: 170 });
+  const lastTableY = (doc as any).lastAutoTable.finalY + 15;
+  const dateText = `Dada a solicitud de la parte interesada, para los fines correspondiente, en Higüey, Provincia La Altagracia, Republica Dominicana, el día ${new Date().getDate()} mes de ${new Date().toLocaleString('es-DO', { month: 'long' })} del año ${new Date().getFullYear()}.`;
+  const dateLines = doc.splitTextToSize(dateText, 170);
+  
+  let currentY = lastTableY;
+  const pageHeight = doc.internal.pageSize.height;
+
+  if (currentY + (dateLines.length * 7) + 40 > pageHeight - 20) {
+    doc.addPage();
+    currentY = 20;
+  }
+
+  doc.text(dateLines, 20, currentY);
+  currentY += (dateLines.length * 7) + 35;
 
   doc.setFont("helvetica", "bold");
-  doc.text(center?.director_name || "Nombre del Director(a)", 20, finalY + 40);
-  doc.text(`Directora de la Junta de centro Educativo ${centerCode} ${centerName}`, 20, finalY + 47);
+  doc.text(center?.director_name || "Nombre del Director(a)", 20, currentY);
+  doc.text(`Directora de la Junta de centro Educativo ${centerCode} ${centerName}`, 20, currentY + 7);
 
   doc.save(`Certificacion_Retencion_ITBIS_${check.check_number}.pdf`);
 };
@@ -380,33 +415,33 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
 
   doc.setFontSize(10);
   doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 45, { align: "center" });
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 50, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 51, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text(centerName, 105, 60, { align: "center" });
+  doc.text(centerName, 105, 62, { align: "center" });
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   const addressText = center?.address || "Eliseo Pérez Sánchez # 27, Sector Juan P. Duarte. Higüey, República Dominicana";
   const addressLines = doc.splitTextToSize(addressText, 160);
-  doc.text(addressLines, 105, 48, { align: "center" });
+  doc.text(addressLines, 105, 68, { align: "center" });
   
-  const emailY = 48 + (addressLines.length * 5);
-  doc.text(`${center?.email || "Colegiocristianogenesis@hotmail.com"}`, 105, emailY, { align: "center" });
+  const emailY = 68 + (addressLines.length * 5);
+  doc.text(`${center?.email || "colegiocristianogenesis@hotmail.com"}`, 105, emailY, { align: "center" });
   doc.text(`Teléfono ${center?.phone || "809-554-0329"}`, 105, emailY + 5, { align: "center" });
 
   doc.setFontSize(11);
-  doc.text(`Fecha: ${formatDate(new Date()).toUpperCase()}`, 140, 70);
+  doc.text(`Fecha: ${formatDate(new Date()).toUpperCase()}`, 140, emailY + 15);
 
   doc.setFont("helvetica", "bold");
-  doc.text(`A : Junta de Centro Educativo ${centerCode} ${centerName}`, 20, 85);
-  doc.text(center?.director_name || "Director(a) de la Junta de Centro", 30, 92);
+  doc.text(`A : Junta de Centro Educativo ${centerCode} ${centerName}`, 20, emailY + 25);
+  doc.text(center?.director_name || "Director(a) de la Junta de Centro", 30, emailY + 32);
 
-  doc.text(`Atención : ${center?.director_name || 'Presidente(a) y/o Tesorero(a)'}`, 20, 105);
+  doc.text(`Atención : ${center?.director_name || 'Presidente(a) y/o Tesorero(a)'}`, 20, emailY + 42);
   
   // Dynamic Y positioning starts here
-  let currentY = 115;
+  let currentY = emailY + 52;
   const asuntoText = `Asunto : Solicitud de libramiento de cheque por concepto de ${check.description || 'adquisición de equipos tecnológico / materiales / servicios'}`;
   const asuntoLines = doc.splitTextToSize(asuntoText, 170);
   doc.text(asuntoLines, 20, currentY);
@@ -465,6 +500,12 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
   doc.text("Atentamente,", 20, currentY);
   currentY += 12;
 
+  // Page break check for signatures
+  if (currentY + 25 > doc.internal.pageSize.height - 20) {
+    doc.addPage();
+    currentY = 20;
+  }
+
   doc.text("Miembro del Equipo de Gestión________________", 20, currentY + 15);
   doc.text("Miembro del Equipo de Gestión________________", 110, currentY + 15);
 
@@ -522,17 +563,25 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
     headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 30;
-  doc.text("____________________", 40, finalY);
-  doc.text(center?.director_name || "Presidente (a) de la Junta de Centro", 40, finalY + 5, { align: "center" });
+  const finalY = (doc as any).lastAutoTable.finalY + 25;
+  const pageHeight = doc.internal.pageSize.height;
+  let currentY = finalY;
 
-  doc.text("____________________", 140, finalY);
-  doc.text(center?.secretary_name || "Secretario (a) de la Junta de Centro", 140, finalY + 5, { align: "center" });
+  if (currentY + 60 > pageHeight - 10) {
+    doc.addPage();
+    currentY = 30;
+  }
 
-  doc.text("____________________", 90, finalY + 25);
-  doc.text(center?.treasurer_name || "Tesorero (a) de la Junta de Centro", 90, finalY + 30, { align: "center" });
+  doc.text("____________________", 40, currentY);
+  doc.text(center?.director_name || "Presidente (a) de la Junta de Centro", 40, currentY + 5, { align: "center" });
 
-  doc.text(`Visto por la Dirección Distrital Educativa ${center?.district || '12-01, Higüey'}: ________________________________`, 20, finalY + 50);
+  doc.text("____________________", 140, currentY);
+  doc.text(center?.secretary_name || "Secretario (a) de la Junta de Centro", 140, currentY + 5, { align: "center" });
+
+  doc.text("____________________", 90, currentY + 25);
+  doc.text(center?.treasurer_name || "Tesorero (a) de la Junta de Centro", 90, currentY + 30, { align: "center" });
+
+  doc.text(`Visto por la Dirección Distrital Educativa ${center?.district || '12-01, Higüey'}: ________________________________`, 20, currentY + 50);
 
   doc.save(`Requisicion_${requisition.id}.pdf`);
 };
@@ -627,12 +676,18 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[] = 
     footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold' }
   });
 
+  const lastTableFinalY = (doc as any).lastAutoTable.finalY;
   const amountInWords = numberToWordsSpanish(po.total_amount);
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(`VALOR EN LETRAS: ${amountInWords}`, 20, (doc as any).lastAutoTable.finalY + 10, { maxWidth: 170 });
+  doc.text(`VALOR EN LETRAS: ${amountInWords}`, 20, lastTableFinalY + 10, { maxWidth: 170 });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 35;
+  let finalY = lastTableFinalY + 35;
+  if (finalY + 20 > doc.internal.pageSize.height - 10) {
+    doc.addPage();
+    finalY = 35;
+  }
+
   doc.text("____________________", 40, finalY);
   doc.text(center?.director_name || "Director (a) Centro Educativo", 40, finalY + 5, { align: "center" });
 
@@ -677,12 +732,19 @@ export const generateCheckCalculationSheetPDF = (check: any, supplier: any, cent
     headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] }
   });
 
+  const lastTableFinalY = (doc as any).lastAutoTable.finalY;
   const amountInWords = numberToWordsSpanish(check.amount_net);
   doc.setFontSize(9);
-  doc.text(`VALOR EN LETRAS: ${amountInWords}`, 20, (doc as any).lastAutoTable.finalY + 10);
+  doc.text(`VALOR EN LETRAS: ${amountInWords}`, 20, lastTableFinalY + 10);
 
-  doc.text("Preparado por: ____________________", 20, 150);
-  doc.text("Aprobado por: ____________________", 120, 150);
+  let finalY = lastTableFinalY + 40;
+  if (finalY + 20 > doc.internal.pageSize.height - 10) {
+    doc.addPage();
+    finalY = 30;
+  }
+
+  doc.text("Preparado por: ____________________", 20, finalY);
+  doc.text("Aprobado por: ____________________", 120, finalY);
 
   doc.save(`Planilla_Calculos_${check.check_number}.pdf`);
 };
@@ -779,7 +841,14 @@ export const generateLaborReceiptPDF = (check: any, supplier: any, center?: any,
     columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } }
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 20;
+  const lastTableFinalY = (doc as any).lastAutoTable.finalY;
+  let finalY = lastTableFinalY + 20;
+  
+  if (finalY + 60 > doc.internal.pageSize.height - 10) {
+    doc.addPage();
+    finalY = 30;
+  }
+
   doc.text(supplier.name.toUpperCase(), 140, finalY, { align: "center" });
 
   doc.text("____________________", 40, finalY + 15);
@@ -1437,6 +1506,11 @@ export const generatePurchaseVoucherPDF = (voucher: any, center?: any) => {
 
   // Signatures
   let signY = 220;
+  if (tableY + 60 > doc.internal.pageSize.height - 10) {
+    doc.addPage();
+    signY = 40;
+  }
+
   doc.line(20, signY, 80, signY);
   doc.text("ENTREGADO POR", 50, signY + 5, { align: "center" });
   doc.setFontSize(8);
