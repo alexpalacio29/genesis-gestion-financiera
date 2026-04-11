@@ -165,6 +165,16 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
               <img src="/hero-image.png" alt="App Preview" className="w-full h-auto" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent" />
             </div>
+            
+            {/* MINERD Compliance badge below image */}
+            <div className="relative z-10 mt-6 flex items-center justify-center lg:justify-start gap-4">
+               <div className="w-16 h-12 flex items-center justify-center p-1 bg-white rounded-lg shadow-sm border border-slate-100">
+                  <img src="/minerd_logo.png" alt="Logo MINERD" className="max-w-full max-h-full object-contain" />
+               </div>
+               <p className="text-sm font-black uppercase tracking-widest text-slate-400">
+                  Conforme a los estándares del <span className="text-emerald-600">MINERD</span>
+               </p>
+            </div>
             {/* Decostyle elements */}
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-100 rounded-full blur-3xl opacity-50" />
             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-100 rounded-full blur-3xl opacity-50" />
