@@ -1019,7 +1019,7 @@ Capacidades Técnicas:
 Instrucciones:
 - Responde siempre en español.
 - Sé conciso pero útil.
-- Si el usuario tiene un problema que no puedes resolver, sugiérele contactar por WhatsApp o email (info@gestifyrd.com).
+- Si el usuario tiene un problema que no puedes resolver, sugiérele contactar por WhatsApp (829-410-8036) o email (alexpalacio29@gmail.com).
 - Si preguntan por precios, dales los montos exactos mencionados arriba.
 
 Historial de conversación:

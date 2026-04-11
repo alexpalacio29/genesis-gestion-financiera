@@ -458,25 +458,33 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
               </div>
 
               <div className="space-y-4">
-                 <button className="flex items-center gap-4 bg-emerald-50 text-emerald-700 w-full p-6 rounded-3xl border border-emerald-100 hover:bg-emerald-100 transition-all font-bold group">
+                 <a 
+                   href="https://wa.me/18294108036"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   className="flex items-center gap-4 bg-emerald-50 text-emerald-700 w-full p-6 rounded-3xl border border-emerald-100 hover:bg-emerald-100 transition-all font-bold group"
+                 >
                     <div className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                        <MessageCircle className="w-6 h-6" />
                     </div>
                     <div className="text-left">
                        <p className="text-xs font-black uppercase tracking-widest opacity-60">WhatsApp Directo</p>
-                       <p className="text-lg">Contactar por WhatsApp</p>
+                       <p className="text-lg">829-410-8036</p>
                     </div>
-                 </button>
+                 </a>
 
-                 <button className="flex items-center gap-4 bg-blue-50 text-blue-700 w-full p-6 rounded-3xl border border-blue-100 hover:bg-blue-100 transition-all font-bold group">
+                 <a 
+                   href="mailto:alexpalacio29@gmail.com"
+                   className="flex items-center gap-4 bg-blue-50 text-blue-700 w-full p-6 rounded-3xl border border-blue-100 hover:bg-blue-100 transition-all font-bold group"
+                 >
                     <div className="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                        <Mail className="w-6 h-6" />
                     </div>
                     <div className="text-left">
                        <p className="text-xs font-black uppercase tracking-widest opacity-60">Correo Electrónico</p>
-                       <p className="text-lg">info@gestifyrd.com</p>
+                       <p className="text-lg">alexpalacio29@gmail.com</p>
                     </div>
-                 </button>
+                 </a>
               </div>
            </div>
 
