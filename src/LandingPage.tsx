@@ -147,9 +147,11 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
-            {['Inicio', 'Funciones', 'Reportes', 'Tutorial', 'Planes', 'Contacto'].map(item => (
-              <a key={item} href={`#${item.toLowerCase()}`} className="text-sm font-bold text-slate-500 hover:text-emerald-600 transition-colors">{item}</a>
-            ))}
+            <a href="#inicio" className="text-sm font-bold text-slate-500 hover:text-emerald-600 transition-colors uppercase tracking-wider">Plataforma</a>
+            <a href="#funciones" className="text-sm font-bold text-slate-500 hover:text-emerald-600 transition-colors uppercase tracking-wider">Funciones</a>
+            <a href="#reportes" className="text-sm font-bold text-slate-500 hover:text-emerald-600 transition-colors uppercase tracking-wider">Reportes</a>
+            <a href="#funciones" className="text-sm font-bold text-slate-500 hover:text-emerald-600 transition-colors uppercase tracking-wider">Seguridad</a>
+            <a href="#planes" className="text-sm font-bold text-slate-500 hover:text-emerald-600 transition-colors uppercase tracking-wider">Planes</a>
           </nav>
 
           <div className="flex items-center gap-4">
@@ -623,13 +625,13 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
            <div>
               <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-6">Plataforma</h4>
               <ul className="space-y-4">
-                 {['Funciones', 'Reportes', 'Seguridad', 'Planes'].map(l => <li key={l}><a href="#" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">{l}</a></li>)}
+                 <li><a href="#funciones" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Funciones</a></li><li><a href="#reportes" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Reportes</a></li><li><a href="#funciones" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Seguridad</a></li><li><a href="#planes" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Planes</a></li>
               </ul>
            </div>
            <div>
               <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-6">Compañía</h4>
               <ul className="space-y-4">
-                 {['Sobre Nosotros', 'Contacto', 'Ayuda', 'Términos'].map(l => <li key={l}><a href="#" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">{l}</a></li>)}
+                 <li><a href="#inicio" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Sobre Nosotros</a></li><li><a href="#contacto" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Contacto</a></li><li><a href="#tutorial" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Tutorial</a></li><li><a href="#contacto" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors">Ayuda</a></li>
               </ul>
            </div>
            <div className="space-y-6">
