@@ -158,8 +158,8 @@ const Auth = ({ onLogin }: { onLogin: (user: any, centers: any[]) => void }) => 
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-100 p-8 space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden shadow-sm border border-slate-100">
-            <img src="/favicon.png" alt="Gestify RD Logo" className="w-full h-full object-cover" />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
+            <img src="/logo-gestify.png" alt="Gestify RD Logo" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">
             {isRegister ? 'Crear Cuenta' : 'Bienvenido de Nuevo'}
@@ -5761,8 +5761,8 @@ export default function App() {
       >
         <div className="flex flex-col h-full">
           <div className="p-6 flex items-center gap-3 border-b border-slate-50">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 shadow-sm">
-              <img src="/favicon.png" alt="Logo" className="w-full h-full object-cover" />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden">
+              <img src="/logo-gestify.png" alt="Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <h1 className="font-serif font-bold text-slate-900 leading-tight">Gestify RD</h1>

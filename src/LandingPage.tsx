@@ -61,8 +61,8 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100 h-20">
         <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-200">
-               <img src="/favicon.png" alt="Logo" className="w-7 h-7 object-contain brightness-0 invert" />
+             <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden">
+               <img src="/logo-gestify.png" alt="Logo" className="w-full h-full object-contain" />
              </div>
              <span className="text-2xl font-black tracking-tight text-slate-900">GestiFy <span className="text-emerald-600">RD</span></span>
           </div>
@@ -431,8 +431,8 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
            <div className="space-y-6">
              <div className="flex items-center gap-3">
-               <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center shadow-md">
-                 <img src="/favicon.png" alt="Logo" className="w-5 h-5 brightness-0 invert" />
+               <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
+                 <img src="/logo-gestify.png" alt="Logo" className="w-full h-full object-contain" />
                </div>
                <span className="text-xl font-black text-slate-900">GestiFy RD</span>
              </div>
