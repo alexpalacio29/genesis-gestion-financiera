@@ -678,32 +678,32 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
                     "Educador y especialista en Gestión Educativa con más de 14 años de experiencia. Dedicado a la transformación digital y eficiencia administrativa del sector educativo dominicano."
                  </p>
 
-                 <div className="space-y-4 pt-4">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
                     <a 
                       href="https://wa.me/18294108036"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-4 bg-emerald-50 text-emerald-700 w-full p-6 rounded-3xl border border-emerald-100 hover:bg-emerald-100 transition-all font-bold group"
+                      className="flex items-center gap-3 bg-emerald-50 text-emerald-700 p-3 rounded-2xl border border-emerald-100 hover:bg-emerald-100 transition-all font-bold group"
                     >
-                       <div className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-emerald-200">
-                          <MessageCircle className="w-6 h-6" />
+                       <div className="w-8 h-8 bg-emerald-500 text-white rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-emerald-200 shrink-0">
+                          <MessageCircle className="w-4 h-4" />
                        </div>
-                       <div className="text-left">
-                          <p className="text-xs font-black uppercase tracking-widest opacity-60">WhatsApp Directo</p>
-                          <p className="text-lg">829-410-8036</p>
+                       <div className="text-left overflow-hidden">
+                          <p className="text-[8px] font-black uppercase tracking-widest opacity-60 truncate">WhatsApp</p>
+                          <p className="text-xs truncate">829-410-8036</p>
                        </div>
                     </a>
 
                     <a 
                       href="mailto:alexpalacio29@gmail.com"
-                      className="flex items-center gap-4 bg-blue-50 text-blue-700 w-full p-6 rounded-3xl border border-blue-100 hover:bg-blue-100 transition-all font-bold group"
+                      className="flex items-center gap-3 bg-blue-50 text-blue-700 p-3 rounded-2xl border border-blue-100 hover:bg-blue-100 transition-all font-bold group"
                     >
-                       <div className="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-blue-200">
-                          <Mail className="w-6 h-6" />
+                       <div className="w-8 h-8 bg-blue-500 text-white rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-blue-200 shrink-0">
+                          <Mail className="w-4 h-4" />
                        </div>
-                       <div className="text-left">
-                          <p className="text-xs font-black uppercase tracking-widest opacity-60">Correo Electrónico</p>
-                          <p className="text-lg">alexpalacio29@gmail.com</p>
+                       <div className="text-left overflow-hidden">
+                          <p className="text-[8px] font-black uppercase tracking-widest opacity-60 truncate">Email</p>
+                          <p className="text-xs truncate">alexpalacio29@gmail.com</p>
                        </div>
                     </a>
                  </div>
