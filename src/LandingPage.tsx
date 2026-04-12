@@ -668,18 +668,30 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
                          }}
                        />
                     </div>
-                    <div className="text-center sm:text-left space-y-2">
-                       <h3 className="text-2xl font-black text-slate-900 leading-tight">Alexander Palacio Espiritusanto</h3>
-                       <p className="text-xs font-black text-emerald-600 uppercase tracking-[0.2em]">Fundador de GestiFy RD</p>
-                    </div>
+                 <div className="text-center sm:text-left space-y-2">
+                    <h3 className="text-2xl font-black text-slate-900 leading-tight">Alexander Palacio Espiritusanto</h3>
+                    <p className="text-xs font-black text-emerald-600 uppercase tracking-[0.2em]">Fundador de GestiFy RD</p>
                  </div>
+              </div>
 
-                 <div className="space-y-4">
-                    <p className="text-slate-500 font-medium leading-relaxed italic border-l-4 border-emerald-500 pl-6">
-                       "Educador y gestor dominicano con más de 14 años de trayectoria, enfocado en modernizar la administración escolar. Actualmente subdirector administrativo en el Centro Educativo Cristiano Génesis, dedicado a la transformación digital y eficiencia institucional del sector educativo. **Lic. en Teología | Máster en Gestión Educativa**."
-                    </p>
+              <div className="space-y-6">
+                 <p className="text-slate-500 font-medium leading-relaxed italic border-l-4 border-emerald-500 pl-6">
+                    "Educador y gestor dominicano con más de 14 años de trayectoria, enfocado en modernizar la administración escolar. Actualmente subdirector administrativo en el Centro Educativo Cristiano Génesis, dedicado a la transformación digital y eficiencia institucional del sector educativo."
+                 </p>
+                 
+                 <div className="flex flex-wrap gap-x-6 gap-y-3 pl-6">
+                    {[
+                      'Lic. en Teología', 
+                      'Máster en Gestión Educativa', 
+                      'Especialista en Gestión de Proyectos'
+                    ].map((titulo, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                         <CheckCircle className="w-4 h-4 text-emerald-500" />
+                         <span className="text-xs font-bold text-slate-700">{titulo}</span>
+                      </div>
+                    ))}
                  </div>
-
+              </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
                     <a 
                       href="https://wa.me/18294108036"
