@@ -68,8 +68,8 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
     { 
       name: "Profesional", 
       desc: "Ideal para centros públicos con juntas descentralizadas", 
-      price: "RD$ 1,199.99 /mes",
-      priceYearly: "RD$ 13,999.99 /año",
+      price: "RD$ 999.99 /mes",
+      priceYearly: "RD$ 10,999.99 /año",
       link: "#contacto",
       features: [
         "1 Centro educativo Full Access", "Certificaciones de Retención", 
