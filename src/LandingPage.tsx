@@ -411,15 +411,14 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
            <div className="order-2 lg:order-1 relative">
               <div className="aspect-video bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white group relative">
-                 <div className="absolute inset-0 flex items-center justify-center bg-slate-900/40 group-hover:bg-slate-900/20 transition-all cursor-pointer">
-                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-2xl transform group-hover:scale-110 transition-transform">
-                       <Play className="fill-emerald-600 text-emerald-600 w-8 h-8 ml-1" />
-                    </div>
-                 </div>
-                 {/* Placeholder for iframe */}
-                 <div className="w-full h-full flex items-center justify-center bg-slate-800 text-slate-500 font-mono text-sm uppercase tracking-widest text-center px-8">
-                    Video Tutorial Placeholder<br/>(Espacio reservado para YouTube)
-                 </div>
+                  <iframe 
+                    className="w-full h-full"
+                    src="https://www.youtube.com/embed/M9psBszGwMI?si=r7Wd6Z9-T6L-R9lY" 
+                    title="GestiFy RD Tutorial" 
+                    frameBorder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowFullScreen
+                  ></iframe>
               </div>
            </div>
            <div className="order-1 lg:order-2 space-y-8">
