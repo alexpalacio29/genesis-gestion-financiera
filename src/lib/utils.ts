@@ -316,11 +316,11 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
   }
 
   doc.text(dateLines, 20, currentY);
-  currentY += (dateLines.length * 7) + 30;
-
-  doc.setFont("helvetica", "bold");
-  doc.text(center?.director_name || "Nombre del Director(a)", 20, currentY);
-  doc.text(`Directora de la Junta de centro Educativo ${centerCode} ${centerName}`, 20, currentY + 7);
+  currentY += (dateLines.length * 7) + 15;
+  
+  doc.text("________________________________", 105, currentY + 15, { align: "center" });
+  doc.text(center?.director_name || "Nombre del Director(a)", 105, currentY + 20, { align: "center" });
+  doc.text("Director (a) de Centro Educativo", 105, currentY + 25, { align: "center" });
 
   doc.save(`Certificacion_Retencion_Conjunta_${check.check_number}.pdf`);
 };
@@ -397,11 +397,11 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
   }
 
   doc.text(dateLines, 20, currentY);
-  currentY += (dateLines.length * 7) + 35;
-
-  doc.setFont("helvetica", "bold");
-  doc.text(center?.director_name || "Nombre del Director(a)", 20, currentY);
-  doc.text(`Directora de la Junta de centro Educativo ${centerCode} ${centerName}`, 20, currentY + 7);
+  currentY += (dateLines.length * 7) + 15;
+  
+  doc.text("________________________________", 105, currentY + 15, { align: "center" });
+  doc.text(center?.director_name || "Nombre del Director(a)", 105, currentY + 20, { align: "center" });
+  doc.text("Director (a) de Centro Educativo", 105, currentY + 25, { align: "center" });
 
   doc.save(`Certificacion_Retencion_ITBIS_${check.check_number}.pdf`);
 };
@@ -571,13 +571,13 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
     headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 25;
+  const finalY = (doc as any).lastAutoTable.finalY + 15;
   const pageHeight = doc.internal.pageSize.height;
   let currentY = finalY;
 
   if (currentY + 60 > pageHeight - 10) {
     doc.addPage();
-    currentY = 30;
+    currentY = 25;
   }
 
   doc.text("____________________", 40, currentY);
@@ -694,8 +694,8 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[], c
   doc.setFont("helvetica", "normal");
   doc.text(`VALOR EN LETRAS: ${amountInWords}`, 20, lastTableFinalY + 10, { maxWidth: 170 });
 
-  finalY = lastTableFinalY + 35;
-  if (finalY + 20 > doc.internal.pageSize.height - 10) {
+  let finalY = lastTableFinalY + 15;
+  if (finalY + 40 > doc.internal.pageSize.height - 10) {
     doc.addPage();
     finalY = 35;
   }
@@ -751,10 +751,10 @@ export const generateCheckCalculationSheetPDF = (check: any, supplier: any, cent
   doc.setFontSize(9);
   doc.text(`VALOR EN LETRAS: ${amountInWords}`, 20, lastTableFinalY + 10);
 
-  let finalY = lastTableFinalY + 40;
-  if (finalY + 20 > doc.internal.pageSize.height - 10) {
+  let finalY = lastTableFinalY + 15;
+  if (finalY + 40 > doc.internal.pageSize.height - 10) {
     doc.addPage();
-    finalY = 30;
+    finalY = 35;
   }
 
   doc.text("Preparado por: ____________________", 20, finalY);
@@ -796,7 +796,7 @@ export const generateServiceRequestPDF = (quote: any, supplier: any, center?: an
   doc.text("Necesario para el correcto funcionamiento de las instalaciones", 25, justificationY + 15);
   doc.text("del centro educativo.", 25, justificationY + 20);
 
-  const signatureY = justificationY + 50;
+  const signatureY = justificationY + 20;
   doc.text("Firma Solicitante: ____________________", 20, signatureY);
   doc.text("Visto Bueno: ____________________", 120, signatureY);
 
@@ -856,11 +856,11 @@ export const generateLaborReceiptPDF = (check: any, supplier: any, center?: any,
   });
 
   const lastTableFinalY = (doc as any).lastAutoTable.finalY;
-  let finalY = lastTableFinalY + 20;
+  let finalY = lastTableFinalY + 15;
   
   if (finalY + 60 > doc.internal.pageSize.height - 10) {
     doc.addPage();
-    finalY = 30;
+    finalY = 25;
   }
 
   doc.text(supplier.name.toUpperCase(), 140, finalY, { align: "center" });
