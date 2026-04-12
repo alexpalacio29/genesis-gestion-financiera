@@ -173,9 +173,13 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
                       }}
                     />
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <h3 className="text-xl font-black text-slate-900 leading-tight">Alexander Palacio Espiritusanto</h3>
-                    <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mt-2">Fundador</p>
+                    <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Fundador</p>
+                    <div className="flex gap-2 justify-center">
+                       <span className="text-[10px] font-bold bg-white/50 px-2 py-1 rounded-md text-emerald-600 border border-emerald-100 uppercase tracking-widest">Educador</span>
+                       <span className="text-[10px] font-bold bg-white/50 px-2 py-1 rounded-md text-emerald-600 border border-emerald-100 uppercase tracking-widest">Gestor Educativo</span>
+                    </div>
                   </div>
                 </div>
                 
@@ -184,7 +188,7 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
                     <div className="space-y-2">
                        <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">Trayectoria Profecional</h4>
                        <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                         Alexander Palacio Espiritusanto es un educador dominicano y especialista en gestión educativa, enfocado en el desarrollo de soluciones modernas que fortalecen la administración escolar y elevan la eficiencia institucional.
+                         Alexander Palacio Espiritusanto es un educador dominicano y gestor educativo, enfocado en el desarrollo de soluciones modernas que fortalecen la administración escolar y elevan la eficiencia institucional.
                        </p>
                     </div>
 
@@ -667,16 +671,14 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
                     <div className="text-center sm:text-left space-y-2">
                        <h3 className="text-2xl font-black text-slate-900 leading-tight">Alexander Palacio Espiritusanto</h3>
                        <p className="text-xs font-black text-emerald-600 uppercase tracking-[0.2em]">Fundador de GestiFy RD</p>
-                       <div className="flex gap-2 justify-center sm:justify-start">
-                          <span className="text-[10px] font-bold bg-slate-100 px-2 py-1 rounded-md text-slate-500 uppercase tracking-widest">Educador</span>
-                          <span className="text-[10px] font-bold bg-slate-100 px-2 py-1 rounded-md text-slate-500 uppercase tracking-widest">Gestión Educativa</span>
-                       </div>
                     </div>
                  </div>
 
-                 <p className="text-slate-500 font-medium leading-relaxed italic border-l-4 border-emerald-500 pl-6">
-                    "Educador y especialista en Gestión Educativa con más de 14 años de experiencia. Dedicado a la transformación digital y eficiencia administrativa del sector educativo dominicano."
-                 </p>
+                 <div className="space-y-4">
+                    <p className="text-slate-500 font-medium leading-relaxed italic border-l-4 border-emerald-500 pl-6">
+                       "Educador y gestor dominicano con más de 14 años de trayectoria, enfocado en modernizar la administración escolar. Actualmente subdirector administrativo en el Centro Educativo Cristiano Génesis, dedicado a la transformación digital y eficiencia institucional del sector educativo. **Lic. en Teología | Máster en Gestión Educativa**."
+                    </p>
+                 </div>
 
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
                     <a 
