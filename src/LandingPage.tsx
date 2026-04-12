@@ -28,7 +28,9 @@ import {
   Share2,
   Copy,
   Twitter,
-  Facebook
+  Facebook,
+  Youtube,
+  Instagram
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils'; // Assuming cn utility is here, or I can define it
@@ -193,6 +195,25 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
                     <div className="flex gap-2 justify-center">
                        <span className="text-[10px] font-bold bg-white/50 px-2 py-1 rounded-md text-emerald-600 border border-emerald-100 uppercase tracking-widest">Educador</span>
                        <span className="text-[10px] font-bold bg-white/50 px-2 py-1 rounded-md text-emerald-600 border border-emerald-100 uppercase tracking-widest">Gestor Educativo</span>
+                    </div>
+
+                    <div className="flex flex-col gap-2 pt-4">
+                       <a 
+                         href="https://wa.me/18294108036"
+                         target="_blank"
+                         rel="noopener noreferrer"
+                         className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl text-xs font-bold text-slate-700 border border-emerald-100 hover:bg-emerald-100 transition-all shadow-sm group"
+                       >
+                          <MessageCircle className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" />
+                          829-410-8036
+                       </a>
+                       <a 
+                         href="mailto:alexpalacio29@gmail.com"
+                         className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl text-xs font-bold text-slate-700 border border-emerald-100 hover:bg-emerald-100 transition-all shadow-sm group"
+                       >
+                          <Mail className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" />
+                          alexpalacio29@gmail.com
+                       </a>
                     </div>
                   </div>
                 </div>
@@ -889,9 +910,12 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
            <div className="space-y-6">
               <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-6">Social</h4>
               <div className="flex gap-4">
-                 <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all cursor-pointer"><Phone className="w-5 h-5" /></div>
-                 <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all cursor-pointer"><Mail className="w-5 h-5" /></div>
-                 <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all cursor-pointer"><MessageCircle className="w-5 h-5" /></div>
+                 <a href="tel:+18294108036" className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all cursor-pointer"><Phone className="w-5 h-5" /></a>
+                 <a href="mailto:alexpalacio29@gmail.com" className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all cursor-pointer"><Mail className="w-5 h-5" /></a>
+                 <a href="https://wa.me/18294108036" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all cursor-pointer"><MessageCircle className="w-5 h-5" /></a>
+                  <a href="https://www.instagram.com/gestifyrd/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-pink-50 hover:text-pink-600 transition-all cursor-pointer"><Instagram className="w-5 h-5" /></a>
+                  <a href="https://www.facebook.com/profile.php?id=61574283226708" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all cursor-pointer"><Facebook className="w-5 h-5" /></a>
+                 <a href="https://www.youtube.com/playlist?list=PLT_0ZdzVRrXiICIwZXNX2BSPaizDJmTqA" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all cursor-pointer"><Youtube className="w-5 h-5" /></a>
               </div>
            </div>
         </div>
