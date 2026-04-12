@@ -124,8 +124,8 @@ export const generateQuotePDF = (quote: any, supplier: any, items: any[] = [], c
   }
 
   doc.setFontSize(9);
-  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 45, { align: "center" });
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 50, { align: "center" });
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL", 105, 45, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL", 105, 50, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -201,11 +201,8 @@ export const generateCheckPDF = (check: any, center?: any, logoBase64?: string) 
   });
   const centerCode = center?.codigo_no || "06907";
 
-  try {
-    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 128.5, 3, LOGO_W, LOGO_H);
-  } catch (e) {
-    console.error("Error adding logo:", e);
-  }
+  // Logo removed from check as requested
+
 
   doc.setFontSize(10);
   // Top right calculations
@@ -253,8 +250,8 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 45, { align: "center" });
-  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 50, { align: "center" });
+  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional", 105, 45, { align: "center" });
+  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito", 105, 50, { align: "center" });
   doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 55, { align: "center" });
   doc.text(`RNC: ${centerRNC}`, 105, 60, { align: "center" });
 
@@ -264,14 +261,14 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`DD 12-01 Núm..: ${check.check_number}-2026`, 20, 82);
+  doc.text(`DD ${center?.district || '12-01'} Núm..: ${check.check_number}-2026`, 20, 80);
 
-  const text = `Quien suscribe, ${center?.director_name || 'Nombre del Director(a)'}, directora de la Junta de centro Educativo ${centerCode} ${centerName} del Distrito ${center?.district || '12-01 de Higüey'}, Republica Dominicana, CERTIFICA: Que de acuerdo a lo establecido en el Art. 309 (y sus modificaciones) de la Ley 11-92, que establece el código Tributario Dominicano, en la Norma General 02-05 (y sus modificaciones), Decreto 293-11, la Ley 253-12, la Resolución Núm.. 41-2014, de la Dirección General de Impuestos Internos (DGII), en lo referente, hemos efectuado las retenciones de lugar aplicadas al pago de:`;
+  const text = `Quien suscribe, ${center?.director_name || 'Nombre del Director(a)'}, directora de la Junta de centro Educativo ${centerCode} ${centerName} del Distrito ${center?.district || '12-01'}, Republica Dominicana, CERTIFICA: Que de acuerdo a lo establecido en el Art. 309 (y sus modificaciones) de la Ley 11-92, que establece el código Tributario Dominicano, en la Norma General 02-05 (y sus modificaciones), Decreto 293-11, la Ley 253-12, la Resolución Núm.. 41-2014, de la Dirección General de Impuestos Internos (DGII), en lo referente, hemos efectuado las retenciones de lugar aplicadas al pago de:`;
 
   const splitText = doc.splitTextToSize(text, 170);
-  doc.text(splitText, 20, 75);
+  doc.text(splitText, 20, 88);
   
-  let currentY = 75 + (splitText.length * 6) + 10;
+  let currentY = 88 + (splitText.length * 6) + 10;
   doc.setFont("helvetica", "bold");
   doc.text(`Beneficiario: ${supplier.name.toUpperCase()}`, 20, currentY);
   doc.text(`RNC o Cedula: ${supplier.rnc}`, 20, currentY + 7);
@@ -339,8 +336,8 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional 12, Higüey", 105, 45, { align: "center" });
-  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito 12-01", 105, 50, { align: "center" });
+  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional", 105, 45, { align: "center" });
+  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito", 105, 50, { align: "center" });
   doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 55, { align: "center" });
   doc.text(`RNC: ${centerRNC}`, 105, 60, { align: "center" });
 
@@ -349,14 +346,14 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`DD 12-01 Núm..: ${check.check_number}-2026`, 20, 82);
+  doc.text(`DD ${center?.district || '12-01'} Núm..: ${check.check_number}-2026`, 20, 80);
 
-  const text = `Quien suscribe, ${center?.director_name || 'Nombre del Director(a)'}, directora de la Junta de centro Educativo ${centerCode} ${centerName} del Distrito ${center?.district || '12-01 de Higüey'}, Republica Dominicana, CERTIFICA: Que de acuerdo a lo establecido en la Norma General 02-05 de la Dirección General de Impuestos Internos (DGII) sobre Proveedores Informales, hemos efectuado la retención del 100% del ITBIS facturado aplicado al pago de:`;
+  const text = `Quien suscribe, ${center?.director_name || 'Nombre del Director(a)'}, directora de la Junta de centro Educativo ${centerCode} ${centerName} del Distrito ${center?.district || '12-01'}, Republica Dominicana, CERTIFICA: Que de acuerdo a lo establecido en la Norma General 02-05 de la Dirección General de Impuestos Internos (DGII) sobre Proveedores Informales, hemos efectuado la retención del 100% del ITBIS facturado aplicado al pago de:`;
 
   const splitText = doc.splitTextToSize(text, 170);
-  doc.text(splitText, 20, 75);
+  doc.text(splitText, 20, 88);
 
-  let currentY = 75 + (splitText.length * 6) + 10;
+  let currentY = 88 + (splitText.length * 6) + 10;
   doc.setFont("helvetica", "bold");
   doc.text(`Beneficiario: ${supplier.name.toUpperCase()}`, 20, currentY);
   doc.text(`Cédula: ${supplier.rnc}`, 20, currentY + 7);
@@ -418,8 +415,8 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
   }
 
   doc.setFontSize(8);
-  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 40, { align: "center" });
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 45, { align: "center" });
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL", 105, 40, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL", 105, 45, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -532,7 +529,7 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
   }
 
   doc.setFontSize(9);
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 45, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL", 105, 45, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -589,7 +586,7 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
   doc.text("____________________", 90, currentY + 25);
   doc.text(center?.treasurer_name || "Tesorero (a) de la Junta de Centro", 90, currentY + 30, { align: "center" });
 
-  doc.text(`Visto por la Dirección Distrital Educativa ${center?.district || '12-01, Higüey'}: ________________________________`, 20, currentY + 50);
+  doc.text(`Visto por la Dirección Distrital Educativa ${center?.district || 'Correspondiente'}: ________________________________`, 20, currentY + 50);
 
   doc.save(`Requisicion_${requisition.id}.pdf`);
 };
@@ -610,8 +607,9 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[], c
   }
 
   doc.setFontSize(9);
-  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL 12 HIGÜEY", 105, 45, { align: "center" });
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL 12-01, HIGÜEY", 105, 50, { align: "center" });
+  doc.setFontSize(9);
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL", 105, 45, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL", 105, 50, { align: "center" });
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -826,7 +824,7 @@ export const generateLaborReceiptPDF = (check: any, supplier: any, center?: any,
   doc.text(`FECHA: ${formatDate(check.date)}`, 20, 45);
 
   const amountInWords = numberToWordsSpanish(check.amount_net);
-  const dist = center?.district ? `DEL DISTRITO ${center.district.toUpperCase()}` : "DEL DISTRITO 12-01, HIGÜEY";
+  const dist = center?.district ? `DEL DISTRITO ${center.district.toUpperCase()}` : "DEL DISTRITO CORRESPONDIENTE";
   const text = `HE RECIBIDO DE LA JUNTA DE CENTRO ${centerCode} ${centerName.toUpperCase()}, ${dist}, LA SUMA DE RD$ ${formatCurrency(check.amount_net).replace('RD$', '')} ****** (${amountInWords}) *******`;
 
   const splitText = doc.splitTextToSize(text, 170);
