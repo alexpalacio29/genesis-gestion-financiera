@@ -541,143 +541,174 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
       {/* Contact Section */}
       <section id="contacto" className="py-24 px-6 overflow-hidden relative">
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-16">
+           {/* Left Column: Text + Form */}
            <div className="lg:w-1/2 space-y-12">
               <div className="space-y-6">
                 <h2 className="text-4xl font-black text-slate-900 leading-tight">¿Háblanos de tu <span className="text-emerald-600">centro educativo</span>?</h2>
                 <p className="text-lg text-slate-500 font-medium leading-relaxed">Estamos listos para ayudarte a transformar tu gestión económica. Completa el formulario y responderemos en menos de 24 horas.</p>
               </div>
 
-              <div className="space-y-4">
-                 <a 
-                   href="https://wa.me/18294108036"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   className="flex items-center gap-4 bg-emerald-50 text-emerald-700 w-full p-6 rounded-3xl border border-emerald-100 hover:bg-emerald-100 transition-all font-bold group"
-                 >
-                    <div className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                       <MessageCircle className="w-6 h-6" />
-                    </div>
-                    <div className="text-left">
-                       <p className="text-xs font-black uppercase tracking-widest opacity-60">WhatsApp Directo</p>
-                       <p className="text-lg">829-410-8036</p>
-                    </div>
-                 </a>
-
-                 <a 
-                   href="mailto:alexpalacio29@gmail.com"
-                   className="flex items-center gap-4 bg-blue-50 text-blue-700 w-full p-6 rounded-3xl border border-blue-100 hover:bg-blue-100 transition-all font-bold group"
-                 >
-                    <div className="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                       <Mail className="w-6 h-6" />
-                    </div>
-                    <div className="text-left">
-                       <p className="text-xs font-black uppercase tracking-widest opacity-60">Correo Electrónico</p>
-                       <p className="text-lg">alexpalacio29@gmail.com</p>
-                    </div>
-                 </a>
+              <div className="bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 relative">
+                {submitted ? (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="h-full flex flex-col items-center justify-center text-center space-y-6 py-12"
+                  >
+                     <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
+                        <CheckCircle className="w-10 h-10" />
+                     </div>
+                     <h3 className="text-2xl font-black text-slate-900">¡Solicitud Enviada!</h3>
+                     <p className="text-slate-500 font-medium max-w-xs">Gracias por tu interés. Nuestro equipo revisará tu mensaje y te contactará a la brevedad posible.</p>
+                     <button 
+                       onClick={() => setSubmitted(false)}
+                       className="text-emerald-600 font-bold hover:underline"
+                     >
+                       Enviar otro mensaje
+                     </button>
+                  </motion.div>
+                ) : (
+                  <form onSubmit={handleSubmitContact} className="space-y-6">
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre Completo</label>
+                           <input 
+                             required
+                             type="text" 
+                             className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" 
+                             placeholder="Ej: Juan Pérez"
+                             value={formData.name}
+                             onChange={e => setFormData({ ...formData, name: e.target.value })}
+                           />
+                        </div>
+                        <div className="space-y-1.5">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Teléfono</label>
+                           <input 
+                             required
+                             type="text" 
+                             className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" 
+                             placeholder="809-000-0000"
+                             value={formData.phone}
+                             onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                           />
+                        </div>
+                     </div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Centro Educativo</label>
+                           <input 
+                             required
+                             type="text" 
+                             className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" 
+                             placeholder="Ej: Escuela México"
+                             value={formData.center_name}
+                             onChange={e => setFormData({ ...formData, center_name: e.target.value })}
+                           />
+                        </div>
+                        <div className="space-y-1.5">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Distrito</label>
+                           <input 
+                             required
+                             type="text" 
+                             className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" 
+                             placeholder="Ej: 15-02"
+                             value={formData.district}
+                             onChange={e => setFormData({ ...formData, district: e.target.value })}
+                           />
+                        </div>
+                     </div>
+                     <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Correo Institucional</label>
+                        <input 
+                          required
+                          type="email" 
+                          className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" 
+                          placeholder="ejemplo@minerd.gob.do"
+                          value={formData.email}
+                          onChange={e => setFormData({ ...formData, email: e.target.value })}
+                        />
+                     </div>
+                     <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">¿En qué podemos ayudarte?</label>
+                        <textarea 
+                          required
+                          className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl h-32 focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm resize-none" 
+                          placeholder="Escribe tu mensaje aquí..."
+                          value={formData.message}
+                          onChange={e => setFormData({ ...formData, message: e.target.value })}
+                        ></textarea>
+                     </div>
+                     <button 
+                       type="submit"
+                       disabled={isSubmitting}
+                       className="w-full bg-emerald-600 text-white p-5 rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 flex items-center justify-center gap-2 text-lg disabled:opacity-50"
+                     >
+                       {isSubmitting ? 'Enviando...' : 'Enviar solicitud'} <ArrowRight className="w-5 h-5" />
+                     </button>
+                  </form>
+                )}
               </div>
            </div>
 
-           <div className="lg:w-1/2 bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 relative">
-               {submitted ? (
-                 <motion.div 
-                   initial={{ opacity: 0, scale: 0.9 }}
-                   animate={{ opacity: 1, scale: 1 }}
-                   className="h-full flex flex-col items-center justify-center text-center space-y-6 py-12"
-                 >
-                    <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
-                       <CheckCircle className="w-10 h-10" />
-                    </div>
-                    <h3 className="text-2xl font-black text-slate-900">¡Solicitud Enviada!</h3>
-                    <p className="text-slate-500 font-medium max-w-xs">Gracias por tu interés. Nuestro equipo revisará tu mensaje y te contactará a la brevedad posible.</p>
-                    <button 
-                      onClick={() => setSubmitted(false)}
-                      className="text-emerald-600 font-bold hover:underline"
-                    >
-                      Enviar otro mensaje
-                    </button>
-                 </motion.div>
-               ) : (
-                 <form onSubmit={handleSubmitContact} className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                       <div className="space-y-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre Completo</label>
-                          <input 
-                            required
-                            type="text" 
-                            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" 
-                            placeholder="Ej: Juan Pérez"
-                            value={formData.name}
-                            onChange={e => setFormData({ ...formData, name: e.target.value })}
-                          />
-                       </div>
-                       <div className="space-y-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Teléfono</label>
-                          <input 
-                            required
-                            type="text" 
-                            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" 
-                            placeholder="809-000-0000"
-                            value={formData.phone}
-                            onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                          />
-                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                       <div className="space-y-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Centro Educativo</label>
-                          <input 
-                            required
-                            type="text" 
-                            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" 
-                            placeholder="Ej: Escuela México"
-                            value={formData.center_name}
-                            onChange={e => setFormData({ ...formData, center_name: e.target.value })}
-                          />
-                       </div>
-                       <div className="space-y-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Distrito</label>
-                          <input 
-                            required
-                            type="text" 
-                            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" 
-                            placeholder="Ej: 15-02"
-                            value={formData.district}
-                            onChange={e => setFormData({ ...formData, district: e.target.value })}
-                          />
-                       </div>
-                    </div>
-                    <div className="space-y-1.5">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Correo Institucional</label>
-                       <input 
-                         required
-                         type="email" 
-                         className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm" 
-                         placeholder="ejemplo@minerd.gob.do"
-                         value={formData.email}
-                         onChange={e => setFormData({ ...formData, email: e.target.value })}
+           {/* Right Column: Profile + Contact Links */}
+           <div className="lg:w-1/2 space-y-8">
+              <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100 space-y-8">
+                 <div className="flex flex-col sm:flex-row items-center gap-8">
+                    <div className="w-32 h-32 rounded-[2rem] overflow-hidden shadow-2xl border-4 border-emerald-50 shrink-0">
+                       <img 
+                         src="/alex-palacio.jpg" 
+                         alt="Alexander Palacio" 
+                         className="w-full h-full object-cover"
+                         onError={(e) => {
+                           (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=Alexander+Palacio+Espiritusanto&background=059669&color=fff&size=200`;
+                         }}
                        />
                     </div>
-                    <div className="space-y-1.5">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">¿En qué podemos ayudarte?</label>
-                       <textarea 
-                         required
-                         className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl h-32 focus:ring-4 focus:ring-emerald-500/5 outline-none font-bold text-sm resize-none" 
-                         placeholder="Escribe tu mensaje aquí..."
-                         value={formData.message}
-                         onChange={e => setFormData({ ...formData, message: e.target.value })}
-                       ></textarea>
+                    <div className="text-center sm:text-left space-y-2">
+                       <h3 className="text-2xl font-black text-slate-900 leading-tight">Alexander Palacio Espiritusanto</h3>
+                       <p className="text-xs font-black text-emerald-600 uppercase tracking-[0.2em]">Fundador de GestiFy RD</p>
+                       <div className="flex gap-2 justify-center sm:justify-start">
+                          <span className="text-[10px] font-bold bg-slate-100 px-2 py-1 rounded-md text-slate-500 uppercase tracking-widest">Educador</span>
+                          <span className="text-[10px] font-bold bg-slate-100 px-2 py-1 rounded-md text-slate-500 uppercase tracking-widest">Gestión Educativa</span>
+                       </div>
                     </div>
-                    <button 
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full bg-emerald-600 text-white p-5 rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 flex items-center justify-center gap-2 text-lg disabled:opacity-50"
+                 </div>
+
+                 <p className="text-slate-500 font-medium leading-relaxed italic border-l-4 border-emerald-500 pl-6">
+                    "Educador y especialista en Gestión Educativa con más de 14 años de experiencia. Dedicado a la transformación digital y eficiencia administrativa del sector educativo dominicano."
+                 </p>
+
+                 <div className="space-y-4 pt-4">
+                    <a 
+                      href="https://wa.me/18294108036"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-4 bg-emerald-50 text-emerald-700 w-full p-6 rounded-3xl border border-emerald-100 hover:bg-emerald-100 transition-all font-bold group"
                     >
-                      {isSubmitting ? 'Enviando...' : 'Enviar solicitud'} <ArrowRight className="w-5 h-5" />
-                    </button>
-                 </form>
-               )}
-            </div>
+                       <div className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-emerald-200">
+                          <MessageCircle className="w-6 h-6" />
+                       </div>
+                       <div className="text-left">
+                          <p className="text-xs font-black uppercase tracking-widest opacity-60">WhatsApp Directo</p>
+                          <p className="text-lg">829-410-8036</p>
+                       </div>
+                    </a>
+
+                    <a 
+                      href="mailto:alexpalacio29@gmail.com"
+                      className="flex items-center gap-4 bg-blue-50 text-blue-700 w-full p-6 rounded-3xl border border-blue-100 hover:bg-blue-100 transition-all font-bold group"
+                    >
+                       <div className="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-blue-200">
+                          <Mail className="w-6 h-6" />
+                       </div>
+                       <div className="text-left">
+                          <p className="text-xs font-black uppercase tracking-widest opacity-60">Correo Electrónico</p>
+                          <p className="text-lg">alexpalacio29@gmail.com</p>
+                       </div>
+                    </a>
+                 </div>
+              </div>
+           </div>
         </div>
       </section>
 
