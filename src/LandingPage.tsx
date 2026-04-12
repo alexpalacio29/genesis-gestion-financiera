@@ -543,7 +543,7 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
            </div>
            <div className="order-1 lg:order-2 space-y-8">
               <h2 className="text-4xl font-black text-slate-900 leading-tight">
-                🎥 Tutorial: Aprende a usar <span className="text-emerald-600">GestiFy RD</span>
+                Conoce más de <span className="text-emerald-600">GestiFy RD</span>
               </h2>
               <p className="text-lg text-slate-500 font-medium font-serif leading-relaxed">
                 Descubre cómo nuestra plataforma puede transformar tu jornada laboral. En este tutorial paso a paso, te mostramos desde la carga de documentos hasta la generación de reportes automáticos.
