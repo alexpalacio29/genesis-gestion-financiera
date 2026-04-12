@@ -24,7 +24,11 @@ import {
   Send,
   Bot,
   User,
-  Sparkles
+  Sparkles,
+  Share2,
+  Copy,
+  Twitter,
+  Facebook
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils'; // Assuming cn utility is here, or I can define it
@@ -98,6 +102,16 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
   const slides = ["/hero-image.png", "/dashboard-preview.png", "/ai-processor.png", "/minerd-official.png"];
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const shareMessage = `Moderniza tu centro con GestiFy RD 🇩🇴 Una plataforma moderna para gestionar de forma fácil y organizada las finanzas de la Junta Descentralizada de tu centro educativo. Conócelo aquí: https://gestifyrd.com`;
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(shareMessage);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
   const [submitted, setSubmitted] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [formData, setFormData] = useState({
@@ -230,6 +244,97 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
           </div>
         )}
       </AnimatePresence>
+
+      {/* Share Modal */}
+      <AnimatePresence>
+        {showShareModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowShareModal(false)}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden"
+            >
+              <div className="p-10 space-y-8">
+                 <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                       <h3 className="text-2xl font-black text-slate-900">Recomienda Gestify</h3>
+                       <p className="text-sm font-medium text-slate-500">Haz que otros gestionen de forma moderna 🇩🇴</p>
+                    </div>
+                    <button onClick={() => setShowShareModal(false)} className="w-10 h-10 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors">
+                       <X className="w-5 h-5" />
+                    </button>
+                 </div>
+
+                 <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 relative group">
+                    <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                       {shareMessage}
+                    </p>
+                    <button 
+                      onClick={copyToClipboard}
+                      className="absolute bottom-4 right-4 bg-white shadow-lg border border-slate-100 p-2 rounded-xl text-slate-400 hover:text-emerald-600 transition-all"
+                    >
+                       {copied ? <CheckCircle className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                    {copied && <span className="absolute -top-10 right-0 bg-slate-900 text-white text-[10px] py-1 px-3 rounded-full animate-bounce">¡Copiado!</span>}
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-4">
+                    <a 
+                      href={`https://wa.me/?text=${encodeURIComponent(shareMessage)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 bg-[#25D366]/10 text-[#25D366] p-4 rounded-2xl font-bold hover:bg-[#25D366]/20 transition-all group"
+                    >
+                       <div className="w-10 h-10 bg-[#25D366] text-white rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-[#25D366]/20">
+                          <MessageCircle className="w-5 h-5" />
+                       </div>
+                       WhatsApp
+                    </a>
+                    <a 
+                      href={`mailto:?subject=Recomendación: GestiFy RD&body=${encodeURIComponent(shareMessage)}`}
+                      className="flex items-center gap-3 bg-blue-50 text-blue-600 p-4 rounded-2xl font-bold hover:bg-blue-100 transition-all group"
+                    >
+                       <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-blue-200">
+                          <Mail className="w-5 h-5" />
+                       </div>
+                       Email
+                    </a>
+                    <a 
+                      href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareMessage)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 bg-slate-50 text-slate-900 p-4 rounded-2xl font-bold hover:bg-slate-100 transition-all group"
+                    >
+                       <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-slate-200">
+                          <Twitter className="w-5 h-5" />
+                       </div>
+                       Twitter
+                    </a>
+                    <a 
+                      href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://gestifyrd.com')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 bg-[#1877F2]/10 text-[#1877F2] p-4 rounded-2xl font-bold hover:bg-[#1877F2]/20 transition-all group"
+                    >
+                       <div className="w-10 h-10 bg-[#1877F2] text-white rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-[#1877F2]/20">
+                          <Facebook className="w-5 h-5" />
+                       </div>
+                       Facebook
+                    </a>
+                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100 h-20">
         <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
@@ -264,6 +369,15 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
                 Iniciar Sesión
               </button>
             )}
+            
+            <button 
+              onClick={() => setShowShareModal(true)}
+              className="hidden md:flex items-center justify-center w-10 h-10 bg-slate-50 border border-slate-100 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all shadow-sm"
+              title="Recomendar GestiFy RD"
+            >
+              <Share2 className="w-5 h-5" />
+            </button>
+
             <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X /> : <Menu />}
             </button>
@@ -320,6 +434,12 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
               <a href="#funciones" className="flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-bold hover:bg-slate-50 transition-all text-lg shadow-sm">
                 🧾 Ver Funciones
               </a>
+              <button 
+                onClick={() => setShowShareModal(true)}
+                className="flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-bold hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-all text-lg shadow-sm"
+              >
+                📢 Recomendar
+              </button>
               {!isLoggedIn && (
                 <button onClick={onLogin} className="sm:hidden flex items-center justify-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold">
                   🔐 Iniciar Sesión
