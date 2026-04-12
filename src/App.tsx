@@ -3046,7 +3046,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
     }
   };
 
-  const downloadDocs = () => {
+  const downloadDocs = async () => {
     if (!result) return;
 
     const supplier = result.supplier;
@@ -3056,18 +3056,50 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
     const check = { ...result.check, id: result.ids.checkId };
     const items = result.items;
 
-    if (selectedDocs.includes('quote')) generateQuotePDF(quote, supplier, items, currentCenter);
-    if (selectedDocs.includes('requisition')) generateRequisitionPDF(requisition, quote, items, currentCenter);
-    if (selectedDocs.includes('po')) generatePurchaseOrderPDF(po, supplier, items, currentCenter);
-    if (selectedDocs.includes('check')) generateCheckPDF(check, currentCenter);
-    if (selectedDocs.includes('calc')) generateCheckCalculationSheetPDF(check, supplier, currentCenter);
-    if (selectedDocs.includes('retention')) generateRetentionCertPDF(check, supplier, currentCenter);
-    if (selectedDocs.includes('retention_itbis')) generateITBISRetentionCertPDF(check, supplier, currentCenter);
-    if (selectedDocs.includes('letter')) generateCheckRequestLetterPDF(check, supplier, currentCenter);
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    if (selectedDocs.includes('quote')) {
+      generateQuotePDF(quote, supplier, items, currentCenter);
+      await delay(300);
+    }
+    if (selectedDocs.includes('requisition')) {
+      generateRequisitionPDF(requisition, quote, items, currentCenter);
+      await delay(300);
+    }
+    if (selectedDocs.includes('po')) {
+      generatePurchaseOrderPDF(po, supplier, items, currentCenter);
+      await delay(300);
+    }
+    if (selectedDocs.includes('check')) {
+      generateCheckPDF(check, currentCenter);
+      await delay(300);
+    }
+    if (selectedDocs.includes('calc')) {
+      generateCheckCalculationSheetPDF(check, supplier, currentCenter);
+      await delay(300);
+    }
+    if (selectedDocs.includes('retention')) {
+      generateRetentionCertPDF(check, supplier, currentCenter);
+      await delay(300);
+    }
+    if (selectedDocs.includes('retention_itbis')) {
+      generateITBISRetentionCertPDF(check, supplier, currentCenter);
+      await delay(300);
+    }
+    if (selectedDocs.includes('letter')) {
+      generateCheckRequestLetterPDF(check, supplier, currentCenter);
+      await delay(300);
+    }
 
     if (metadata.quoteType === 'labor') {
-      if (selectedDocs.includes('service')) generateServiceRequestPDF(quote, supplier, currentCenter);
-      if (selectedDocs.includes('receipt')) generateLaborReceiptPDF(check, supplier, currentCenter);
+      if (selectedDocs.includes('service')) {
+        generateServiceRequestPDF(quote, supplier, currentCenter);
+        await delay(300);
+      }
+      if (selectedDocs.includes('receipt')) {
+        generateLaborReceiptPDF(check, supplier, currentCenter);
+        await delay(300);
+      }
     }
   };
 

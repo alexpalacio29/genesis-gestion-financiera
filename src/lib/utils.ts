@@ -226,8 +226,8 @@ export const generateCheckPDF = (check: any, center?: any, logoBase64?: string) 
   doc.text(formatDateShort(check.date), 160, 40);
 
   doc.setFont("helvetica", "bold");
-  doc.text(check.beneficiary.toUpperCase(), 80, 50, { maxWidth: 120 });
-  doc.text(formatCurrency(check.amount_net).replace('RD$', ''), 160, 50);
+  doc.text(check.beneficiary.toUpperCase(), 80, 50, { maxWidth: 75 });
+  doc.text(formatCurrency(check.amount_net).replace('RD$', ''), 175, 50);
 
   doc.setFont("helvetica", "normal");
   const amountInWords = numberToWordsSpanish(check.amount_net);
@@ -250,8 +250,8 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional", 105, 45, { align: "center" });
-  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito", 105, 50, { align: "center" });
+  doc.text(center?.regional ? `Dirección Regional ${center.regional}` : "Dirección Regional", 105, 45, { align: "center" });
+  doc.text(center?.district ? `Dirección Distrital ${center.district}` : "Dirección Distrital", 105, 50, { align: "center" });
   doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 55, { align: "center" });
   doc.text(`RNC: ${centerRNC}`, 105, 60, { align: "center" });
 
@@ -268,7 +268,7 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
   const splitText = doc.splitTextToSize(text, 170);
   doc.text(splitText, 20, 88);
   
-  let currentY = 88 + (splitText.length * 6) + 10;
+  let currentY = 88 + (splitText.length * 6) + 20;
   doc.setFont("helvetica", "bold");
   doc.text(`Beneficiario: ${supplier.name.toUpperCase()}`, 20, currentY);
   doc.text(`RNC o Cedula: ${supplier.rnc}`, 20, currentY + 7);
@@ -336,8 +336,8 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text(center?.regional ? `Regional ${center.regional}` : "Regional", 105, 45, { align: "center" });
-  doc.text(center?.district ? `Distrito ${center.district}` : "Distrito", 105, 50, { align: "center" });
+  doc.text(center?.regional ? `Dirección Regional ${center.regional}` : "Dirección Regional", 105, 45, { align: "center" });
+  doc.text(center?.district ? `Dirección Distrital ${center.district}` : "Dirección Distrital", 105, 50, { align: "center" });
   doc.text(`Junta de centro Educativo ${centerCode} ${centerName}`, 105, 55, { align: "center" });
   doc.text(`RNC: ${centerRNC}`, 105, 60, { align: "center" });
 
@@ -353,7 +353,7 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
   const splitText = doc.splitTextToSize(text, 170);
   doc.text(splitText, 20, 88);
 
-  let currentY = 88 + (splitText.length * 6) + 10;
+  let currentY = 88 + (splitText.length * 6) + 20;
   doc.setFont("helvetica", "bold");
   doc.text(`Beneficiario: ${supplier.name.toUpperCase()}`, 20, currentY);
   doc.text(`Cédula: ${supplier.rnc}`, 20, currentY + 7);
@@ -436,70 +436,70 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
   doc.text(`Fecha: ${formatDate(new Date()).toUpperCase()}`, 140, emailY + 15);
 
   doc.setFont("helvetica", "bold");
-  doc.text(`A : Junta de Centro Educativo ${centerCode} ${centerName}`, 20, emailY + 25);
-  doc.text(center?.director_name || "Director(a) de la Junta de Centro", 30, emailY + 32);
+  doc.text(`A : Junta de Centro Educativo ${centerCode} ${centerName}`, 20, emailY + 15);
+  doc.text(center?.director_name || "Director(a) de la Junta de Centro", 20, emailY + 22);
 
-  doc.text(`Atención : ${center?.director_name || 'Presidente(a) y/o Tesorero(a)'}`, 20, emailY + 42);
+  doc.text(`Atención : ${center?.director_name || 'Presidente(a) y/o Tesorero(a)'}`, 20, emailY + 30);
   
   // Dynamic Y positioning starts here
-  let currentY = emailY + 52;
+  let currentY = emailY + 38;
   const asuntoText = `Asunto : Solicitud de libramiento de cheque por concepto de ${check.description || 'adquisición de equipos tecnológico / materiales / servicios'}`;
   const asuntoLines = doc.splitTextToSize(asuntoText, 170);
   doc.text(asuntoLines, 20, currentY);
-  currentY += (asuntoLines.length * 7);
+  currentY += (asuntoLines.length * 6);
 
-  doc.text("Distinguido(a) Director(a):", 20, currentY + 8);
-  currentY += 15;
+  doc.text("Distinguido(a) Director(a):", 20, currentY + 5);
+  currentY += 10;
 
   doc.setFont("helvetica", "normal");
   const introText = "Cortésmente, nos dirigimos a usted con el propósito de solicitar el libramiento de un cheque con cargo a los fondos de descentralización correspondientes a este centro educativo, amparados en la Ordenanza No. 02-2018.";
   const introLines = doc.splitTextToSize(introText, 170);
   doc.text(introLines, 20, currentY);
-  currentY += (introLines.length * 7);
+  currentY += (introLines.length * 6);
 
   const subText = "Dicha solicitud se realiza para cubrir gastos necesarios para el buen funcionamiento del plantel, según el siguiente detalle:";
   const subLines = doc.splitTextToSize(subText, 170);
-  doc.text(subLines, 20, currentY + 5);
-  currentY += (subLines.length * 7) + 5;
+  doc.text(subLines, 20, currentY + 3);
+  currentY += (subLines.length * 6) + 3;
 
   doc.setFont("helvetica", "bold");
   const detalleText = `Detalles del Pago: ${check.description || 'ADQUISICIÓN SEGÚN FACTURA'}`;
   const detalleLines = doc.splitTextToSize(detalleText, 170);
   doc.text(detalleLines, 20, currentY);
-  currentY += (detalleLines.length * 7) + 4;
+  currentY += (detalleLines.length * 6) + 3;
 
   doc.text(`• Beneficiario: ${supplier.name.toUpperCase()}`, 20, currentY);
-  currentY += 7;
+  currentY += 6;
   doc.text(`• RNC / Cédula: ${supplier.rnc}`, 20, currentY);
-  currentY += 7;
+  currentY += 6;
   
   const amountInWords = numberToWordsSpanish(check.amount_net);
   const montoText = `• Monto Total: ${formatCurrency(check.amount_net)} (${amountInWords})`;
   const montoLines = doc.splitTextToSize(montoText, 170);
   doc.text(montoLines, 20, currentY);
-  currentY += (montoLines.length * 7);
+  currentY += (montoLines.length * 6);
 
   const conceptoDetail = `• Concepto: ${check.description || 'PAGO DE BIENES/SERVICIOS'}`;
   const conceptoLines = doc.splitTextToSize(conceptoDetail, 170);
   doc.text(conceptoLines, 20, currentY);
-  currentY += (conceptoLines.length * 7);
+  currentY += (conceptoLines.length * 6);
 
   doc.text(`• Partida Presupuestaria: 100,000.00 Pesos Trimestral.`, 20, currentY);
-  currentY += 10;
+  currentY += 8;
 
   doc.setFont("helvetica", "normal");
   const anexoText = "Se anexa a la presente la documentación soporte requerida (Factura con comprobante fiscal gubernamental, copia de cédula/RNC, cotizaciones previas y acta de la junta de centro que aprueba el gasto).";
   const anexoLines = doc.splitTextToSize(anexoText, 170);
   doc.text(anexoLines, 20, currentY);
-  currentY += (anexoLines.length * 7) + 5;
+  currentY += (anexoLines.length * 6) + 4;
 
   const finalParaText = "Agradecemos de antemano su gestión para que estos recursos sean entregados a la brevedad, permitiendo así la continuidad de los procesos pedagógicos y administrativos de nuestra institución.";
   const finalParaLines = doc.splitTextToSize(finalParaText, 170);
   doc.text(finalParaLines, 20, currentY);
-  currentY += (finalParaLines.length * 7) + 10;
+  currentY += (finalParaLines.length * 6) + 8;
 
   doc.text("Atentamente,", 20, currentY);
-  currentY += 12;
+  currentY += 10;
 
   // Page break check for signatures
   if (currentY + 25 > doc.internal.pageSize.height - 20) {
@@ -568,7 +568,7 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
     headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 15;
+  const finalY = (doc as any).lastAutoTable.finalY + 25;
   const pageHeight = doc.internal.pageSize.height;
   let currentY = finalY;
 
@@ -692,7 +692,7 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[], c
   doc.setFont("helvetica", "normal");
   doc.text(`VALOR EN LETRAS: ${amountInWords}`, 20, lastTableFinalY + 10, { maxWidth: 170 });
 
-  let finalY = lastTableFinalY + 15;
+  let finalY = lastTableFinalY + 25;
   if (finalY + 40 > doc.internal.pageSize.height - 10) {
     doc.addPage();
     finalY = 35;
@@ -749,7 +749,7 @@ export const generateCheckCalculationSheetPDF = (check: any, supplier: any, cent
   doc.setFontSize(9);
   doc.text(`VALOR EN LETRAS: ${amountInWords}`, 20, lastTableFinalY + 10);
 
-  let finalY = lastTableFinalY + 15;
+  let finalY = lastTableFinalY + 25;
   if (finalY + 40 > doc.internal.pageSize.height - 10) {
     doc.addPage();
     finalY = 35;
@@ -794,7 +794,7 @@ export const generateServiceRequestPDF = (quote: any, supplier: any, center?: an
   doc.text("Necesario para el correcto funcionamiento de las instalaciones", 25, justificationY + 15);
   doc.text("del centro educativo.", 25, justificationY + 20);
 
-  const signatureY = justificationY + 20;
+  const signatureY = justificationY + 30;
   doc.text("Firma Solicitante: ____________________", 20, signatureY);
   doc.text("Visto Bueno: ____________________", 120, signatureY);
 
@@ -854,7 +854,7 @@ export const generateLaborReceiptPDF = (check: any, supplier: any, center?: any,
   });
 
   const lastTableFinalY = (doc as any).lastAutoTable.finalY;
-  let finalY = lastTableFinalY + 15;
+  let finalY = lastTableFinalY + 25;
   
   if (finalY + 60 > doc.internal.pageSize.height - 10) {
     doc.addPage();
