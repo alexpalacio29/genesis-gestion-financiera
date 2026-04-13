@@ -366,43 +366,45 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
              <span className="text-2xl font-black tracking-tight text-slate-900">GestiFy <span className="text-emerald-600">RD</span></span>
           </div>
 
-          <nav className="hidden md:flex items-center gap-8">
-            {['Inicio', 'Funciones', 'Reportes', 'Tutorial', 'Planes', 'Contacto'].map(item => (
-              <a key={item} href={`#${item.toLowerCase()}`} className="text-sm font-bold text-slate-500 hover:text-emerald-600 transition-colors">{item}</a>
-            ))}
-          </nav>
+          <div className="hidden md:flex items-center gap-8 lg:gap-12">
+            <nav className="flex items-center gap-6 lg:gap-8">
+              {['Inicio', 'Funciones', 'Reportes', 'Tutorial', 'Planes', 'Contacto'].map(item => (
+                <a key={item} href={`#${item.toLowerCase()}`} className="text-sm font-bold text-slate-500 hover:text-emerald-600 transition-colors whitespace-nowrap">{item}</a>
+              ))}
+            </nav>
 
-          <div className="flex items-center gap-4">
-            {isLoggedIn ? (
+            <div className="flex items-center gap-3">
+              {isLoggedIn ? (
+                <button 
+                  onClick={onGoToDashboard}
+                  className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100/50"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>Mi Panel</span>
+                </button>
+              ) : (
+                <button 
+                  onClick={onLogin}
+                  className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2 rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg"
+                >
+                  <Lock className="w-4 h-4" />
+                  <span className="whitespace-nowrap">Iniciar Sesión</span>
+                </button>
+              )}
+              
               <button 
-                onClick={onGoToDashboard}
-                className="hidden md:flex items-center gap-2 bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100"
+                onClick={() => setShowShareModal(true)}
+                className="flex items-center justify-center w-10 h-10 bg-slate-50 border border-slate-100 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all shadow-sm"
+                title="Recomendar GestiFy RD"
               >
-                <LayoutDashboard className="w-4 h-4" />
-                Mi Panel
+                <Share2 className="w-5 h-5" />
               </button>
-            ) : (
-              <button 
-                onClick={onLogin}
-                className="hidden md:flex items-center gap-2 bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg"
-              >
-                <Lock className="w-4 h-4" />
-                Iniciar Sesión
-              </button>
-            )}
-            
-            <button 
-              onClick={() => setShowShareModal(true)}
-              className="hidden md:flex items-center justify-center w-10 h-10 bg-slate-50 border border-slate-100 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all shadow-sm"
-              title="Recomendar GestiFy RD"
-            >
-              <Share2 className="w-5 h-5" />
-            </button>
-
-            <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-              {isMenuOpen ? <X /> : <Menu />}
-            </button>
+            </div>
           </div>
+
+          <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            {isMenuOpen ? <X /> : <Menu />}
+          </button>
         </div>
       </header>
 
