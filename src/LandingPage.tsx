@@ -358,7 +358,7 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
       </AnimatePresence>
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100 h-20">
-        <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between md:justify-start md:gap-12 lg:gap-20">
           <div className="flex items-center gap-3">
              <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden">
                <img src="/logo-gestify.png" alt="Logo" className="w-full h-full object-contain" />
@@ -402,7 +402,7 @@ export default function LandingPage({ onLogin, isLoggedIn, onGoToDashboard }: La
             </div>
           </div>
 
-          <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          <button className="md:hidden ml-auto" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <X /> : <Menu />}
           </button>
         </div>
