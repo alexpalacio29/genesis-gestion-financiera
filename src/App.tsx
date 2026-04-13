@@ -5310,6 +5310,19 @@ const SaaSAdminPanel = ({ apiFetch, onSelectCenter }: { apiFetch: any, onSelectC
     }
   };
 
+  const handleUpdateCenterSubscription = async (id: number, date: string) => {
+    try {
+      await apiFetch(`/api/saas/centers/${id}/subscription`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription_until: date })
+      });
+      fetchData();
+    } catch (e) {
+      alert('Error al actualizar fecha de vencimiento');
+    }
+  };
+
   const handleUpdateUserPlan = async (id: number, plan: string) => {
     try {
       await apiFetch(`/api/saas/users/${id}/plan`, { 
@@ -5454,6 +5467,7 @@ const SaaSAdminPanel = ({ apiFetch, onSelectCenter }: { apiFetch: any, onSelectC
                 <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Administrador</th>
                 <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Usuarios</th>
                 <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Estado</th>
+                <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Vence</th>
                 <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Acciones</th>
               </tr>
             </thead>
@@ -5484,12 +5498,28 @@ const SaaSAdminPanel = ({ apiFetch, onSelectCenter }: { apiFetch: any, onSelectC
                     </select>
                   </td>
                   <td className="p-4">
-                    <span className={cn(
-                      "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest",
-                      c.status === 'active' ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
-                    )}>
-                      {c.status === 'active' ? 'Activo' : 'Suspendido'}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span className={cn(
+                        "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit",
+                        c.status === 'active' ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                      )}>
+                        {c.status === 'active' ? 'Activo' : 'Suspendido'}
+                      </span>
+                      {c.subscription_until && new Date(c.subscription_until) < new Date() && (
+                        <span className="text-[8px] font-bold text-rose-500 uppercase tracking-tighter animate-pulse">¡Suscripción Expirada!</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <input 
+                      type="date"
+                      value={c.subscription_until || ''}
+                      onChange={(e) => handleUpdateCenterSubscription(c.id, e.target.value)}
+                      className={cn(
+                        "text-[10px] font-bold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-slate-900/5 transition-all text-slate-600",
+                        c.subscription_until && new Date(c.subscription_until) < new Date() ? "text-rose-600 border-rose-200 bg-rose-50" : ""
+                      )}
+                    />
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex justify-end gap-2">

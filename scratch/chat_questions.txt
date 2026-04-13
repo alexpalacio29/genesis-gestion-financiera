@@ -1,0 +1,3 @@
+1. ¿Tienes algún nombre específico para el asistente de IA (ej: "GestiBot", "Soporte GestiFy")?
+2. ¿Prefieres que el chat tenga botones con preguntas rápidas (ej: "¿Qué planes ofrecen?", "¿Cómo funciona el procesador de IA?") o que sea solo de texto libre?
+3. ¿El bot debe centrarse solo en vender los planes a nuevos clientes o también dar soporte técnico?

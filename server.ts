@@ -153,7 +153,8 @@ async function startServer() {
     "CREATE TABLE IF NOT EXISTS products (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), name TEXT NOT NULL, category TEXT, unit_price DECIMAL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);",
     "ALTER TABLE products ADD COLUMN center_id INTEGER;",
     "ALTER TABLE centers ADD COLUMN plan TEXT DEFAULT 'multi';",
-    "ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'multi';"
+    "ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'multi';",
+    "ALTER TABLE centers ADD COLUMN subscription_until TEXT;"
   ];
 
   for (const m of migrations) {
@@ -332,6 +333,26 @@ async function startServer() {
     try {
       const { plan } = req.body;
       await pool.query("UPDATE users SET plan = $1 WHERE id = $2", [plan, req.params.id]);
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: any, res: any) => {
+    try {
+      const { subscription_until } = req.body;
+      await pool.query("UPDATE centers SET subscription_until = $1 WHERE id = $2", [subscription_until, req.params.id]);
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: any, res: any) => {
+    try {
+      const { subscription_until } = req.body;
+      await pool.query("UPDATE centers SET subscription_until = $1 WHERE id = $2", [subscription_until, req.params.id]);
       res.json({ success: true });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
