@@ -449,16 +449,15 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
   doc.text(`Teléfono ${center?.phone || "809-554-0329"}`, 105, emailY + 5, { align: "center" });
 
   doc.setFontSize(10);
-  doc.text(`Fecha: ${formatDate(new Date()).toUpperCase()}`, 140, emailY + 12);
+  doc.text(`Fecha: ${formatDate(new Date()).toUpperCase()}`, 180, emailY + 12, { align: "right" });
 
   doc.setFont("helvetica", "bold");
-  doc.text(`A : Junta de Centro Educativo ${centerCode} ${centerName}`, 20, emailY + 12);
-  doc.text(center?.director_name || "Director(a) de la Junta de Centro", 20, emailY + 18);
-
-  doc.text(`Atención : ${center?.director_name || 'Presidente(a) y/o Tesorero(a)'}`, 20, emailY + 24);
+  doc.text(`A : Junta de Centro Educativo ${centerName}`, 20, emailY + 18);
+  doc.text(`Código: ${centerCode}`, 180, emailY + 24, { align: "right" });
+  doc.text(`Atención : ${center?.director_name || 'Presidente(a) y/o Tesorero(a)'}`, 20, emailY + 30);
   
   // Dynamic Y positioning starts here
-  let currentY = emailY + 30;
+  let currentY = emailY + 38;
   const asuntoText = `Asunto : Solicitud de libramiento de cheque por concepto de ${check.description || 'adquisición de equipos tecnológico / materiales / servicios'}`;
   const asuntoLines = doc.splitTextToSize(asuntoText, 170);
   doc.text(asuntoLines, 20, currentY);
@@ -559,8 +558,8 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
   doc.setFont("helvetica", "normal");
   doc.text(`Fecha: ${formatDate(requisition.created_at)}`, 20, 65);
   doc.text(`Junta de Centro Educativo: ${centerName}`, 20, 72);
-  doc.text(`Código: ${centerCode}`, 120, 72);
-  doc.text(`POA: ${requisition.poa_year || '2026'}`, 20, 80);
+  doc.text(`Código: ${centerCode}`, 180, 78, { align: "right" });
+  doc.text(`POA: ${requisition.poa_year || '2026'}`, 20, 84);
 
   doc.setFont("helvetica", "bold");
   const conceptText = `CONCEPTO: ${quote.description || 'Materiales didácticos nivel inicial, primaria y secundaria'}`;
@@ -674,9 +673,9 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[], c
   currentY += 10;
   doc.setFont("helvetica", "bold");
   doc.text(`Junta de Centro Educativo: ${centerName}`, 20, currentY);
-  doc.text(`Código: ${centerCode}`, 120, currentY);
+  doc.text(`Código: ${centerCode}`, 180, currentY + 6, { align: "right" });
 
-  currentY += 10;
+  currentY += 12;
   doc.setFont("helvetica", "normal");
   const subText = "Solicitamos despachar por nuestra cuenta, los artículos y/o servicios que se detallan a continuación, según los precios convenidos y pactados entre usted/es y la Junta de este Centro Educativo.";
   const subLines = doc.splitTextToSize(subText, 170);
