@@ -111,7 +111,7 @@ async function startServer() {
       CREATE TABLE IF NOT EXISTS budgets (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), year TEXT NOT NULL, total_amount DECIMAL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, UNIQUE(center_id, year));
       CREATE TABLE IF NOT EXISTS budget_allocations (id SERIAL PRIMARY KEY, budget_id INTEGER NOT NULL REFERENCES budgets(id), category TEXT NOT NULL, allocated_amount DECIMAL DEFAULT 0, UNIQUE(budget_id, category));
       CREATE TABLE IF NOT EXISTS user_centers (user_id INTEGER REFERENCES users(id), center_id INTEGER REFERENCES centers(id), role TEXT DEFAULT 'admin', PRIMARY KEY (user_id, center_id));
-      CREATE TABLE IF NOT EXISTS suppliers (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), name TEXT NOT NULL, rnc TEXT, type TEXT DEFAULT 'formal', phone TEXT, address TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS suppliers (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), name TEXT NOT NULL, rnc TEXT, type TEXT DEFAULT 'formal', phone TEXT, address TEXT, is_exempt_isr BOOLEAN DEFAULT FALSE, is_exempt_itbis BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS quotes (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), supplier_id INTEGER REFERENCES suppliers(id), type TEXT DEFAULT 'materials', total_amount DECIMAL, subtotal DECIMAL, itbis DECIMAL, description TEXT, status TEXT DEFAULT 'pending', pdf_url TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS requisitions (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), quote_id INTEGER REFERENCES quotes(id), poa_year INTEGER DEFAULT 2026, code TEXT, description TEXT, status TEXT DEFAULT 'pending', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS purchase_orders (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), requisition_id INTEGER REFERENCES requisitions(id), supplier_id INTEGER REFERENCES suppliers(id), total_amount DECIMAL, subtotal DECIMAL, itbis DECIMAL, status TEXT DEFAULT 'pending', ncf TEXT, description TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
@@ -154,7 +154,9 @@ async function startServer() {
     "ALTER TABLE products ADD COLUMN center_id INTEGER;",
     "ALTER TABLE centers ADD COLUMN plan TEXT DEFAULT 'multi';",
     "ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'multi';",
-    "ALTER TABLE centers ADD COLUMN subscription_until TEXT;"
+    "ALTER TABLE centers ADD COLUMN subscription_until TEXT;",
+    "ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS is_exempt_isr BOOLEAN DEFAULT FALSE;",
+    "ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS is_exempt_itbis BOOLEAN DEFAULT FALSE;"
   ];
 
   for (const m of migrations) {
@@ -912,11 +914,11 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
   app.post("/api/suppliers", async (req: any, res: any) => {
     const centerId = (req as any).centerId;
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
-    const { name, rnc, type, phone, address } = req.body;
+    const { name, rnc, type, phone, address, is_exempt_isr, is_exempt_itbis } = req.body;
     try {
       const result = await pool.query(
-        "INSERT INTO suppliers (center_id, name, rnc, type, phone, address) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
-        [centerId, name, rnc, type, phone, address]
+        "INSERT INTO suppliers (center_id, name, rnc, type, phone, address, is_exempt_isr, is_exempt_itbis) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
+        [centerId, name, rnc, type, phone, address, is_exempt_isr || false, is_exempt_itbis || false]
       );
       res.json({ id: result.rows[0].id });
     } catch (e: any) {
@@ -928,11 +930,11 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
     const centerId = (req as any).centerId;
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
     const { id } = req.params;
-    const { name, rnc, type, phone, address } = req.body;
+    const { name, rnc, type, phone, address, is_exempt_isr, is_exempt_itbis } = req.body;
     try {
       await pool.query(
-        "UPDATE suppliers SET name = $1, rnc = $2, type = $3, phone = $4, address = $5 WHERE id = $6 AND center_id = $7",
-        [name, rnc, type, phone, address, id, centerId]
+        "UPDATE suppliers SET name = $1, rnc = $2, type = $3, phone = $4, address = $5, is_exempt_isr = $6, is_exempt_itbis = $7 WHERE id = $8 AND center_id = $9",
+        [name, rnc, type, phone, address, is_exempt_isr || false, is_exempt_itbis || false, id, centerId]
       );
       res.json({ success: true });
     } catch (e: any) {

@@ -64,6 +64,7 @@ import {
   generateBankBookReportPDF,
   generatePettyCashReportPDF,
   generateInventoryReportPDF,
+  exportInventoryToExcel,
   exportCashBookToExcel,
   generateGeneralReportPDF,
   exportOfficialMinerdReport,
@@ -1322,12 +1323,12 @@ const Dashboard = ({ onNavigate, apiFetch, currentCenter }: { onNavigate: (tab: 
   );
 };
 
-const Suppliers = ({ apiFetch }: { apiFetch: any }) => {
+const Suppliers = ({ apiFetch, onNavigate, setPreselectedSupplier }: any) => {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [newSupplier, setNewSupplier] = useState({ name: '', rnc: '', type: 'formal', phone: '', address: '' });
+  const [newSupplier, setNewSupplier] = useState({ name: '', rnc: '', type: 'formal', phone: '', address: '', is_exempt_isr: false, is_exempt_itbis: false });
 
   const fetchSuppliers = useCallback(() => {
     apiFetch('/api/suppliers')
@@ -1349,7 +1350,9 @@ const Suppliers = ({ apiFetch }: { apiFetch: any }) => {
       rnc: s.rnc || '',
       type: s.type || 'formal',
       phone: s.phone || '',
-      address: s.address || ''
+      address: s.address || '',
+      is_exempt_isr: !!s.is_exempt_isr,
+      is_exempt_itbis: !!s.is_exempt_itbis
     });
     setShowForm(true);
   };
@@ -1366,7 +1369,7 @@ const Suppliers = ({ apiFetch }: { apiFetch: any }) => {
     
     setEditingId(null);
     setShowForm(false);
-    setNewSupplier({ name: '', rnc: '', type: 'formal', phone: '', address: '' });
+    setNewSupplier({ name: '', rnc: '', type: 'formal', phone: '', address: '', is_exempt_isr: false, is_exempt_itbis: false });
     fetchSuppliers();
   };
 
@@ -1380,7 +1383,7 @@ const Suppliers = ({ apiFetch }: { apiFetch: any }) => {
         <button
           onClick={() => {
             setEditingId(null);
-            setNewSupplier({ name: '', rnc: '', type: 'formal', phone: '', address: '' });
+            setNewSupplier({ name: '', rnc: '', type: 'formal', phone: '', address: '', is_exempt_isr: false, is_exempt_itbis: false });
             setShowForm(true);
           }}
           className="bg-slate-900 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-800"
@@ -1429,6 +1432,26 @@ const Suppliers = ({ apiFetch }: { apiFetch: any }) => {
                 onChange={e => setNewSupplier({ ...newSupplier, address: e.target.value })}
               />
             </div>
+            <div className="md:col-span-2 flex flex-col sm:flex-row gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                  checked={newSupplier.is_exempt_isr}
+                  onChange={e => setNewSupplier({ ...newSupplier, is_exempt_isr: e.target.checked })}
+                />
+                Exento de Retención ISR (5%)
+              </label>
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                  checked={newSupplier.is_exempt_itbis}
+                  onChange={e => setNewSupplier({ ...newSupplier, is_exempt_itbis: e.target.checked })}
+                />
+                Exento de Retención ITBIS
+              </label>
+            </div>
             <div className="md:col-span-2 flex justify-end gap-2 text-sm font-bold uppercase tracking-widest">
               <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-slate-400 hover:text-slate-600">Cancelar</button>
               <button type="submit" className="px-6 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors">
@@ -1476,13 +1499,26 @@ const Suppliers = ({ apiFetch }: { apiFetch: any }) => {
                   <td className="data-grid-cell font-mono text-xs">{s.rnc}</td>
                   <td className="data-grid-cell">{s.phone}</td>
                   <td className="data-grid-cell text-right">
-                    <button 
-                      onClick={() => handleEditClick(s)}
-                      className="text-slate-400 hover:text-slate-900 p-2 hover:bg-slate-100 rounded-lg transition-all"
-                      title="Editar Suplidor"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex justify-end gap-1">
+                      <button 
+                        onClick={() => {
+                          setPreselectedSupplier(s);
+                          onNavigate('auto-processor');
+                        }}
+                        className="text-indigo-600 hover:text-indigo-900 p-2 hover:bg-indigo-50 rounded-lg transition-all flex items-center gap-1"
+                        title="Crear Cotización"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span className="text-[10px] font-bold uppercase hidden sm:inline">Cotizar</span>
+                      </button>
+                      <button 
+                        onClick={() => handleEditClick(s)}
+                        className="text-slate-400 hover:text-slate-900 p-2 hover:bg-slate-100 rounded-lg transition-all"
+                        title="Editar Suplidor"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1664,7 +1700,13 @@ const Inventory = ({ apiFetch, minerdCodes }: { apiFetch: any, minerdCodes: any[
             onClick={() => generateInventoryReportPDF(sortedItems, startDate, endDate)}
             className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors">
             <Download className="w-4 h-4" />
-            Exportar
+            PDF
+          </button>
+          <button
+            onClick={() => exportInventoryToExcel(sortedItems)}
+            className="bg-emerald-50 border border-emerald-200 text-emerald-600 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-emerald-100 transition-colors">
+            <FileSpreadsheet className="w-4 h-4" />
+            Excel
           </button>
 
           {selectedIds.length > 0 && (
@@ -2178,7 +2220,9 @@ const Checks = ({ apiFetch }: { apiFetch: any }) => {
     amount_gross: 0,
     supplier_id: '',
     beneficiary: '',
-    description: ''
+    description: '',
+    isExemptISR: false,
+    isExemptITBIS: false
   });
 
   useEffect(() => {
@@ -2190,10 +2234,12 @@ const Checks = ({ apiFetch }: { apiFetch: any }) => {
     const supplier = suppliers.find((s: any) => s.id === parseInt(supplierId)) as any;
     if (!supplier) return { isr: 0, itbis: 0, net: amount };
 
-    let isr = amount * 0.05; // Standard 5% ISR
+    let isr = newCheck.isExemptISR ? 0 : (amount * 0.05); // Standard 5% ISR or exempt
     let itbis = 0;
 
-    if (supplier.type === 'informal') {
+    if (newCheck.isExemptITBIS) {
+      itbis = 0;
+    } else if (supplier.type === 'informal') {
       // 100% ITBIS retention for informal suppliers (assuming 18% ITBIS included in gross or calculated)
       // For simplicity, let's assume gross is the base and ITBIS is added/extracted
       itbis = (amount / 1.18) * 0.18;
@@ -2263,7 +2309,16 @@ const Checks = ({ apiFetch }: { apiFetch: any }) => {
               className="p-2 border rounded-lg"
               required
               value={newCheck.supplier_id}
-              onChange={e => setNewCheck({ ...newCheck, supplier_id: e.target.value })}
+              onChange={e => {
+                const s = suppliers.find((sup: any) => sup.id === parseInt(e.target.value)) as any;
+                setNewCheck({ 
+                  ...newCheck, 
+                  supplier_id: e.target.value, 
+                  beneficiary: s?.name || '',
+                  isExemptISR: s ? !!s.is_exempt_isr : false,
+                  isExemptITBIS: s ? !!s.is_exempt_itbis : false
+                });
+              }}
             >
               <option value="">Seleccionar Suplidor</option>
               {suppliers.map((s: any) => (
@@ -2285,6 +2340,26 @@ const Checks = ({ apiFetch }: { apiFetch: any }) => {
               value={newCheck.description}
               onChange={e => setNewCheck({ ...newCheck, description: e.target.value })}
             />
+            <div className="md:col-span-2 flex flex-col sm:flex-row gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                  checked={newCheck.isExemptISR}
+                  onChange={e => setNewCheck({ ...newCheck, isExemptISR: e.target.checked })}
+                />
+                Exento ISR (5%)
+              </label>
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                  checked={newCheck.isExemptITBIS}
+                  onChange={e => setNewCheck({ ...newCheck, isExemptITBIS: e.target.checked })}
+                />
+                Exento ITBIS
+              </label>
+            </div>
             <div className="md:col-span-2 flex justify-end gap-2">
               <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-slate-500">Cancelar</button>
               <button type="submit" className="px-4 py-2 bg-slate-900 text-white rounded-lg">Generar Cheque</button>
@@ -2483,7 +2558,7 @@ const BankBook = ({ apiFetch }: { apiFetch: any }) => {
   );
 };
 
-const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit, setQuoteToEdit, minerdCodes }: any) => {
+const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit, setQuoteToEdit, minerdCodes, preselectedSupplier, onClearPreselected }: any) => {
   const [file, setFile] = useState<File | null>(null);
   const [metadata, setMetadata] = useState<any>({
     supplierType: 'formal',
@@ -2493,8 +2568,11 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
     ncf: '',
     checkNumber: '',
     concept: '',
-    inputMode: 'excel' // 'manual', 'excel', 'pdf'
+    inputMode: 'excel', // 'manual', 'excel', 'pdf'
+    isExemptISR: false,
+    isExemptITBIS: false
   });
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   const [processing, setProcessing] = useState(false);
   const [suggestingCodes, setSuggestingCodes] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
@@ -2575,6 +2653,23 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
         });
     }
   }, [quoteToEdit, apiFetch]);
+
+  useEffect(() => {
+    apiFetch('/api/suppliers').then((res: any) => res.json()).then(setSuppliers);
+  }, [apiFetch]);
+
+  useEffect(() => {
+    if (preselectedSupplier) {
+      setMetadata({ ...metadata, inputMode: 'manual', isExemptISR: !!preselectedSupplier.is_exempt_isr, isExemptITBIS: !!preselectedSupplier.is_exempt_itbis });
+      setManualSupplier({
+        name: preselectedSupplier.name,
+        rnc: preselectedSupplier.rnc || '',
+        address: preselectedSupplier.address || '',
+        phone: preselectedSupplier.phone || ''
+      });
+      if (onClearPreselected) onClearPreselected();
+    }
+  }, [preselectedSupplier]);
 
 
 
@@ -2954,10 +3049,12 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
 
 
       // Calculations based on subtotal for ISR
-      const retention_isr = subtotal * 0.05;
+      const retention_isr = metadata.isExemptISR ? 0 : (subtotal * 0.05);
 
       // Formal: No ITBIS retention. Informal: 100% ITBIS retention.
-      const retention_itbis = metadata.supplierType === 'informal' ? itbis : 0;
+      let retention_itbis = metadata.supplierType === 'informal' ? itbis : 0;
+      if (metadata.isExemptITBIS) retention_itbis = 0;
+      
       const finalDescription = metadata.concept || previewData.quote.description || (metadata.quoteType === 'labor' ? 'Servicios de mantenimiento' : 'Adquisición de materiales');
 
       const amount_net = total - retention_isr - retention_itbis;
@@ -3163,6 +3260,30 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
 
             {metadata.inputMode === 'manual' ? (
               <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold uppercase text-slate-400">Buscar Suplidor Registrado</h4>
+                  <select 
+                    className="w-full p-2 border rounded-lg text-sm bg-slate-50 border-slate-200"
+                    onChange={(e) => {
+                      const s = suppliers.find(sup => sup.id === parseInt(e.target.value));
+                      if (s) {
+                        setManualSupplier({ name: s.name, rnc: s.rnc, address: s.address, phone: s.phone });
+                        setMetadata({ 
+                          ...metadata, 
+                          supplierType: s.type || 'formal',
+                          isExemptISR: !!s.is_exempt_isr,
+                          isExemptITBIS: !!s.is_exempt_itbis
+                        });
+                      }
+                    }}
+                  >
+                    <option value="">-- Seleccionar Suplidor Existente --</option>
+                    {suppliers.map(s => (
+                      <option key={s.id} value={s.id}>{s.name} ({s.rnc})</option>
+                    ))}
+                  </select>
+                </div>
+
                 <h4 className="text-xs font-bold uppercase text-slate-400">Datos del Suplidor</h4>
                 <div className="space-y-3">
                   <input
@@ -3363,6 +3484,26 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
                   value={metadata.checkNumber}
                   onChange={e => setMetadata({ ...metadata, checkNumber: e.target.value })}
                 />
+              </div>
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
+                <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                    checked={metadata.isExemptISR}
+                    onChange={e => setMetadata({ ...metadata, isExemptISR: e.target.checked })}
+                  />
+                  Este pago está exento de ISR (5%)
+                </label>
+                <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                    checked={metadata.isExemptITBIS}
+                    onChange={e => setMetadata({ ...metadata, isExemptITBIS: e.target.checked })}
+                  />
+                  Este pago está exento de ITBIS
+                </label>
               </div>
               <div>
                 <label className="text-xs font-bold uppercase text-slate-400">Concepto del Pago</label>
@@ -5724,6 +5865,7 @@ export default function App() {
   const [isSuspended, setIsSuspended] = useState(false);
   const [minerdCodes, setMinerdCodes] = useState<any[]>([]);
   const [isAuthMode, setIsAuthMode] = useState(false);
+  const [preselectedSupplier, setPreselectedSupplier] = useState<any>(null);
 
   // Global fetch wrapper with center context
   const apiFetch = useCallback(async (url: string, options: any = {}) => {
@@ -5899,7 +6041,7 @@ export default function App() {
   const renderContent = () => {
 
     // Pass apiFetch to components that need it
-    const props = { apiFetch, currentCenter, user, onNavigate: setActiveTab, minerdCodes };
+    const props = { apiFetch, currentCenter, user, onNavigate: setActiveTab, minerdCodes, setPreselectedSupplier };
     const onEditQuote = (id: number) => {
       setQuoteToEdit(id);
       setActiveTab('auto-processor');
@@ -5907,7 +6049,7 @@ export default function App() {
 
     switch (activeTab) {
       case 'dashboard': return <Dashboard onNavigate={setActiveTab} apiFetch={apiFetch} currentCenter={currentCenter} />;
-      case 'auto-processor': return <AutoProcessor {...props} quoteToEdit={quoteToEdit} setQuoteToEdit={setQuoteToEdit} />;
+      case 'auto-processor': return <AutoProcessor {...props} quoteToEdit={quoteToEdit} setQuoteToEdit={setQuoteToEdit} preselectedSupplier={preselectedSupplier} onClearPreselected={() => setPreselectedSupplier(null)} />;
       case 'budget': return <Budget {...props} />;
       case 'suppliers': return <Suppliers {...props} />;
       case 'inventory': return <Inventory {...props} />;

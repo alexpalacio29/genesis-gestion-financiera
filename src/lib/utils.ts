@@ -113,7 +113,11 @@ export function numberToWordsSpanish(n: number): string {
 }
 
 export const generateQuotePDF = (quote: any, supplier: any, items: any[] = [], center?: any, logoBase64?: string) => {
-  const doc = new jsPDF();
+  const doc = new jsPDF({
+    orientation: 'p',
+    unit: 'mm',
+    format: 'letter'
+  });
   const centerName = center?.name || "Gestify RD";
   const centerCode = center?.codigo_no || "06907";
 
@@ -237,7 +241,11 @@ export const generateCheckPDF = (check: any, center?: any, logoBase64?: string) 
 };
 
 export const generateRetentionCertPDF = (check: any, supplier: any, center?: any, logoBase64?: string) => {
-  const doc = new jsPDF();
+  const doc = new jsPDF({
+    orientation: 'p',
+    unit: 'mm',
+    format: 'letter'
+  });
   const centerName = center?.name || "Centro Educativo";
   const centerRNC = center?.rnc || "4-30-37254-4";
   const centerCode = center?.codigo_no || "06907";
@@ -323,7 +331,11 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
 };
 
 export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?: any, logoBase64?: string) => {
-  const doc = new jsPDF();
+  const doc = new jsPDF({
+    orientation: 'p',
+    unit: 'mm',
+    format: 'letter'
+  });
   const centerName = center?.name || "Centro Educativo";
   const centerRNC = center?.rnc || "4-30-37254-4";
   const centerCode = center?.codigo_no || "06907";
@@ -404,7 +416,11 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
 };
 
 export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?: any, logoBase64?: string) => {
-  const doc = new jsPDF();
+  const doc = new jsPDF({
+    orientation: 'p',
+    unit: 'mm',
+    format: 'letter'
+  });
   const centerName = center?.name || "CENTRO EDUCATIVO";
   const centerCode = center?.codigo_no || "06907";
 
@@ -432,83 +448,83 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
   doc.text(`${center?.email || "colegiocristianogenesis@hotmail.com"}`, 105, emailY, { align: "center" });
   doc.text(`Teléfono ${center?.phone || "809-554-0329"}`, 105, emailY + 5, { align: "center" });
 
-  doc.setFontSize(11);
-  doc.text(`Fecha: ${formatDate(new Date()).toUpperCase()}`, 140, emailY + 15);
+  doc.setFontSize(10);
+  doc.text(`Fecha: ${formatDate(new Date()).toUpperCase()}`, 140, emailY + 12);
 
   doc.setFont("helvetica", "bold");
-  doc.text(`A : Junta de Centro Educativo ${centerCode} ${centerName}`, 20, emailY + 15);
-  doc.text(center?.director_name || "Director(a) de la Junta de Centro", 20, emailY + 22);
+  doc.text(`A : Junta de Centro Educativo ${centerCode} ${centerName}`, 20, emailY + 12);
+  doc.text(center?.director_name || "Director(a) de la Junta de Centro", 20, emailY + 18);
 
-  doc.text(`Atención : ${center?.director_name || 'Presidente(a) y/o Tesorero(a)'}`, 20, emailY + 30);
+  doc.text(`Atención : ${center?.director_name || 'Presidente(a) y/o Tesorero(a)'}`, 20, emailY + 24);
   
   // Dynamic Y positioning starts here
-  let currentY = emailY + 38;
+  let currentY = emailY + 30;
   const asuntoText = `Asunto : Solicitud de libramiento de cheque por concepto de ${check.description || 'adquisición de equipos tecnológico / materiales / servicios'}`;
   const asuntoLines = doc.splitTextToSize(asuntoText, 170);
   doc.text(asuntoLines, 20, currentY);
-  currentY += (asuntoLines.length * 6);
+  currentY += (asuntoLines.length * 5);
 
-  doc.text("Distinguido(a) Director(a):", 20, currentY + 5);
-  currentY += 10;
+  doc.text("Distinguido(a) Director(a):", 20, currentY + 3);
+  currentY += 8;
 
   doc.setFont("helvetica", "normal");
   const introText = "Cortésmente, nos dirigimos a usted con el propósito de solicitar el libramiento de un cheque con cargo a los fondos de descentralización correspondientes a este centro educativo, amparados en la Ordenanza No. 02-2018.";
   const introLines = doc.splitTextToSize(introText, 170);
   doc.text(introLines, 20, currentY);
-  currentY += (introLines.length * 6);
+  currentY += (introLines.length * 5);
 
   const subText = "Dicha solicitud se realiza para cubrir gastos necesarios para el buen funcionamiento del plantel, según el siguiente detalle:";
   const subLines = doc.splitTextToSize(subText, 170);
-  doc.text(subLines, 20, currentY + 3);
-  currentY += (subLines.length * 6) + 3;
+  doc.text(subLines, 20, currentY + 2);
+  currentY += (subLines.length * 5) + 2;
 
   doc.setFont("helvetica", "bold");
   const detalleText = `Detalles del Pago: ${check.description || 'ADQUISICIÓN SEGÚN FACTURA'}`;
   const detalleLines = doc.splitTextToSize(detalleText, 170);
   doc.text(detalleLines, 20, currentY);
-  currentY += (detalleLines.length * 6) + 3;
+  currentY += (detalleLines.length * 5) + 2;
 
   doc.text(`• Beneficiario: ${supplier.name.toUpperCase()}`, 20, currentY);
-  currentY += 6;
+  currentY += 5;
   doc.text(`• RNC / Cédula: ${supplier.rnc}`, 20, currentY);
-  currentY += 6;
+  currentY += 5;
   
   const amountInWords = numberToWordsSpanish(check.amount_net);
   const montoText = `• Monto Total: ${formatCurrency(check.amount_net)} (${amountInWords})`;
   const montoLines = doc.splitTextToSize(montoText, 170);
   doc.text(montoLines, 20, currentY);
-  currentY += (montoLines.length * 6);
+  currentY += (montoLines.length * 5);
 
   const conceptoDetail = `• Concepto: ${check.description || 'PAGO DE BIENES/SERVICIOS'}`;
   const conceptoLines = doc.splitTextToSize(conceptoDetail, 170);
   doc.text(conceptoLines, 20, currentY);
-  currentY += (conceptoLines.length * 6);
+  currentY += (conceptoLines.length * 5);
 
   doc.text(`• Partida Presupuestaria: 100,000.00 Pesos Trimestral.`, 20, currentY);
-  currentY += 8;
+  currentY += 6;
 
   doc.setFont("helvetica", "normal");
   const anexoText = "Se anexa a la presente la documentación soporte requerida (Factura con comprobante fiscal gubernamental, copia de cédula/RNC, cotizaciones previas y acta de la junta de centro que aprueba el gasto).";
   const anexoLines = doc.splitTextToSize(anexoText, 170);
   doc.text(anexoLines, 20, currentY);
-  currentY += (anexoLines.length * 6) + 4;
+  currentY += (anexoLines.length * 5) + 3;
 
   const finalParaText = "Agradecemos de antemano su gestión para que estos recursos sean entregados a la brevedad, permitiendo así la continuidad de los procesos pedagógicos y administrativos de nuestra institución.";
   const finalParaLines = doc.splitTextToSize(finalParaText, 170);
   doc.text(finalParaLines, 20, currentY);
-  currentY += (finalParaLines.length * 6) + 8;
+  currentY += (finalParaLines.length * 5) + 6;
 
   doc.text("Atentamente,", 20, currentY);
-  currentY += 10;
+  currentY += 8;
 
-  // Page break check for signatures
-  if (currentY + 25 > doc.internal.pageSize.height - 20) {
+  // Page break check for signatures - letter is 279.4mm height
+  if (currentY + 20 > doc.internal.pageSize.height - 15) {
     doc.addPage();
     currentY = 20;
   }
 
-  doc.text("Miembro del Equipo de Gestión________________", 20, currentY + 15);
-  doc.text("Miembro del Equipo de Gestión________________", 110, currentY + 15);
+  doc.text("Miembro del Equipo de Gestión________________", 20, currentY + 12);
+  doc.text("Miembro del Equipo de Gestión________________", 110, currentY + 12);
 
   doc.save(`Carta_Solicitud_${check.check_number}.pdf`);
 };
@@ -518,7 +534,11 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
     alert("Esta cotización aún no tiene una requisición generada. Debe procesarla primero.");
     return;
   }
-  const doc = new jsPDF();
+  const doc = new jsPDF({
+    orientation: 'p',
+    unit: 'mm',
+    format: 'letter'
+  });
   const centerName = center?.name || "Gestify RD";
   const centerCode = center?.codigo_no || "11001619";
 
@@ -596,7 +616,11 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[], c
     alert("Esta cotización aún no tiene una orden de compra generada. Debe procesarla primero.");
     return;
   }
-  const doc = new jsPDF();
+  const doc = new jsPDF({
+    orientation: 'p',
+    unit: 'mm',
+    format: 'letter'
+  });
   const centerName = center?.name || "CENTRO EDUCATIVO";
   const centerCode = center?.codigo_no || "06907";
 
@@ -708,7 +732,11 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[], c
 };
 
 export const generateCheckCalculationSheetPDF = (check: any, supplier: any, center?: any, logoBase64?: string) => {
-  const doc = new jsPDF();
+  const doc = new jsPDF({
+    orientation: 'p',
+    unit: 'mm',
+    format: 'letter'
+  });
   const centerName = center?.name || "GESTIFY RD";
 
   try {
@@ -762,7 +790,11 @@ export const generateCheckCalculationSheetPDF = (check: any, supplier: any, cent
 };
 
 export const generateServiceRequestPDF = (quote: any, supplier: any, center?: any, logoBase64?: string) => {
-  const doc = new jsPDF();
+  const doc = new jsPDF({
+    orientation: 'p',
+    unit: 'mm',
+    format: 'letter'
+  });
   const centerName = center?.name || "GESTIFY RD";
 
   try {
@@ -1105,6 +1137,32 @@ export const exportCashBookToExcel = (data: any[]) => {
   worksheet['!cols'] = maxWidths.map(w => ({ wch: w + 2 }));
 
   XLSX.writeFile(workbook, `Libro_Ingresos_Egresos_${new Date().toISOString().split('T')[0]}.xlsx`);
+};
+
+export const exportInventoryToExcel = (data: any[]) => {
+  const worksheetData = data.map(item => ({
+    'CÓDIGO MINERD': item.minerd_code || 'N/A',
+    'PRODUCTO': item.name || '',
+    'CATEGORÍA': item.category || '',
+    'PRECIO UNITARIO': item.unit_price || 0,
+    'STOCK ACTUAL': item.quantity || 0,
+    'VALOR TOTAL': (item.unit_price || 0) * (item.quantity || 0),
+    'STOCK MÍNIMO': item.min_quantity || 0,
+    'ESTADO': (item.quantity || 0) <= (item.min_quantity || 0) ? 'STOCK BAJO' : 'NORMAL',
+    'FECHA REGISTRO': formatDate(item.created_at || new Date())
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Inventario");
+
+  // Auto-size columns
+  const maxWidths = Object.keys(worksheetData[0] || {}).map(key =>
+    Math.max(key.length, ...worksheetData.map(row => String((row as any)[key]).length))
+  );
+  worksheet['!cols'] = maxWidths.map(w => ({ wch: w + 2 }));
+
+  XLSX.writeFile(workbook, `Inventario_${new Date().toISOString().split('T')[0]}.xlsx`);
 };
 
 export const generateGeneralReportPDF = (data: any, startDate: string, endDate: string, center?: any) => {
