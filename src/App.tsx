@@ -587,7 +587,7 @@ const BankReconciliation = ({ apiFetch, currentCenter }: { apiFetch: any, curren
                 <td className="p-4 font-bold text-slate-900">{rec.period_date}</td>
                 <td className="p-4 text-slate-600 font-medium">{formatCurrency(rec.bank_balance)}</td>
                 <td className="p-4 text-slate-600 font-medium">{formatCurrency(rec.book_balance)}</td>
-                <td className="p-4 text-[10px] text-slate-400 font-mono tracking-tighter">{new Date(rec.created_at).toLocaleString()}</td>
+                <td className="p-4 text-[10px] text-slate-400 font-mono tracking-tighter">{new Date(rec.created_at).toLocaleString("en-US")}</td>
                 <td className="p-4 text-right">
                   <button
                     onClick={() => handleGeneratePDF(rec)}
