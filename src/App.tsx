@@ -2002,6 +2002,7 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
             <tr className="bg-slate-50">
               <th className="data-grid-header">Fecha</th>
               <th className="data-grid-header">N. Cotización</th>
+              <th className="data-grid-header">N. Cheque</th>
               <th className="data-grid-header">Suplidor</th>
               <th className="data-grid-header">Tipo</th>
               <th className="data-grid-header">Monto Total</th>
@@ -2014,6 +2015,9 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
               <tr key={q.id} className="data-grid-row">
                 <td className="data-grid-cell text-xs font-medium text-slate-500">{formatDate(q.created_at)}</td>
                 <td className="data-grid-cell text-xs font-mono font-bold text-indigo-600">{q.quote_number || `#${q.id}`}</td>
+                <td className="data-grid-cell text-xs font-mono font-bold text-emerald-600">
+                  {q.check_number ? `Cheque #${q.check_number}` : <span className="text-slate-300">-</span>}
+                </td>
                 <td className="data-grid-cell font-medium">{q.supplier_name}</td>
                 <td className="data-grid-cell">
                   <span className={cn(

@@ -1078,9 +1078,13 @@ El JSON debe tener esta estructura exacta:
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
     try {
       const result = await pool.query(`
-        SELECT q.*, s.name as supplier_name, s.type as supplier_type, s.rnc, s.phone, s.address, s.is_exempt_isr, s.is_exempt_itbis
+        SELECT q.*, s.name as supplier_name, s.type as supplier_type, s.rnc, s.phone, s.address, s.is_exempt_isr, s.is_exempt_itbis,
+               c.check_number as check_number
         FROM quotes q 
         JOIN suppliers s ON q.supplier_id = s.id
+        LEFT JOIN requisitions r ON r.quote_id = q.id AND r.center_id = q.center_id
+        LEFT JOIN purchase_orders po ON po.requisition_id = r.id AND po.center_id = q.center_id
+        LEFT JOIN checks c ON c.purchase_order_id = po.id AND c.center_id = q.center_id
         WHERE q.center_id = $1
         ORDER BY q.created_at DESC
       `, [centerId]);
@@ -2028,17 +2032,32 @@ El JSON debe tener esta estructura exacta:
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      // 1. Update Supplier
+      // 1. Update/Find Supplier safely without merging empty RNCs
       let supplierId;
-      const sRes = await client.query("SELECT id FROM suppliers WHERE rnc = $1 AND center_id = $2", [supplier.rnc, centerId]);
-      if (sRes.rows.length > 0) {
-        supplierId = sRes.rows[0].id;
-        await client.query("UPDATE suppliers SET name = $1, type = $2, phone = $3, address = $4 WHERE id = $5 AND center_id = $6",
-          [supplier.name, supplier.type, supplier.phone, supplier.address, supplierId, centerId]);
-      } else {
-        const insS = await client.query("INSERT INTO suppliers (center_id, name, rnc, type, phone, address) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
-          [centerId, supplier.name, supplier.rnc, supplier.type, supplier.phone, supplier.address]);
-        supplierId = insS.rows[0].id;
+      const rncClean = supplier.rnc ? supplier.rnc.trim() : "";
+      
+      // Solo buscar por RNC si no está vacío para evitar mezclar suplidores
+      if (rncClean && rncClean !== "") {
+        const sRes = await client.query("SELECT id FROM suppliers WHERE rnc = $1 AND center_id = $2", [rncClean, centerId]);
+        if (sRes.rows.length > 0) {
+          supplierId = sRes.rows[0].id;
+          await client.query("UPDATE suppliers SET name = $1, type = $2, phone = $3, address = $4 WHERE id = $5 AND center_id = $6",
+            [supplier.name, supplier.type, supplier.phone, supplier.address, supplierId, centerId]);
+        }
+      }
+
+      // Si no se encontró por RNC o el RNC estaba vacío, buscar por nombre exacto para evitar duplicados
+      if (!supplierId) {
+        const sNameRes = await client.query("SELECT id FROM suppliers WHERE name = $1 AND center_id = $2", [supplier.name, centerId]);
+        if (sNameRes.rows.length > 0) {
+          supplierId = sNameRes.rows[0].id;
+          await client.query("UPDATE suppliers SET rnc = $1, type = $2, phone = $3, address = $4 WHERE id = $5 AND center_id = $6",
+            [supplier.rnc, supplier.type, supplier.phone, supplier.address, supplierId, centerId]);
+        } else {
+          const insS = await client.query("INSERT INTO suppliers (center_id, name, rnc, type, phone, address) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+            [centerId, supplier.name, supplier.rnc, supplier.type, supplier.phone, supplier.address]);
+          supplierId = insS.rows[0].id;
+        }
       }
 
       // 2. Update Quote
