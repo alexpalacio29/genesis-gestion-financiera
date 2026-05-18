@@ -1959,13 +1959,19 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
 
   const getCheckFormatFromQuote = (quote: any) => {
     const amount = quote.total_amount;
-    let isr = amount * 0.05;
-    let itbis = quote.supplier_type === 'informal' ? (amount / 1.18) * 0.18 : ((amount / 1.18) * 0.18) * 0.30;
+    const subtotal = quote.subtotal || amount;
+    let isr = (quote.is_exempt_isr || quote.isExemptISR) ? 0 : (subtotal * 0.05);
+    let itbis = 0;
+    if (!(quote.is_exempt_itbis || quote.isExemptITBIS)) {
+      itbis = quote.supplier_type === 'informal' ? (amount / 1.18) * 0.18 : ((amount / 1.18) * 0.18) * 0.30;
+    }
 
     return {
       check_number: `CHQ-${quote.id}`,
       date: quote.created_at,
       amount_gross: amount,
+      subtotal: quote.subtotal || (amount - (quote.itbis || 0)),
+      itbis_total: quote.itbis || 0,
       retention_isr: isr,
       retention_itbis: itbis,
       amount_net: amount - isr - itbis,

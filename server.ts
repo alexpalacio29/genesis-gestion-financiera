@@ -951,7 +951,7 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
 
     try {
       const quoteRes = await pool.query(`
-        SELECT q.*, s.name as supplier_name, s.rnc, s.address, s.phone, s.type as supplier_type
+        SELECT q.*, s.name as supplier_name, s.rnc, s.address, s.phone, s.type as supplier_type, s.is_exempt_isr, s.is_exempt_itbis
         FROM quotes q
         LEFT JOIN suppliers s ON q.supplier_id = s.id
         WHERE q.id = $1 AND q.center_id = $2
@@ -1078,10 +1078,11 @@ El JSON debe tener esta estructura exacta:
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
     try {
       const result = await pool.query(`
-        SELECT q.*, s.name as supplier_name, s.type as supplier_type, s.rnc, s.phone, s.address
+        SELECT q.*, s.name as supplier_name, s.type as supplier_type, s.rnc, s.phone, s.address, s.is_exempt_isr, s.is_exempt_itbis
         FROM quotes q 
         JOIN suppliers s ON q.supplier_id = s.id
         WHERE q.center_id = $1
+        ORDER BY q.created_at DESC
       `, [centerId]);
       res.json(result.rows);
     } catch (e: any) {
