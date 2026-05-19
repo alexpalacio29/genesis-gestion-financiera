@@ -211,11 +211,11 @@ export const generateCheckPDF = (check: any, center?: any, logoBase64?: string) 
 
   doc.setFontSize(10);
   // Top right calculations
-  doc.text(`RD ${formatCurrency(check.amount_gross).replace('RD$', '')}`, 180, 8);
+  doc.text(`RD ${formatCurrency(parseFloat(check.amount_gross) || 0).replace('RD$', '')}`, 180, 8);
   doc.text(`ITBIS.`, 160, 13);
-  doc.text(`5% ISR. ${formatCurrency(check.retention_isr).replace('RD$', '')}`, 160, 18);
+  doc.text(`5% ISR. ${formatCurrency(parseFloat(check.retention_isr) || 0).replace('RD$', '')}`, 160, 18);
   doc.setFont("helvetica", "bold");
-  doc.text(`${formatCurrency(check.amount_net).replace('RD$', '')}`, 180, 23);
+  doc.text(`${formatCurrency(parseFloat(check.amount_net) || 0).replace('RD$', '')}`, 180, 23);
 
   doc.setFont("helvetica", "normal");
   doc.text(formatDate(check.date), 20, 20);
@@ -232,10 +232,10 @@ export const generateCheckPDF = (check: any, center?: any, logoBase64?: string) 
 
   doc.setFont("helvetica", "bold");
   doc.text(check.beneficiary.toUpperCase(), 80, 50, { maxWidth: 75 });
-  doc.text(formatCurrency(check.amount_net).replace('RD$', ''), 175, 50);
+  doc.text(formatCurrency(parseFloat(check.amount_net) || 0).replace('RD$', ''), 175, 50);
 
   doc.setFont("helvetica", "normal");
-  const amountInWords = numberToWordsSpanish(check.amount_net);
+  const amountInWords = numberToWordsSpanish(parseFloat(check.amount_net) || 0);
   doc.text(`*** ${amountInWords} ***`, 30, 60);
 
   doc.save(`Cheque_${check.check_number}.pdf`);
@@ -265,7 +265,7 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
   doc.text(`RNC: ${centerRNC}`, 105, 60, { align: "center" });
 
   doc.setFontSize(14);
-  const certTitle = (check.retention_itbis || 0) > 0 ? "CERTIFICACIÓN DE RETENCIÓN DE IMPUESTOS (ISR E ITBIS)" : "CERTIFICACIÓN DE RETENCIÓN DE IMPUESTOS (ISR)";
+  const certTitle = (parseFloat(check.retention_itbis) || 0) > 0 ? "CERTIFICACIÓN DE RETENCIÓN DE IMPUESTOS (ISR E ITBIS)" : "CERTIFICACIÓN DE RETENCIÓN DE IMPUESTOS (ISR)";
   doc.text(certTitle, 105, 72, { align: "center" });
 
   doc.setFontSize(10);
@@ -291,11 +291,11 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
     body: [[
       check.check_number,
       formatDate(check.date),
-      formatCurrency(check.subtotal || check.amount_gross - (check.itbis_total || 0)),
-      formatCurrency(check.itbis_total || 0),
-      formatCurrency(check.retention_isr),
-      formatCurrency(check.retention_isr + (check.retention_itbis || 0)),
-      formatCurrency(check.amount_net)
+      formatCurrency(parseFloat(check.subtotal) || parseFloat(check.amount_gross) - (parseFloat(check.itbis_total) || 0)),
+      formatCurrency(parseFloat(check.itbis_total) || 0),
+      formatCurrency(parseFloat(check.retention_isr) || 0),
+      formatCurrency((parseFloat(check.retention_isr) || 0) + (parseFloat(check.retention_itbis) || 0)),
+      formatCurrency(parseFloat(check.amount_net) || 0)
     ]],
     theme: 'grid',
     headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8 },
@@ -489,8 +489,8 @@ export const generateCheckRequestLetterPDF = (check: any, supplier: any, center?
   doc.text(`• RNC / Cédula: ${supplier.rnc}`, 20, currentY);
   currentY += 5;
   
-  const amountInWords = numberToWordsSpanish(check.amount_net);
-  const montoText = `• Monto Total: ${formatCurrency(check.amount_net)} (${amountInWords})`;
+  const amountInWords = numberToWordsSpanish(parseFloat(check.amount_net) || 0);
+  const montoText = `• Monto Total: ${formatCurrency(parseFloat(check.amount_net) || 0)} (${amountInWords})`;
   const montoLines = doc.splitTextToSize(montoText, 170);
   doc.text(montoLines, 20, currentY);
   currentY += (montoLines.length * 5);
@@ -760,12 +760,12 @@ export const generateCheckCalculationSheetPDF = (check: any, supplier: any, cent
     startY: 100,
     head: [['Concepto', 'Monto']],
     body: [
-      ['Monto Bruto (Sub-Total)', formatCurrency(check.subtotal || check.amount_gross - (check.itbis_total || 0))],
-      ['(+) ITBIS Total', formatCurrency(check.itbis_total || 0)],
-      ['(=) Total General', formatCurrency(check.amount_gross)],
-      ['(-) Retención ISR (5% del Sub-Total)', formatCurrency(check.retention_isr)],
-      ['(-) Retención ITBIS (100% Proveedor Informal)', formatCurrency(check.retention_itbis || 0)],
-      ['(=) Monto Neto a Pagar', formatCurrency(check.amount_net)]
+      ['Monto Bruto (Sub-Total)', formatCurrency(parseFloat(check.subtotal) || parseFloat(check.amount_gross) - (parseFloat(check.itbis_total) || 0))],
+      ['(+) ITBIS Total', formatCurrency(parseFloat(check.itbis_total) || 0)],
+      ['(=) Total General', formatCurrency(parseFloat(check.amount_gross) || 0)],
+      ['(-) Retención ISR (5% del Sub-Total)', formatCurrency(parseFloat(check.retention_isr) || 0)],
+      ['(-) Retención ITBIS (100% Proveedor Informal)', formatCurrency(parseFloat(check.retention_itbis) || 0)],
+      ['(=) Monto Neto a Pagar', formatCurrency(parseFloat(check.amount_net) || 0)]
     ],
     theme: 'grid',
     columnStyles: { 1: { halign: 'right' } },

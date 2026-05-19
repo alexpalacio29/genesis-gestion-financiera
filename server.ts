@@ -1079,7 +1079,7 @@ El JSON debe tener esta estructura exacta:
     try {
       const result = await pool.query(`
         SELECT q.*, s.name as supplier_name, s.type as supplier_type, s.rnc, s.phone, s.address, s.is_exempt_isr, s.is_exempt_itbis,
-               c.check_number as check_number
+               c.check_number as check_number, c.id as check_id, c.retention_isr as check_retention_isr, c.retention_itbis as check_retention_itbis, c.amount_net as check_amount_net
         FROM quotes q 
         JOIN suppliers s ON q.supplier_id = s.id
         LEFT JOIN requisitions r ON r.quote_id = q.id AND r.center_id = q.center_id

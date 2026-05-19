@@ -1958,20 +1958,43 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
   };
 
   const getCheckFormatFromQuote = (quote: any) => {
-    const amount = quote.total_amount;
-    const subtotal = quote.subtotal || amount;
-    let isr = (quote.is_exempt_isr || quote.isExemptISR) ? 0 : (subtotal * 0.05);
+    const amount = parseFloat(quote.total_amount) || 0;
+    const itbis_total = parseFloat(quote.itbis) || 0;
+    const subtotal = parseFloat(quote.subtotal) || (amount - itbis_total);
+
+    // Si el cheque ya fue registrado en la base de datos, usamos los montos y retenciones reales grabados
+    if (quote.check_id !== undefined && quote.check_id !== null) {
+      return {
+        check_number: quote.check_number || `CHQ-${quote.id}`,
+        date: quote.created_at,
+        amount_gross: amount,
+        subtotal: subtotal,
+        itbis_total: itbis_total,
+        retention_isr: parseFloat(quote.check_retention_isr) || 0,
+        retention_itbis: parseFloat(quote.check_retention_itbis) || 0,
+        amount_net: parseFloat(quote.check_amount_net) || 0,
+        beneficiary: quote.supplier_name,
+        description: quote.description || `PAGO DE BIENES Y SERVICIOS`
+      };
+    }
+
+    // Cálculo dinámico para cotizaciones pendientes o sin cheque en base de datos
+    const is_exempt_isr = quote.is_exempt_isr === true || quote.is_exempt_isr === 'true' || quote.isExemptISR === true;
+    const isr = is_exempt_isr ? 0 : (subtotal * 0.05);
+
+    const is_exempt_itbis = quote.is_exempt_itbis === true || quote.is_exempt_itbis === 'true' || quote.isExemptITBIS === true;
     let itbis = 0;
-    if (!(quote.is_exempt_itbis || quote.isExemptITBIS)) {
-      itbis = quote.supplier_type === 'informal' ? (amount / 1.18) * 0.18 : ((amount / 1.18) * 0.18) * 0.30;
+    // Solo retenemos ITBIS si el suplidor es informal y no está exento. Para los formales la retención de ITBIS es 0 por defecto.
+    if (!is_exempt_itbis && quote.supplier_type === 'informal') {
+      itbis = itbis_total || ((amount / 1.18) * 0.18);
     }
 
     return {
       check_number: `CHQ-${quote.id}`,
       date: quote.created_at,
       amount_gross: amount,
-      subtotal: quote.subtotal || (amount - (quote.itbis || 0)),
-      itbis_total: quote.itbis || 0,
+      subtotal: subtotal,
+      itbis_total: itbis_total,
       retention_isr: isr,
       retention_itbis: itbis,
       amount_net: amount - isr - itbis,
