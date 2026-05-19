@@ -598,13 +598,13 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
   }
 
   doc.text("____________________", 40, currentY);
-  doc.text(center?.director_name || "Presidente (a) de la Junta de Centro", 40, currentY + 5, { align: "center" });
+  doc.text("Presidenta", 40, currentY + 5, { align: "center" });
 
   doc.text("____________________", 140, currentY);
-  doc.text(center?.secretary_name || "Secretario (a) de la Junta de Centro", 140, currentY + 5, { align: "center" });
+  doc.text("Secretaria", 140, currentY + 5, { align: "center" });
 
   doc.text("____________________", 90, currentY + 25);
-  doc.text(center?.treasurer_name || "Tesorero (a) de la Junta de Centro", 90, currentY + 30, { align: "center" });
+  doc.text("Tesorera", 90, currentY + 30, { align: "center" });
 
   doc.text(`Visto por la Dirección Distrital Educativa ${center?.district || 'Correspondiente'}: ________________________________`, 20, currentY + 50);
 
@@ -723,10 +723,10 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[], c
   }
 
   doc.text("____________________", 40, finalY);
-  doc.text(center?.director_name || "Director (a) Centro Educativo", 40, finalY + 5, { align: "center" });
+  doc.text("Presidenta", 40, finalY + 5, { align: "center" });
 
   doc.text("____________________", 140, finalY);
-  doc.text(center?.secretary_name || "Secretario (a) Junta de Centro", 140, finalY + 5, { align: "center" });
+  doc.text("Secretaria", 140, finalY + 5, { align: "center" });
 
   doc.save(`Orden_Compra_${po.id}.pdf`);
 };
