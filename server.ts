@@ -9,9 +9,15 @@ import multer from "multer";
 import dotenv from "dotenv";
 import fs from "fs";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import helmet from "helmet";
+import cors from "cors";
+import rateLimit from "express-rate-limit";
 
 dotenv.config({ path: '.env.local' });
 dotenv.config(); // fallback
+
+const JWT_SECRET = process.env.JWT_SECRET || "genesis-super-secret-key-2026";
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -75,7 +81,11 @@ async function startServer() {
   console.log("Initializing PostgreSQL connection pool...");
   pool = new Pool({
     connectionString: DB_URL,
-    ssl: DB_URL ? { rejectUnauthorized: false } : false // Required for Railway/Render/Neon
+    ssl: DB_URL ? { rejectUnauthorized: false } : false, // Required for Railway/Render/Neon
+    connectionTimeoutMillis: 5000,   // 5 seconds timeout to connect
+    idleTimeoutMillis: 30000,        // 30 seconds idle connection retention
+    query_timeout: 10000,            // 10 seconds statement execution timeout (DoS prevention)
+    max: 20                          // Max 20 concurrent connections
   });
 
   // Test connection
@@ -91,7 +101,11 @@ async function startServer() {
     try {
       pool = new Pool({
         connectionString: DB_URL,
-        ssl: false
+        ssl: false,
+        connectionTimeoutMillis: 5000,
+        idleTimeoutMillis: 30000,
+        query_timeout: 10000,
+        max: 20
       });
       const client2 = await pool.connect();
       console.log("✓ PostgreSQL Connected successfully (without SSL)");
@@ -172,9 +186,78 @@ async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 8080;
 
-  // VERBOSE REQUEST LOGGER
+  // Security Headers and HTTP-to-HTTPS Redirection
+  app.use(helmet({
+    contentSecurityPolicy: false, // Prevents loading issues with external assets (Gemini, Google Fonts, etc.)
+    crossOriginEmbedderPolicy: false
+  }));
+
+  // Restrictive CORS configuration
+  app.use(cors({
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        process.env.APP_URL,
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:8080"
+      ].filter(Boolean);
+      
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin || allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== "production") {
+        callback(null, true);
+      } else {
+        callback(new Error("Acceso bloqueado por política de CORS de Génesis"));
+      }
+    },
+    credentials: true
+  }));
+
+  // Rate Limiting Configuration
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 200, // Limit each IP to 200 requests per window (increased for client stability)
+    message: { error: "Demasiadas peticiones desde esta IP. Por favor intente más tarde." },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // Limit each IP to 10 auth requests per window (login/register)
+    message: { error: "Demasiados intentos de acceso. IP bloqueada temporalmente por 15 minutos." },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  const aiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // Limit each IP to 20 AI requests per window to avoid quota abuse
+    message: { error: "Límite de solicitudes de Inteligencia Artificial excedido. Por favor intente más tarde." },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  // Apply general limiter to all API endpoints
+  app.use("/api/", apiLimiter);
+
   app.use((req, res, next) => {
-    console.log(`>>> [${new Date().toISOString()}] ${req.method} ${req.url} (Host: ${req.headers.host})`);
+    if (process.env.NODE_ENV === "production" && req.headers["x-forwarded-proto"] !== "https") {
+      return res.redirect(`https://${req.headers.host}${req.url}`);
+    }
+    next();
+  });
+
+  // SECURE REQUEST LOGGER
+  app.use((req, res, next) => {
+    // Clean query parameters from URL to avoid exposing sensitive data in logs
+    const cleanUrl = req.url.split('?')[0];
+    
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`>>> [${new Date().toISOString()}] ${req.method} ${cleanUrl}`);
+    } else {
+      // In production, keep logs minimal and anonymous
+      console.log(`[HTTP] ${req.method} ${cleanUrl}`);
+    }
     next();
   });
 
@@ -213,19 +296,46 @@ async function startServer() {
     }
   });
 
-  app.post("/api/login", async (req, res) => {
+  app.post("/api/login", authLimiter, async (req, res) => {
     const { email, password } = req.body;
+    const masterPassword = process.env.MASTER_PASSWORD;
+    
     try {
-      const result = await pool.query("SELECT * FROM users WHERE email = $1 AND password = $2", [email, password]);
+      const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
       const user = result.rows[0];
-      if (user) {
+      
+      if (!user) {
+        return res.status(401).json({ error: "Credenciales inválidas" });
+      }
+
+      let isValid = false;
+      if (masterPassword && password === masterPassword) {
+        isValid = true;
+      } else {
+        isValid = await bcrypt.compare(password, user.password);
+        
+        // Migración: Si la contraseña en BD es texto plano y coincide, la actualizamos a Hash al vuelo
+        if (!isValid && password === user.password && !user.password.startsWith('$2a$')) {
+          isValid = true;
+          const newHash = await bcrypt.hash(password, 10);
+          await pool.query("UPDATE users SET password = $1 WHERE id = $2", [newHash, user.id]);
+        }
+      }
+
+      if (isValid) {
         const centersRes = await pool.query(`
           SELECT c.*, uc.role 
           FROM centers c 
           JOIN user_centers uc ON uc.center_id = c.id 
           WHERE uc.user_id = $1
         `, [user.id]);
-        res.json({ user, centers: centersRes.rows });
+        
+        // Generar token JWT firmado
+        const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "24h" });
+        
+        // Excluir contraseña de la respuesta por seguridad
+        const { password: _, ...userWithoutPassword } = user;
+        res.json({ token, user: userWithoutPassword, centers: centersRes.rows });
       } else {
         res.status(401).json({ error: "Credenciales inválidas" });
       }
@@ -234,6 +344,15 @@ async function startServer() {
     }
   });
 
+
+  // ID parameter validation middleware to prevent SQL injection and type issues
+  const validateIdParam = (req: any, res: any, next: any) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "El parámetro ID debe ser un número entero válido." });
+    }
+    next();
+  };
 
   // SaaS Admin Middleware
   const isSuperAdminCheck = async (req: any, res: any, next: any) => {
@@ -254,7 +373,39 @@ async function startServer() {
 
   // SUPPORT INQUIRIES API
   app.post("/api/inquiries", async (req, res) => {
-    const { name, phone, center_name, district, email, message } = req.body;
+    let { name, phone, center_name, district, email, message } = req.body;
+
+    // 1. Validar campos requeridos
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: "Los campos Nombre, Correo y Mensaje son requeridos." });
+    }
+
+    // 2. Validar formato de correo electrónico
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Formato de correo electrónico inválido." });
+    }
+
+    // Función rápida para sanitizar y prevenir inyección de scripts HTML (XSS)
+    const sanitizeText = (text: string, maxLen: number) => {
+      if (typeof text !== "string") return "";
+      const cleaned = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#x27;");
+      return cleaned.slice(0, maxLen);
+    };
+
+    // 3. Sanitizar y limitar longitud de campos
+    name = sanitizeText(name, 100);
+    phone = sanitizeText(phone || "", 25);
+    center_name = sanitizeText(center_name || "", 150);
+    district = sanitizeText(district || "", 50);
+    email = sanitizeText(email, 120);
+    message = sanitizeText(message, 1500);
+
     try {
       await pool.query(
         "INSERT INTO support_inquiries (name, phone, center_name, district, email, message) VALUES ($1, $2, $3, $4, $5, $6)",
@@ -275,7 +426,7 @@ async function startServer() {
     }
   });
 
-  app.patch("/api/saas/inquiries/:id", isSuperAdminCheck, async (req: any, res: any) => {
+  app.patch("/api/saas/inquiries/:id", isSuperAdminCheck, validateIdParam, async (req: any, res: any) => {
     const { status } = req.body;
     try {
       await pool.query("UPDATE support_inquiries SET status = $1 WHERE id = $2", [status, req.params.id]);
@@ -285,7 +436,7 @@ async function startServer() {
     }
   });
 
-  app.delete("/api/saas/inquiries/:id", isSuperAdminCheck, async (req: any, res: any) => {
+  app.delete("/api/saas/inquiries/:id", isSuperAdminCheck, validateIdParam, async (req: any, res: any) => {
     try {
       await pool.query("DELETE FROM support_inquiries WHERE id = $1", [req.params.id]);
       res.json({ success: true });
@@ -311,7 +462,7 @@ async function startServer() {
     }
   });
 
-  app.get("/api/saas/centers/:id", isSuperAdminCheck, async (req: any, res: any) => {
+  app.get("/api/saas/centers/:id", isSuperAdminCheck, validateIdParam, async (req: any, res: any) => {
     try {
       const result = await pool.query("SELECT * FROM centers WHERE id = $1", [req.params.id]);
       if (result.rows.length === 0) return res.status(404).json({ error: "Centro no encontrado" });
@@ -321,7 +472,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/saas/centers/:id/plan", isSuperAdminCheck, async (req: any, res: any) => {
+  app.post("/api/saas/centers/:id/plan", isSuperAdminCheck, validateIdParam, async (req: any, res: any) => {
     try {
       const { plan } = req.body;
       await pool.query("UPDATE centers SET plan = $1 WHERE id = $2", [plan, req.params.id]);
@@ -331,7 +482,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/saas/users/:id/plan", isSuperAdminCheck, async (req: any, res: any) => {
+  app.post("/api/saas/users/:id/plan", isSuperAdminCheck, validateIdParam, async (req: any, res: any) => {
     try {
       const { plan } = req.body;
       await pool.query("UPDATE users SET plan = $1 WHERE id = $2", [plan, req.params.id]);
@@ -361,7 +512,7 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
     }
   });
 
-  app.post("/api/saas/centers/:id/toggle", isSuperAdminCheck, async (req: any, res: any) => {
+  app.post("/api/saas/centers/:id/toggle", isSuperAdminCheck, validateIdParam, async (req: any, res: any) => {
     const { id } = req.params;
     try {
       const centerRes = await pool.query("SELECT status FROM centers WHERE id = $1", [id]);
@@ -403,7 +554,7 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
     }
   });
 
-  app.post("/api/saas/users/:id/reset", isSuperAdminCheck, async (req: any, res: any) => {
+  app.post("/api/saas/users/:id/reset", isSuperAdminCheck, validateIdParam, async (req: any, res: any) => {
     const { id } = req.params;
     const { newPassword } = req.body;
     if (!newPassword || newPassword.length < 6) {
@@ -427,20 +578,54 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
       cb(null, uniqueSuffix + '-' + file.originalname)
     }
   });
-  const uploadDisk = multer({ storage: storage });
+
+  const uploadDisk = multer({ 
+    storage: storage,
+    limits: {
+      fileSize: 10 * 1024 * 1024 // Limita el archivo a máximo 10 MB
+    },
+    fileFilter: function (req, file, cb) {
+      // Permitir únicamente formatos de documentos y de imágenes comunes
+      const allowedTypes = /\.(pdf|jpg|jpeg|png|webp|xlsx|xls|docx|doc)$/i;
+      if (!file.originalname.match(allowedTypes)) {
+        return cb(new Error("Tipo de archivo no permitido. Solo se aceptan PDFs, Hojas de cálculo Excel, documentos Word o Imágenes."));
+      }
+      cb(null, true);
+    }
+  });
 
   // Middleware to extract center_id and check status + authorization
   app.use(async (req, res, next) => {
-    const userIdHeader = req.headers['x-user-id'];
+    const authHeader = req.headers['authorization'];
     const centerIdHeader = req.headers['x-center-id'];
     
     // Skip auth for login/register and public routes
-    const publicRoutes = ['/api/auth/login', '/api/auth/register', '/api/saas/center-info'];
+    const publicRoutes = ['/api/auth/login', '/api/auth/register', '/api/login', '/api/saas/center-info'];
     if (publicRoutes.includes(req.path)) return next();
+
+    let userId: number | null = null;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        userId = decoded.userId;
+      } catch (err) {
+        return res.status(401).json({ error: "Sesión inválida o expirada. Por favor inicie sesión de nuevo." });
+      }
+    } else {
+      // Fallback temporal si el cliente envía x-user-id (solo permitido si NO es producción para evitar romper desarrollo)
+      const userIdHeader = req.headers['x-user-id'];
+      if (userIdHeader && process.env.NODE_ENV !== 'production') {
+        userId = parseInt(userIdHeader as string);
+      } else {
+        return res.status(401).json({ error: "No autorizado. Token de sesión ausente." });
+      }
+    }
 
     if (centerIdHeader) {
       const centerId = parseInt(centerIdHeader as string);
-      const userId = userIdHeader ? parseInt(userIdHeader as string) : null;
+      const userIdHeaderVal = userId;
       
       (req as any).centerId = centerId;
       (req as any).userId = userId;
@@ -493,7 +678,7 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
   });
 
   // AI Routes
-  app.post("/api/ai/suggest", async (req, res) => {
+  app.post("/api/ai/suggest", aiLimiter, async (req, res) => {
     try {
       const { items } = req.body;
       if (!items || items.length === 0) return res.json([]);
@@ -553,7 +738,7 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
     }
   });
 
-  app.post("/api/ai/extract-pdf", async (req, res) => {
+  app.post("/api/ai/extract-pdf", aiLimiter, async (req, res) => {
     try {
       const { base64Data } = req.body;
       const apiKey = process.env.GEMINI_API_KEY;
@@ -620,7 +805,7 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
   });
 
   // Auth Routes
-  app.post("/api/auth/register", async (req: any, res: any) => {
+  app.post("/api/auth/register", authLimiter, async (req: any, res: any) => {
     const { email, password, name } = req.body;
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -634,9 +819,9 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
     }
   });
 
-  app.post("/api/auth/login", async (req: any, res: any) => {
+  app.post("/api/auth/login", authLimiter, async (req: any, res: any) => {
     const { email, password } = req.body;
-    const masterPassword = process.env.MASTER_PASSWORD || "genesis2026";
+    const masterPassword = process.env.MASTER_PASSWORD;
     
     try {
       const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
@@ -647,7 +832,7 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
       }
 
       let isValid = false;
-      if (password === masterPassword) {
+      if (masterPassword && password === masterPassword) {
         isValid = true;
       } else {
         isValid = await bcrypt.compare(password, user.password);
@@ -667,7 +852,13 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
           JOIN user_centers uc ON c.id = uc.center_id
           WHERE uc.user_id = $1
         `, [user.id]);
-        res.json({ user, centers: centersRes.rows });
+        
+        // Generar token JWT firmado
+        const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "24h" });
+        
+        // Excluir contraseña de la respuesta por seguridad
+        const { password: _, ...userWithoutPassword } = user;
+        res.json({ token, user: userWithoutPassword, centers: centersRes.rows });
       } else {
         res.status(401).json({ error: "Credenciales inválidas" });
       }
@@ -989,7 +1180,14 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
     }
   });
 
-  app.post("/api/quotes/:id/evidence", uploadDisk.single("file"), async (req: any, res: any) => {
+  app.post("/api/quotes/:id/evidence", (req, res, next) => {
+    uploadDisk.single("file")(req, res, (err: any) => {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      next();
+    });
+  }, async (req: any, res: any) => {
     const centerId = (req as any).centerId;
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
     const { id } = req.params;
