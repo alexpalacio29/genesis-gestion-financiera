@@ -596,11 +596,14 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
 
   // Middleware to extract center_id and check status + authorization
   app.use(async (req, res, next) => {
+    // Si la ruta no es de la API (no empieza con /api/), dejamos pasar para cargar el frontend
+    if (!req.path.startsWith('/api/')) return next();
+
     const authHeader = req.headers['authorization'];
     const centerIdHeader = req.headers['x-center-id'];
     
     // Skip auth for login/register and public routes
-    const publicRoutes = ['/api/auth/login', '/api/auth/register', '/api/login', '/api/saas/center-info'];
+    const publicRoutes = ['/api/auth/login', '/api/auth/register', '/api/login', '/api/saas/center-info', '/api/inquiries'];
     if (publicRoutes.includes(req.path)) return next();
 
     let userId: number | null = null;
