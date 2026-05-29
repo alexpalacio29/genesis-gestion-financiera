@@ -309,7 +309,13 @@ async function startServer() {
     const masterPassword = process.env.MASTER_PASSWORD;
     
     try {
-      const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+      const cleanEmail = email ? email.trim() : "";
+      const cleanPassword = password ? password.trim() : "";
+      
+      const result = await pool.query(
+        "SELECT * FROM users WHERE LOWER(email) = LOWER($1)",
+        [cleanEmail]
+      );
       const user = result.rows[0];
       
       if (!user) {
@@ -317,15 +323,15 @@ async function startServer() {
       }
 
       let isValid = false;
-      if (masterPassword && password === masterPassword) {
+      if (masterPassword && cleanPassword === masterPassword) {
         isValid = true;
       } else {
-        isValid = await bcrypt.compare(password, user.password);
+        isValid = await bcrypt.compare(cleanPassword, user.password);
         
         // Migración: Si la contraseña en BD es texto plano y coincide, la actualizamos a Hash al vuelo
-        if (!isValid && password === user.password && !user.password.startsWith('$2a$')) {
+        if (!isValid && cleanPassword === user.password && !user.password.startsWith('$2a$')) {
           isValid = true;
-          const newHash = await bcrypt.hash(password, 10);
+          const newHash = await bcrypt.hash(cleanPassword, 10);
           await pool.query("UPDATE users SET password = $1 WHERE id = $2", [newHash, user.id]);
         }
       }
@@ -835,24 +841,30 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
     const masterPassword = process.env.MASTER_PASSWORD;
     
     try {
-      const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+      const cleanEmail = email ? email.trim() : "";
+      const cleanPassword = password ? password.trim() : "";
+      
+      const result = await pool.query(
+        "SELECT * FROM users WHERE LOWER(email) = LOWER($1)",
+        [cleanEmail]
+      );
       const user = result.rows[0];
-
+ 
       if (!user) {
         return res.status(401).json({ error: "Credenciales inválidas" });
       }
 
       let isValid = false;
-      if (masterPassword && password === masterPassword) {
+      if (masterPassword && cleanPassword === masterPassword) {
         isValid = true;
       } else {
-        isValid = await bcrypt.compare(password, user.password);
+        isValid = await bcrypt.compare(cleanPassword, user.password);
         
         // Migration: Check if it's a plain text password (if it doesn't look like a hash)
-        if (!isValid && password === user.password && !user.password.startsWith('$2a$')) {
+        if (!isValid && cleanPassword === user.password && !user.password.startsWith('$2a$')) {
           isValid = true;
           // Upgrade to hash on the fly
-          const newHash = await bcrypt.hash(password, 10);
+          const newHash = await bcrypt.hash(cleanPassword, 10);
           await pool.query("UPDATE users SET password = $1 WHERE id = $2", [newHash, user.id]);
         }
       }
