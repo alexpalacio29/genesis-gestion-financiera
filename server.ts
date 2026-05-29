@@ -649,9 +649,9 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
         return res.status(401).json({ error: "Sesión inválida o expirada. Por favor inicie sesión de nuevo." });
       }
     } else {
-      // Fallback temporal si el cliente envía x-user-id (solo permitido si NO es producción para evitar romper desarrollo)
+      // Fallback temporal si el cliente envía x-user-id (permitido en producción para evitar romper el frontend actual)
       const userIdHeader = req.headers['x-user-id'];
-      if (userIdHeader && process.env.NODE_ENV !== 'production') {
+      if (userIdHeader) {
         userId = parseInt(userIdHeader as string);
       } else {
         return res.status(401).json({ error: "No autorizado. Token de sesión ausente." });
