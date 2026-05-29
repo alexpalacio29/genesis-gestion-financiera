@@ -186,14 +186,14 @@ async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 8080;
 
-  // Security Headers and HTTP-to-HTTPS Redirection
-  app.use(helmet({
-    contentSecurityPolicy: false, // Prevents loading issues with external assets (Gemini, Google Fonts, etc.)
+  // Security Headers for API
+  app.use("/api/", helmet({
+    contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false
   }));
 
-  // Restrictive CORS configuration
-  app.use(cors({
+  // Restrictive CORS configuration for API endpoints only
+  app.use("/api/", cors({
     origin: (origin, callback) => {
       const allowedOrigins = [
         process.env.APP_URL,
@@ -2500,9 +2500,14 @@ El JSON debe tener esta estructura exacta:
     const indexPath = path.resolve(distPath, "index.html");
     
     console.log(`Setting up static serving from: ${distPath}`);
-    app.use(express.static(distPath, { index: 'index.html' }));
     
-    app.get("*", (req, res) => {
+    // Serve static files with error handling/logging
+    app.use(express.static(distPath, { 
+      index: 'index.html',
+      fallthrough: true // Pass control to catch-all if static file not found
+    }));
+    
+    app.get("*", (req, res, next) => {
       console.log(`SPA Catch-all hit: ${req.url}. Sending ${indexPath}`);
       if (!fs.existsSync(indexPath)) {
         console.error("CRITICAL: index.html missing during request!");
@@ -2511,11 +2516,21 @@ El JSON debe tener esta estructura exacta:
       res.sendFile(indexPath, (err) => {
         if (err) {
           console.error("res.sendFile error:", err);
-          if (!res.headersSent) res.status(500).send("Error al enviar index.html");
+          if (!res.headersSent) {
+            next(err);
+          }
         }
       });
     });
   }
+
+  // Global Error Handler - MUST be after all routes and middleware
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error(">>> UNHANDLED EXPRESS ERROR:", err);
+    if (!res.headersSent) {
+      res.status(500).send(err.message || "Error interno del servidor");
+    }
+  });
 
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`>>> SERVER READY AND LISTENING ON PORT: ${PORT} <<<`);
