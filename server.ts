@@ -183,6 +183,24 @@ async function startServer() {
     }
   }
 
+  // Seed superadmin user if it does not exist
+  try {
+    const superAdminEmail = 'alexpalacio29@gmail.com';
+    const adminCheck = await pool.query("SELECT * FROM users WHERE LOWER(email) = LOWER($1)", [superAdminEmail]);
+    if (adminCheck.rows.length === 0) {
+      console.log(`Seeding superadmin user (${superAdminEmail})...`);
+      const defaultPassword = process.env.MASTER_PASSWORD || "genesis2026";
+      const hashedPw = await bcrypt.hash(defaultPassword, 10);
+      await pool.query(
+        "INSERT INTO users (email, password, name) VALUES ($1, $2, $3)",
+        [superAdminEmail, hashedPw, "Super Admin"]
+      );
+      console.log("✓ Superadmin user seeded successfully");
+    }
+  } catch (err: any) {
+    console.error("Error seeding superadmin user:", err.message);
+  }
+
   const app = express();
   const PORT = Number(process.env.PORT) || 8080;
 
