@@ -204,6 +204,8 @@ async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 8080;
 
+  app.set('trust proxy', 1); // Trust Railway's proxy headers
+
   // Security Headers for API
   app.use("/api/", helmet({
     contentSecurityPolicy: false,
