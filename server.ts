@@ -534,16 +534,6 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
     }
   });
 
-app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: any, res: any) => {
-    try {
-      const { subscription_until } = req.body;
-      await pool.query("UPDATE centers SET subscription_until = $1 WHERE id = $2", [subscription_until, req.params.id]);
-      res.json({ success: true });
-    } catch (e: any) {
-      res.status(500).json({ error: e.message });
-    }
-  });
-
   app.post("/api/saas/centers/:id/toggle", isSuperAdminCheck, validateIdParam, async (req: any, res: any) => {
     const { id } = req.params;
     try {
