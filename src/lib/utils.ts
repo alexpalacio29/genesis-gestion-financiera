@@ -847,33 +847,38 @@ export const generateLaborReceiptPDF = (check: any, supplier: any, center?: any,
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
   doc.text(`Junta de Centro ${centerCode} ${centerName}`, 105, 45, { align: "center" });
+  doc.text(`RNC: ${center?.rnc || "4-30-37254-4"}`, 105, 50, { align: "center" });
 
   doc.setFontSize(16);
-  doc.text("RECIBO DE PAGO", 105, 55, { align: "center" });
+  doc.setFont("helvetica", "bold");
+  doc.text("RECIBO DE PAGO", 105, 60, { align: "center" });
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text(`FECHA: ${formatDate(check.date)}`, 20, 45);
+  doc.text(`FECHA: ${formatDate(check.date)}`, 20, 68);
+  doc.text(`RECIBO NÚM.: ${check.check_number}`, 190, 68, { align: "right" });
 
   const amountInWords = numberToWordsSpanish(check.amount_net);
   const dist = center?.district ? `DEL DISTRITO ${center.district.toUpperCase()}` : "DEL DISTRITO CORRESPONDIENTE";
   const text = `HE RECIBIDO DE LA JUNTA DE CENTRO ${centerCode} ${centerName.toUpperCase()}, ${dist}, LA SUMA DE RD$ ${formatCurrency(check.amount_net).replace('RD$', '')} ****** (${amountInWords}) *******`;
 
   const splitText = doc.splitTextToSize(text, 170);
-  doc.text(splitText, 20, 55);
+  doc.text(splitText, 20, 76);
+
+  let currentY = 76 + (splitText.length * 6) + 8;
 
   doc.setFont("helvetica", "bold");
-  doc.text("POR CONCEPTO DE:", 20, 75);
+  doc.text("POR CONCEPTO DE:", 20, currentY);
   doc.setFont("helvetica", "normal");
   const conceptText = check.description || "PAGO MANO DE OBRA DE REPARACIÓN SEGÚN COTIZACIÓN";
   const conceptLines = doc.splitTextToSize(conceptText, 160);
   const conceptHeight = Math.max(30, (conceptLines.length * 6) + 10);
   
-  doc.rect(20, 80, 170, conceptHeight);
-  doc.text(conceptLines, 25, 90);
+  doc.rect(20, currentY + 5, 170, conceptHeight);
+  doc.text(conceptLines, 25, currentY + 15);
 
   autoTable(doc, {
-    startY: 80 + conceptHeight + 10,
+    startY: currentY + 5 + conceptHeight + 10,
     body: [
       ['Monto', formatCurrency(check.amount_gross)],
       ['ITEBIS', formatCurrency(check.retention_itbis)],
