@@ -287,11 +287,11 @@ export const generateRetentionCertPDF = (check: any, supplier: any, center?: any
 
   autoTable(doc, {
     startY: currentY + 20,
-    head: [['Cheque No.', 'FECHA', 'MONTO BRUTO', 'ITBIS', 'Retención del 5%', 'TOTAL RETENIDO', 'MONTO NETO']],
+    head: [['Cheque No.', 'FECHA', 'MONTO', 'ITBIS', 'Retención del 5%', 'TOTAL RETENIDO', 'MONTO NETO']],
     body: [[
       check.check_number,
       formatDate(check.date),
-      formatCurrency(parseFloat(check.subtotal) || parseFloat(check.amount_gross) - (parseFloat(check.itbis_total) || 0)),
+      formatCurrency(parseFloat(check.amount_gross) || 0),
       formatCurrency(parseFloat(check.itbis_total) || 0),
       formatCurrency(parseFloat(check.retention_isr) || 0),
       formatCurrency((parseFloat(check.retention_isr) || 0) + (parseFloat(check.retention_itbis) || 0)),
@@ -376,11 +376,11 @@ export const generateITBISRetentionCertPDF = (check: any, supplier: any, center?
 
   autoTable(doc, {
     startY: currentY + 20,
-    head: [['Cheque No.', 'FECHA', 'MONTO BRUTO', 'ITBIS FACTURADO', 'ITBIS RETENIDO (100%)']],
+    head: [['Cheque No.', 'FECHA', 'MONTO', 'ITBIS FACTURADO', 'ITBIS RETENIDO (100%)']],
     body: [[
       check.check_number,
       formatDate(check.date),
-      formatCurrency(check.subtotal || check.amount_gross - (check.itbis_total || 0)),
+      formatCurrency(parseFloat(check.amount_gross) || 0),
       formatCurrency(check.itbis_total || 0),
       formatCurrency(check.retention_itbis || 0)
     ]],
