@@ -2607,7 +2607,7 @@ El JSON debe tener esta estructura exacta:
     }
   });
 
-    app.listen(PORT, "0.0.0.0", () => {
+    const server = app.listen(PORT, "0.0.0.0", () => {
       console.log(`>>> SERVER READY AND LISTENING ON PORT: ${PORT} <<<`);
       console.log(`Internal URL: http://0.0.0.0:${PORT}`);
 
@@ -2641,6 +2641,20 @@ El JSON debe tener esta estructura exacta:
           .catch(e => console.error("Maintenance task error:", e));
       }, 5000);
     });
+
+    const gracefulShutdown = (signal: string) => {
+      console.info(`${signal} signal received. Shutting down gracefully...`);
+      server.close(() => {
+        console.log("HTTP server closed.");
+        pool.end(() => {
+          console.log("Database pool closed.");
+          process.exit(0);
+        });
+      });
+    };
+
+    process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+    process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 }
 
 startServer().catch(err => {
