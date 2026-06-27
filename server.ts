@@ -625,7 +625,7 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
     const centerIdHeader = req.headers['x-center-id'];
     
     // Skip auth for login/register and public routes
-    const publicRoutes = ['/api/auth/login', '/api/auth/register', '/api/login', '/api/saas/center-info', '/api/inquiries'];
+    const publicRoutes = ['/api/auth/login', '/api/auth/register', '/api/login', '/api/saas/center-info', '/api/inquiries', '/api/diagnose-db'];
     if (publicRoutes.includes(req.path)) return next();
 
     let userId: number | null = null;
@@ -2461,6 +2461,53 @@ El JSON debe tener esta estructura exacta:
     } catch (error: any) {
       await pool.query("ROLLBACK");
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/diagnose-db", async (req: any, res: any) => {
+    try {
+      const quotesCount = await pool.query("SELECT COUNT(*) FROM quotes");
+      const suppliersCount = await pool.query("SELECT COUNT(*) FROM suppliers");
+      const checksCount = await pool.query("SELECT COUNT(*) FROM checks");
+      const cashBookCount = await pool.query("SELECT COUNT(*) FROM cash_book");
+      
+      const recentQuotes = await pool.query(`
+        SELECT q.*, s.name as supplier_name 
+        FROM quotes q 
+        LEFT JOIN suppliers s ON q.supplier_id = s.id 
+        ORDER BY q.id DESC LIMIT 20
+      `);
+
+      const recentCashBook = await pool.query(`
+        SELECT * FROM cash_book 
+        ORDER BY id DESC LIMIT 20
+      `);
+
+      const recentSuppliers = await pool.query(`
+        SELECT id, name, center_id FROM suppliers 
+        ORDER BY id DESC LIMIT 20
+      `);
+
+      const orphanQuotes = await pool.query(`
+        SELECT q.id, q.center_id, q.supplier_id, q.total_amount 
+        FROM quotes q 
+        WHERE q.supplier_id NOT IN (SELECT id FROM suppliers) OR q.supplier_id IS NULL
+      `);
+
+      res.json({
+        counts: {
+          quotes: parseInt(quotesCount.rows[0].count),
+          suppliers: parseInt(suppliersCount.rows[0].count),
+          checks: parseInt(checksCount.rows[0].count),
+          cash_book: parseInt(cashBookCount.rows[0].count)
+        },
+        recentQuotes: recentQuotes.rows,
+        recentCashBook: recentCashBook.rows,
+        recentSuppliers: recentSuppliers.rows,
+        orphanQuotes: orphanQuotes.rows
+      });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
     }
   });
 
