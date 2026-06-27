@@ -2020,19 +2020,20 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="bg-slate-50">
-              <th className="data-grid-header">Fecha</th>
-              <th className="data-grid-header">N. Cotización</th>
-              <th className="data-grid-header">N. Cheque</th>
-              <th className="data-grid-header">Suplidor</th>
-              <th className="data-grid-header">Tipo</th>
-              <th className="data-grid-header">Monto Total</th>
-              <th className="data-grid-header">Estado</th>
-              <th className="data-grid-header text-right">Acciones</th>
-            </tr>
-          </thead>
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50">
+                <th className="data-grid-header">Fecha</th>
+                <th className="data-grid-header">N. Cotización</th>
+                <th className="data-grid-header">N. Cheque</th>
+                <th className="data-grid-header">Suplidor</th>
+                <th className="data-grid-header">Tipo</th>
+                <th className="data-grid-header">Monto Total</th>
+                <th className="data-grid-header">Estado</th>
+                <th className="data-grid-header text-right min-w-[450px]">Acciones</th>
+              </tr>
+            </thead>
           <tbody>
             {quotes.map((q: any) => (
               <tr key={q.id} className="data-grid-row">
@@ -2188,6 +2189,7 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {showEvidences && (
