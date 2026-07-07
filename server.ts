@@ -1536,6 +1536,15 @@ El JSON debe tener esta estructura exacta:
         [centerId, 'expense', amount_gross, `Pago Cheque #${check_number} - ${beneficiary}`, date]
       );
 
+      const lastBalRes = await client.query("SELECT balance FROM cash_book WHERE center_id = $1 ORDER BY date DESC, id DESC LIMIT 1", [centerId]);
+      const lastBalance = lastBalRes.rows.length > 0 ? parseFloat(lastBalRes.rows[0].balance) : 0;
+      const newBalance = lastBalance - parseFloat(amount_net);
+
+      await client.query(`
+        INSERT INTO cash_book (center_id, date, reference_no, beneficiary, concept, income, expense, balance, retention_isr, retention_itbis, related_id, related_type) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      `, [centerId, date, check_number, beneficiary, description || 'Pago a Suplidor', 0, amount_net, newBalance, retention_isr, retention_itbis, checkId, 'check']);
+
       await client.query('COMMIT');
       res.json({ id: checkId });
     } catch (e: any) {
@@ -2293,29 +2302,64 @@ El JSON debe tener esta estructura exacta:
       await client.query("UPDATE quotes SET supplier_id = $1, type = $2, total_amount = $3, subtotal = $4, itbis = $5, created_at = $6, quote_number = $7 WHERE id = $8 AND center_id = $9",
         [supplierId, quote.type, quote.total_amount, quote.subtotal, quote.itbis, quote.date || 'NOW()', quote.quote_number, quoteId, centerId]);
 
-      // 3. Update Requisition
+      // 3. Update or Create Requisition
+      let requisitionId;
       const rRes = await client.query("SELECT id FROM requisitions WHERE quote_id = $1 AND center_id = $2", [quoteId, centerId]);
       if (rRes.rows.length > 0) {
-        const requisitionId = rRes.rows[0].id;
+        requisitionId = rRes.rows[0].id;
         await client.query("UPDATE requisitions SET poa_year = $1, created_at = $2 WHERE id = $3 AND center_id = $4", [requisition.poa_year, quote.date || 'NOW()', requisitionId, centerId]);
+      } else {
+        const rIns = await client.query("INSERT INTO requisitions (center_id, quote_id, code, poa_year, description, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+          [centerId, quoteId, requisition.code, requisition.poa_year, quote.description, quote.date || 'NOW()']);
+        requisitionId = rIns.rows[0].id;
+      }
 
-        // 4. Update PO
-        const pRes = await client.query("SELECT id FROM purchase_orders WHERE requisition_id = $1 AND center_id = $2", [requisitionId, centerId]);
-        if (pRes.rows.length > 0) {
-          const poId = pRes.rows[0].id;
-          await client.query("UPDATE purchase_orders SET supplier_id = $1, total_amount = $2, subtotal = $3, itbis = $4, ncf = $5, created_at = $6 WHERE id = $7 AND center_id = $8",
-            [supplierId, purchase_order.total_amount, purchase_order.subtotal, purchase_order.itbis, purchase_order.ncf, quote.date || 'NOW()', poId, centerId]);
+      // 4. Update or Create PO
+      let poId;
+      const pRes = await client.query("SELECT id FROM purchase_orders WHERE requisition_id = $1 AND center_id = $2", [requisitionId, centerId]);
+      if (pRes.rows.length > 0) {
+        poId = pRes.rows[0].id;
+        await client.query("UPDATE purchase_orders SET supplier_id = $1, total_amount = $2, subtotal = $3, itbis = $4, ncf = $5, created_at = $6 WHERE id = $7 AND center_id = $8",
+          [supplierId, purchase_order.total_amount, purchase_order.subtotal, purchase_order.itbis, purchase_order.ncf, quote.date || 'NOW()', poId, centerId]);
+      } else {
+        const pIns = await client.query("INSERT INTO purchase_orders (center_id, requisition_id, supplier_id, total_amount, subtotal, itbis, ncf, description, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id",
+          [centerId, requisitionId, supplierId, purchase_order.total_amount, purchase_order.subtotal, purchase_order.itbis, purchase_order.ncf, purchase_order.description, quote.date || 'NOW()']);
+        poId = pIns.rows[0].id;
+      }
 
-          // 5. Update Check
-          const cRes = await client.query("SELECT id FROM checks WHERE purchase_order_id = $1 AND center_id = $2", [poId, centerId]);
-          if (cRes.rows.length > 0) {
-            const checkId = cRes.rows[0].id;
-            await client.query(`
-              UPDATE checks SET check_number = $1, date = $2, amount_gross = $3, retention_isr = $4, retention_itbis = $5, amount_net = $6, beneficiary = $7, description = $8
-              WHERE id = $9 AND center_id = $10
-            `, [check.check_number, check.date, check.amount_gross, check.retention_isr, check.retention_itbis, check.amount_net, check.beneficiary, check.description, checkId, centerId]);
-          }
-        }
+      // 5. Update or Create Check & Cash Book
+      let checkId;
+      const cRes = await client.query("SELECT id FROM checks WHERE purchase_order_id = $1 AND center_id = $2", [poId, centerId]);
+      if (cRes.rows.length > 0) {
+        checkId = cRes.rows[0].id;
+        await client.query(`
+          UPDATE checks SET check_number = $1, date = $2, amount_gross = $3, retention_isr = $4, retention_itbis = $5, amount_net = $6, beneficiary = $7, description = $8
+          WHERE id = $9 AND center_id = $10
+        `, [check.check_number, check.date, check.amount_gross, check.retention_isr, check.retention_itbis, check.amount_net, check.beneficiary, check.description, checkId, centerId]);
+        
+        // Update cash_book
+        await client.query(`
+          UPDATE cash_book SET date = $1, reference_no = $2, beneficiary = $3, concept = $4, expense = $5, retention_isr = $6, retention_itbis = $7
+          WHERE related_id = $8 AND related_type = 'check' AND center_id = $9
+        `, [check.date, check.check_number, check.beneficiary, purchase_order.description || 'Pago a Suplidor', check.amount_net, check.retention_isr, check.retention_itbis, checkId, centerId]);
+      } else {
+        const cIns = await client.query(`
+          INSERT INTO checks (center_id, check_number, date, amount_gross, retention_isr, retention_itbis, amount_net, beneficiary, purchase_order_id, description) 
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
+        `, [centerId, check.check_number, check.date, check.amount_gross, check.retention_isr, check.retention_itbis, check.amount_net, check.beneficiary, poId, check.description]);
+        checkId = cIns.rows[0].id;
+
+        await client.query("INSERT INTO bank_transactions (center_id, type, amount, description, date) VALUES ($1, $2, $3, $4, $5)",
+          [centerId, 'expense', check.amount_gross, check.description || \`Pago a \${check.beneficiary}\`, check.date]);
+
+        const lastBalRes = await client.query("SELECT balance FROM cash_book WHERE center_id = $1 ORDER BY date DESC, id DESC LIMIT 1", [centerId]);
+        const lastBalance = lastBalRes.rows.length > 0 ? parseFloat(lastBalRes.rows[0].balance) : 0;
+        const newBalance = lastBalance - parseFloat(check.amount_net);
+
+        await client.query(`
+          INSERT INTO cash_book (center_id, date, reference_no, beneficiary, concept, income, expense, balance, retention_isr, retention_itbis, related_id, related_type) 
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        `, [centerId, check.date, check.check_number, check.beneficiary, purchase_order.description || 'Pago a Suplidor', 0, check.amount_net, newBalance, check.retention_isr, check.retention_itbis, checkId, 'check']);
       }
 
       // 6. Items
