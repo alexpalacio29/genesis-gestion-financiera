@@ -2350,7 +2350,7 @@ El JSON debe tener esta estructura exacta:
         checkId = cIns.rows[0].id;
 
         await client.query("INSERT INTO bank_transactions (center_id, type, amount, description, date) VALUES ($1, $2, $3, $4, $5)",
-          [centerId, 'expense', check.amount_gross, check.description || \`Pago a \${check.beneficiary}\`, check.date]);
+          [centerId, 'expense', check.amount_gross, check.description || `Pago a ${check.beneficiary}`, check.date]);
 
         const lastBalRes = await client.query("SELECT balance FROM cash_book WHERE center_id = $1 ORDER BY date DESC, id DESC LIMIT 1", [centerId]);
         const lastBalance = lastBalRes.rows.length > 0 ? parseFloat(lastBalRes.rows[0].balance) : 0;
