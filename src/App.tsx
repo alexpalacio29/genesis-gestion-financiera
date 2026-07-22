@@ -1979,7 +1979,8 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
     }
 
     // Cálculo dinámico para cotizaciones pendientes o sin cheque en base de datos
-    const is_exempt_isr = quote.is_exempt_isr === true || quote.is_exempt_isr === 'true' || quote.isExemptISR === true;
+    const isFormal = quote.supplier_type === 'formal';
+    const is_exempt_isr = quote.is_exempt_isr === true || quote.is_exempt_isr === 'true' || quote.isExemptISR === true || isFormal;
     const isr = is_exempt_isr ? 0 : (subtotal * 0.05);
 
     const is_exempt_itbis = quote.is_exempt_itbis === true || quote.is_exempt_itbis === 'true' || quote.isExemptITBIS === true;
@@ -2245,7 +2246,7 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
   );
 };
 
-const Checks = ({ apiFetch }: { apiFetch: any }) => {
+const Checks = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter?: any }) => {
   const [checks, setChecks] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
@@ -2269,7 +2270,8 @@ const Checks = ({ apiFetch }: { apiFetch: any }) => {
     const supplier = suppliers.find((s: any) => s.id === parseInt(supplierId)) as any;
     if (!supplier) return { isr: 0, itbis: 0, net: amount };
 
-    let isr = newCheck.isExemptISR ? 0 : (amount * 0.05); // Standard 5% ISR or exempt
+    const isFormal = supplier.type === 'formal';
+    let isr = (newCheck.isExemptISR || isFormal) ? 0 : (amount * 0.05); // Standard 5% ISR or exempt
     let itbis = 0;
 
     if (newCheck.isExemptITBIS) {
@@ -2426,6 +2428,13 @@ const Checks = ({ apiFetch }: { apiFetch: any }) => {
                 <td className="data-grid-cell text-rose-600">-{formatCurrency(c.retention_itbis)}</td>
                 <td className="data-grid-cell font-bold">{formatCurrency(c.amount_net)}</td>
                 <td className="data-grid-cell text-right flex justify-end gap-2">
+                  <button
+                    onClick={() => generateCheckPDF(c, currentCenter)}
+                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                    title="Imprimir Cheque"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={async () => {
                       if (confirm('¿Está seguro de que desea anular este cheque? Esta acción no se puede deshacer.')) {
@@ -2602,6 +2611,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
     poaYear: 2026,
     ncf: '',
     checkNumber: '',
+    checkNumberTax: '',
     concept: '',
     inputMode: 'excel', // 'manual', 'excel', 'pdf'
     isExemptISR: false,
@@ -2652,6 +2662,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
             poaYear: data.requisition ? data.requisition.poa_year : 2026,
             ncf: data.purchase_order ? data.purchase_order.ncf : '',
             checkNumber: data.check ? data.check.check_number : '',
+            checkNumberTax: data.checkTax ? data.checkTax.check_number : '',
             quote_number: data.quote.quote_number || '',
             concept: data.check ? data.check.description : data.quote.description,
             inputMode: 'manual'
@@ -3084,7 +3095,8 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
 
 
       // Calculations based on subtotal for ISR
-      const retention_isr = metadata.isExemptISR ? 0 : (subtotal * 0.05);
+      const isFormal = metadata.supplierType === 'formal';
+      const retention_isr = (metadata.isExemptISR || isFormal) ? 0 : (subtotal * 0.05);
 
       // Formal: No ITBIS retention. Informal: 100% ITBIS retention.
       let retention_itbis = metadata.supplierType === 'informal' ? itbis : 0;
@@ -3098,6 +3110,8 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
         ...item,
         name: item.name || item.description || 'Producto/Servicio'
       }));
+
+      const hasTaxWithholding = metadata.quoteType === 'labor' && (retention_isr > 0 || retention_itbis > 0);
 
       const payload = {
         supplier: previewData.supplier,
@@ -3136,9 +3150,21 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
           beneficiary: previewData.supplier.name,
           description: finalDescription
         },
+        checkTax: hasTaxWithholding ? {
+          check_number: metadata.checkNumberTax || 'CH-' + Math.floor(Math.random() * 10000),
+          date: metadata.date,
+          amount_gross: retention_isr + retention_itbis,
+          subtotal: 0,
+          itbis_total: 0,
+          retention_isr: 0,
+          retention_itbis: 0,
+          amount_net: retention_isr + retention_itbis,
+          beneficiary: previewData.supplier.name,
+          description: `Retención Impuestos (5% ISR / 18% ITBIS) - Cotización N. ${metadata.quote_number || ''}`
+        } : null,
         bank_transaction: {
           type: 'expense',
-          amount: total,
+          amount: amount_net,
           description: `${finalDescription} - ${previewData.supplier.name} (Chq: ${metadata.checkNumber || 'Pendiente'})`,
           date: metadata.date
         }
@@ -3511,15 +3537,40 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
                 />
               </div>
               <div>
-                <label className="text-xs font-bold uppercase text-slate-400">Número de Cheque</label>
+                <label className="text-xs font-bold uppercase text-slate-400">
+                  {metadata.quoteType === 'labor' && metadata.supplierType === 'informal' && (!metadata.isExemptISR || !metadata.isExemptITBIS) ? 'N. Cheque (Neto)' : 'Número de Cheque'}
+                </label>
                 <input
                   type="text"
                   placeholder="0001"
                   className="w-full p-2 border rounded-lg mt-1"
                   value={metadata.checkNumber}
-                  onChange={e => setMetadata({ ...metadata, checkNumber: e.target.value })}
+                  onChange={e => {
+                    const val = e.target.value;
+                    let nextCheck = '';
+                    if (val && !isNaN(Number(val))) {
+                      nextCheck = (Number(val) + 1).toString();
+                    }
+                    setMetadata({ 
+                      ...metadata, 
+                      checkNumber: val,
+                      checkNumberTax: metadata.checkNumberTax || nextCheck
+                    });
+                  }}
                 />
               </div>
+              {metadata.quoteType === 'labor' && metadata.supplierType === 'informal' && (!metadata.isExemptISR || !metadata.isExemptITBIS) && (
+                <div>
+                  <label className="text-xs font-bold uppercase text-slate-400">N. Cheque (Retenciones)</label>
+                  <input
+                    type="text"
+                    placeholder="0002"
+                    className="w-full p-2 border rounded-lg mt-1"
+                    value={metadata.checkNumberTax || ''}
+                    onChange={e => setMetadata({ ...metadata, checkNumberTax: e.target.value })}
+                  />
+                </div>
+              )}
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
                 <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer">
                   <input

@@ -129,7 +129,7 @@ async function startServer() {
       CREATE TABLE IF NOT EXISTS quotes (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), supplier_id INTEGER REFERENCES suppliers(id), type TEXT DEFAULT 'materials', total_amount DECIMAL, subtotal DECIMAL, itbis DECIMAL, description TEXT, status TEXT DEFAULT 'pending', pdf_url TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS requisitions (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), quote_id INTEGER REFERENCES quotes(id), poa_year INTEGER DEFAULT 2026, code TEXT, description TEXT, status TEXT DEFAULT 'pending', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS purchase_orders (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), requisition_id INTEGER REFERENCES requisitions(id), supplier_id INTEGER REFERENCES suppliers(id), total_amount DECIMAL, subtotal DECIMAL, itbis DECIMAL, status TEXT DEFAULT 'pending', ncf TEXT, description TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS checks (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), check_number TEXT, date TEXT, amount_gross DECIMAL, retention_isr DECIMAL, retention_itbis DECIMAL, amount_net DECIMAL, beneficiary TEXT, description TEXT, purchase_order_id INTEGER REFERENCES purchase_orders(id), status TEXT DEFAULT 'issued', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS checks (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), check_number TEXT, date TEXT, amount_gross DECIMAL, retention_isr DECIMAL, retention_itbis DECIMAL, amount_net DECIMAL, beneficiary TEXT, description TEXT, purchase_order_id INTEGER REFERENCES purchase_orders(id), status TEXT DEFAULT 'issued', is_tax_withholding BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS bank_transactions (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), type TEXT, amount DECIMAL, description TEXT, date TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS petty_cash (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), amount DECIMAL, description TEXT, beneficiary TEXT, receipt_no TEXT, type TEXT, date TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS inventory (id SERIAL PRIMARY KEY, center_id INTEGER NOT NULL REFERENCES centers(id), name TEXT, description TEXT, quantity INTEGER DEFAULT 0, unit_price DECIMAL DEFAULT 0, min_quantity INTEGER DEFAULT 5, category TEXT, minerd_code TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
@@ -170,7 +170,8 @@ async function startServer() {
     "ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'multi';",
     "ALTER TABLE centers ADD COLUMN subscription_until TEXT;",
     "ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS is_exempt_isr BOOLEAN DEFAULT FALSE;",
-    "ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS is_exempt_itbis BOOLEAN DEFAULT FALSE;"
+    "ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS is_exempt_itbis BOOLEAN DEFAULT FALSE;",
+    "ALTER TABLE checks ADD COLUMN IF NOT EXISTS is_tax_withholding BOOLEAN DEFAULT FALSE;"
   ];
 
   for (const m of migrations) {
@@ -1190,10 +1191,11 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
       const poRes = reqDoc ? await pool.query("SELECT * FROM purchase_orders WHERE requisition_id = $1 AND center_id = $2", [reqDoc.id, centerId]) : { rows: [] };
       const poDoc = poRes.rows[0];
       
-      const checkRes = poDoc ? await pool.query("SELECT * FROM checks WHERE purchase_order_id = $1 AND center_id = $2", [poDoc.id, centerId]) : { rows: [] };
-      const checkDoc = checkRes.rows[0];
+      const checksRes = poDoc ? await pool.query("SELECT * FROM checks WHERE purchase_order_id = $1 AND center_id = $2 ORDER BY id ASC", [poDoc.id, centerId]) : { rows: [] };
+      const checkDoc = checksRes.rows.find((c: any) => !c.is_tax_withholding) || checksRes.rows[0];
+      const checkTaxDoc = checksRes.rows.find((c: any) => c.is_tax_withholding);
 
-      res.json({ quote, items: itemsRes.rows, requisition: reqDoc, purchase_order: poDoc, check: checkDoc });
+      res.json({ quote, items: itemsRes.rows, requisition: reqDoc, purchase_order: poDoc, check: checkDoc, checkTax: checkTaxDoc });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
@@ -1313,7 +1315,7 @@ El JSON debe tener esta estructura exacta:
         JOIN suppliers s ON q.supplier_id = s.id
         LEFT JOIN requisitions r ON r.quote_id = q.id AND r.center_id = q.center_id
         LEFT JOIN purchase_orders po ON po.requisition_id = r.id AND po.center_id = q.center_id
-        LEFT JOIN checks c ON c.purchase_order_id = po.id AND c.center_id = q.center_id
+        LEFT JOIN checks c ON c.purchase_order_id = po.id AND c.center_id = q.center_id AND (c.is_tax_withholding = FALSE OR c.is_tax_withholding IS NULL)
         WHERE q.center_id = $1
         ORDER BY q.created_at DESC
       `, [centerId]);
@@ -1447,7 +1449,7 @@ El JSON debe tener esta estructura exacta:
           const checksRes = await client.query(`SELECT * FROM checks WHERE purchase_order_id = ANY($1) AND center_id = $2`, [poIds, centerId]);
           for (const check of checksRes.rows) {
             await client.query("DELETE FROM cash_book WHERE related_id = $1 AND related_type = 'check' AND center_id = $2", [check.id, centerId]);
-            await client.query("DELETE FROM bank_transactions WHERE center_id = $1 AND amount = $2 AND date = $3 AND type = 'expense'", [centerId, check.amount_gross, check.date]);
+            await client.query("DELETE FROM bank_transactions WHERE center_id = $1 AND (amount = $2 OR amount = $3) AND date = $4 AND type = 'expense'", [centerId, check.amount_gross, check.amount_net, check.date]);
           }
           await client.query(`DELETE FROM checks WHERE purchase_order_id = ANY($1) AND center_id = $2`, [poIds, centerId]);
           await client.query(`DELETE FROM purchase_orders WHERE requisition_id = ANY($1) AND center_id = $2`, [reqIds, centerId]);
@@ -1570,8 +1572,8 @@ El JSON debe tener esta estructura exacta:
         await client.query("DELETE FROM cash_book WHERE related_id = $1 AND related_type = 'check' AND center_id = $2", [id, centerId]);
         if (check.amount_gross) {
           await client.query(
-            "DELETE FROM bank_transactions WHERE center_id = $1 AND amount = $2 AND date = $3 AND type = 'expense'",
-            [centerId, check.amount_gross, check.date]
+            "DELETE FROM bank_transactions WHERE center_id = $1 AND (amount = $2 OR amount = $3) AND date = $4 AND type = 'expense'",
+            [centerId, check.amount_gross, check.amount_net, check.date]
           );
         }
         await client.query("DELETE FROM checks WHERE id = $1 AND center_id = $2", [id, centerId]);
@@ -2328,29 +2330,34 @@ El JSON debe tener esta estructura exacta:
       }
 
       // 5. Update or Create Check & Cash Book
+      const checksRes = await client.query("SELECT * FROM checks WHERE purchase_order_id = $1 AND center_id = $2 ORDER BY id ASC", [poId, centerId]);
+      
+      let mainDbCheck = checksRes.rows.find((c: any) => !c.is_tax_withholding) || checksRes.rows[0];
+      let taxDbCheck = checksRes.rows.find((c: any) => c.is_tax_withholding);
+      
       let checkId;
-      const cRes = await client.query("SELECT id FROM checks WHERE purchase_order_id = $1 AND center_id = $2", [poId, centerId]);
-      if (cRes.rows.length > 0) {
-        checkId = cRes.rows[0].id;
+      // Update or create main check
+      if (mainDbCheck) {
+        checkId = mainDbCheck.id;
         await client.query(`
           UPDATE checks SET check_number = $1, date = $2, amount_gross = $3, retention_isr = $4, retention_itbis = $5, amount_net = $6, beneficiary = $7, description = $8
           WHERE id = $9 AND center_id = $10
         `, [check.check_number, check.date, check.amount_gross, check.retention_isr, check.retention_itbis, check.amount_net, check.beneficiary, check.description, checkId, centerId]);
         
-        // Update cash_book
+        // Update cash_book for main check
         await client.query(`
           UPDATE cash_book SET date = $1, reference_no = $2, beneficiary = $3, concept = $4, expense = $5, retention_isr = $6, retention_itbis = $7
           WHERE related_id = $8 AND related_type = 'check' AND center_id = $9
-        `, [check.date, check.check_number, check.beneficiary, purchase_order.description || 'Pago a Suplidor', check.amount_net, check.retention_isr, check.retention_itbis, checkId, centerId]);
+        `, [check.date, check.check_number, check.beneficiary, check.description || purchase_order.description || 'Pago a Suplidor', check.amount_net, check.retention_isr, check.retention_itbis, checkId, centerId]);
       } else {
         const cIns = await client.query(`
-          INSERT INTO checks (center_id, check_number, date, amount_gross, retention_isr, retention_itbis, amount_net, beneficiary, purchase_order_id, description) 
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
+          INSERT INTO checks (center_id, check_number, date, amount_gross, retention_isr, retention_itbis, amount_net, beneficiary, purchase_order_id, description, is_tax_withholding) 
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, FALSE) RETURNING id
         `, [centerId, check.check_number, check.date, check.amount_gross, check.retention_isr, check.retention_itbis, check.amount_net, check.beneficiary, poId, check.description]);
         checkId = cIns.rows[0].id;
 
         await client.query("INSERT INTO bank_transactions (center_id, type, amount, description, date) VALUES ($1, $2, $3, $4, $5)",
-          [centerId, 'expense', check.amount_gross, check.description || `Pago a ${check.beneficiary}`, check.date]);
+          [centerId, 'expense', check.amount_net, `Pago Cheque #${check.check_number} - ${check.beneficiary}`, check.date]);
 
         const lastBalRes = await client.query("SELECT balance FROM cash_book WHERE center_id = $1 ORDER BY date DESC, id DESC LIMIT 1", [centerId]);
         const lastBalance = lastBalRes.rows.length > 0 ? parseFloat(lastBalRes.rows[0].balance) : 0;
@@ -2359,7 +2366,48 @@ El JSON debe tener esta estructura exacta:
         await client.query(`
           INSERT INTO cash_book (center_id, date, reference_no, beneficiary, concept, income, expense, balance, retention_isr, retention_itbis, related_id, related_type) 
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        `, [centerId, check.date, check.check_number, check.beneficiary, purchase_order.description || 'Pago a Suplidor', 0, check.amount_net, newBalance, check.retention_isr, check.retention_itbis, checkId, 'check']);
+        `, [centerId, check.date, check.check_number, check.beneficiary, check.description || purchase_order.description || 'Pago a Suplidor', 0, check.amount_net, newBalance, check.retention_isr, check.retention_itbis, checkId, 'check']);
+      }
+
+      // Update, create or delete tax check
+      if (req.body.checkTax) {
+        const checkTax = req.body.checkTax;
+        if (taxDbCheck) {
+          await client.query(`
+            UPDATE checks SET check_number = $1, date = $2, amount_gross = $3, retention_isr = $4, retention_itbis = $5, amount_net = $6, beneficiary = $7, description = $8
+            WHERE id = $9 AND center_id = $10
+          `, [checkTax.check_number, checkTax.date, checkTax.amount_gross, checkTax.retention_isr, checkTax.retention_itbis, checkTax.amount_net, checkTax.beneficiary, checkTax.description, taxDbCheck.id, centerId]);
+          
+          await client.query(`
+            UPDATE cash_book SET date = $1, reference_no = $2, beneficiary = $3, concept = $4, expense = $5, retention_isr = $6, retention_itbis = $7
+            WHERE related_id = $8 AND related_type = 'check' AND center_id = $9
+          `, [checkTax.date, checkTax.check_number, checkTax.beneficiary, checkTax.description || 'Retención Impuestos', checkTax.amount_net, 0, 0, taxDbCheck.id, centerId]);
+        } else {
+          const cTaxIns = await client.query(`
+            INSERT INTO checks (center_id, check_number, date, amount_gross, retention_isr, retention_itbis, amount_net, beneficiary, purchase_order_id, description, is_tax_withholding) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE) RETURNING id
+          `, [centerId, checkTax.check_number, checkTax.date, checkTax.amount_gross, checkTax.retention_isr, checkTax.retention_itbis, checkTax.amount_net, checkTax.beneficiary, poId, checkTax.description]);
+          const newTaxCheckId = cTaxIns.rows[0].id;
+
+          await client.query("INSERT INTO bank_transactions (center_id, type, amount, description, date) VALUES ($1, $2, $3, $4, $5)",
+            [centerId, 'expense', checkTax.amount_net, `Pago Cheque #${checkTax.check_number} - ${checkTax.beneficiary}`, checkTax.date]);
+
+          const lastBalRes = await client.query("SELECT balance FROM cash_book WHERE center_id = $1 ORDER BY date DESC, id DESC LIMIT 1", [centerId]);
+          const lastBalance = lastBalRes.rows.length > 0 ? parseFloat(lastBalRes.rows[0].balance) : 0;
+          const newBalance = lastBalance - parseFloat(checkTax.amount_net);
+
+          await client.query(`
+            INSERT INTO cash_book (center_id, date, reference_no, beneficiary, concept, income, expense, balance, retention_isr, retention_itbis, related_id, related_type) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          `, [centerId, checkTax.date, checkTax.check_number, checkTax.beneficiary, checkTax.description || 'Retención Impuestos', 0, checkTax.amount_net, newBalance, 0, 0, newTaxCheckId, 'check']);
+        }
+      } else {
+        // If tax check existed in database but now retenciones are 0 (exempt), delete the tax check
+        if (taxDbCheck) {
+          await client.query("DELETE FROM cash_book WHERE related_id = $1 AND related_type = 'check' AND center_id = $2", [taxDbCheck.id, centerId]);
+          await client.query("DELETE FROM checks WHERE id = $1 AND center_id = $2", [taxDbCheck.id, centerId]);
+          await client.query("DELETE FROM bank_transactions WHERE center_id = $1 AND (amount = $2 OR amount = $3) AND date = $4 AND type = 'expense'", [centerId, taxDbCheck.amount_net, taxDbCheck.amount_gross, taxDbCheck.date]);
+        }
       }
 
       // 6. Items
@@ -2433,26 +2481,48 @@ El JSON debe tener esta estructura exacta:
         [centerId, requisitionId, supplierId, purchase_order.total_amount, purchase_order.subtotal, purchase_order.itbis, purchase_order.ncf, purchase_order.description, quote.date || 'NOW()']);
       const poId = pIns.rows[0].id;
 
-      // 5. Check
+      // 5. Check (Main check)
       const cIns = await client.query(`
-        INSERT INTO checks (center_id, check_number, date, amount_gross, retention_isr, retention_itbis, amount_net, beneficiary, purchase_order_id, description) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
+        INSERT INTO checks (center_id, check_number, date, amount_gross, retention_isr, retention_itbis, amount_net, beneficiary, purchase_order_id, description, is_tax_withholding) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, FALSE) RETURNING id
       `, [centerId, check.check_number, check.date, check.amount_gross, check.retention_isr, check.retention_itbis, check.amount_net, check.beneficiary, poId, check.description]);
       const checkId = cIns.rows[0].id;
 
-      // 6. Bank Transaction
+      // 6. Bank Transaction for Main Check
       await client.query("INSERT INTO bank_transactions (center_id, type, amount, description, date) VALUES ($1, $2, $3, $4, $5)",
-        [centerId, bank_transaction.type, bank_transaction.amount, bank_transaction.description, bank_transaction.date]);
+        [centerId, 'expense', check.amount_net, `Pago Cheque #${check.check_number} - ${check.beneficiary}`, check.date]);
 
-      // 7. Cash Book
+      // 7. Cash Book for Main Check
       const lastBalRes = await client.query("SELECT balance FROM cash_book WHERE center_id = $1 ORDER BY date DESC, id DESC LIMIT 1", [centerId]);
-      const lastBalance = lastBalRes.rows.length > 0 ? parseFloat(lastBalRes.rows[0].balance) : 0;
-      const newBalance = lastBalance - parseFloat(check.amount_net);
+      let currentBalance = lastBalRes.rows.length > 0 ? parseFloat(lastBalRes.rows[0].balance) : 0;
+      currentBalance = currentBalance - parseFloat(check.amount_net);
 
       await client.query(`
         INSERT INTO cash_book (center_id, date, reference_no, beneficiary, concept, income, expense, balance, retention_isr, retention_itbis, related_id, related_type) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-      `, [centerId, check.date, check.check_number, check.beneficiary, purchase_order.description || 'Pago a Suplidor', 0, check.amount_net, newBalance, check.retention_isr, check.retention_itbis, checkId, 'check']);
+      `, [centerId, check.date, check.check_number, check.beneficiary, check.description || purchase_order.description || 'Pago a Suplidor', 0, check.amount_net, currentBalance, check.retention_isr, check.retention_itbis, checkId, 'check']);
+
+      // 7b. Optional Tax Check (if checkTax is provided)
+      let checkTaxId = null;
+      if (req.body.checkTax) {
+        const checkTax = req.body.checkTax;
+        const cTaxIns = await client.query(`
+          INSERT INTO checks (center_id, check_number, date, amount_gross, retention_isr, retention_itbis, amount_net, beneficiary, purchase_order_id, description, is_tax_withholding) 
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE) RETURNING id
+        `, [centerId, checkTax.check_number, checkTax.date, checkTax.amount_gross, checkTax.retention_isr, checkTax.retention_itbis, checkTax.amount_net, checkTax.beneficiary, poId, checkTax.description]);
+        checkTaxId = cTaxIns.rows[0].id;
+
+        // Bank Transaction for Tax Check
+        await client.query("INSERT INTO bank_transactions (center_id, type, amount, description, date) VALUES ($1, $2, $3, $4, $5)",
+          [centerId, 'expense', checkTax.amount_net, `Pago Cheque #${checkTax.check_number} - ${checkTax.beneficiary}`, checkTax.date]);
+
+        // Cash Book for Tax Check
+        currentBalance = currentBalance - parseFloat(checkTax.amount_net);
+        await client.query(`
+          INSERT INTO cash_book (center_id, date, reference_no, beneficiary, concept, income, expense, balance, retention_isr, retention_itbis, related_id, related_type) 
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        `, [centerId, checkTax.date, checkTax.check_number, checkTax.beneficiary, checkTax.description || 'Retención Impuestos', 0, checkTax.amount_net, currentBalance, 0, 0, checkTaxId, 'check']);
+      }
 
       // 8. Items & Inventory
       if (items && Array.isArray(items)) {
@@ -2476,7 +2546,7 @@ El JSON debe tener esta estructura exacta:
       }
 
       await client.query('COMMIT');
-      res.json({ success: true, quoteId, requisitionId, poId, checkId });
+      res.json({ success: true, quoteId, requisitionId, poId, checkId, checkTaxId });
     } catch (e: any) {
       await client.query('ROLLBACK');
       res.status(500).json({ error: e.message });

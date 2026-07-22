@@ -543,32 +543,32 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
   const centerCode = center?.codigo_no || "11001619";
 
   try {
-    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 7, LOGO_W, LOGO_H);
+    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 95, 5, 26, 20);
   } catch (e) {
     console.error("Error adding logo:", e);
   }
 
   doc.setFontSize(9);
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL", 105, 45, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL", 105, 30, { align: "center" });
 
-  doc.setFontSize(14);
+  doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text("REQUISICIÓN DE MATERIALES O SERVICIOS", 105, 55, { align: "center" });
+  doc.text("REQUISICIÓN DE MATERIALES O SERVICIOS", 105, 37, { align: "center" });
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Fecha: ${formatDate(requisition.created_at)}`, 20, 65);
-  doc.text(`Junta de Centro Educativo: ${centerName}`, 20, 72);
-  doc.text(`Código: ${centerCode}`, 180, 78, { align: "right" });
-  doc.text(`POA: ${requisition.poa_year || '2026'}`, 20, 84);
+  doc.text(`Fecha: ${formatDate(requisition.created_at)}`, 20, 47);
+  doc.text(`Junta de Centro Educativo: ${centerName}`, 20, 53);
+  doc.text(`Código: ${centerCode}`, 196, 53, { align: "right" });
+  doc.text(`POA: ${requisition.poa_year || '2026'}`, 20, 59);
 
   doc.setFont("helvetica", "bold");
   const conceptText = `CONCEPTO: ${quote.description || 'Materiales didácticos nivel inicial, primaria y secundaria'}`;
   const conceptLines = doc.splitTextToSize(conceptText, 170);
-  doc.text(conceptLines, 20, 90);
+  doc.text(conceptLines, 20, 66);
 
-  const tableStartY = 95 + (conceptLines.length * 6) + 5;
-  doc.text("DESCRIPCIÓN", 105, tableStartY - 5, { align: "center" });
+  const tableStartY = 70 + (conceptLines.length * 5);
+  doc.text("DESCRIPCIÓN", 105, tableStartY - 3, { align: "center" });
 
   const tableBody = (items && items.length > 0)
     ? items.map((item, index) => [
@@ -585,28 +585,26 @@ export const generateRequisitionPDF = (requisition: any, quote: any, items: any[
     head: [['ITEM', 'DESCRIPCIÓN', 'CANTIDAD', 'PRECIO UNIT.', 'TOTAL']],
     body: tableBody,
     theme: 'grid',
-    headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
+    headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+    margin: { bottom: 65 },
+    didDrawPage: function (data) {
+      const pageHeight = doc.internal.pageSize.height;
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      
+      let sigY = pageHeight - 50;
+      doc.text("____________________", 40, sigY);
+      doc.text("Presidenta", 40, sigY + 5, { align: "center" });
+
+      doc.text("____________________", 140, sigY);
+      doc.text("Secretaria", 140, sigY + 5, { align: "center" });
+
+      doc.text("____________________", 90, sigY + 20);
+      doc.text("Tesorera", 90, sigY + 25, { align: "center" });
+
+      doc.text(`Visto por la Dirección Distrital Educativa ${center?.district || 'Correspondiente'}: ________________________________`, 20, sigY + 40);
+    }
   });
-
-  const finalY = (doc as any).lastAutoTable.finalY + 25;
-  const pageHeight = doc.internal.pageSize.height;
-  let currentY = finalY;
-
-  if (currentY + 60 > pageHeight - 10) {
-    doc.addPage();
-    currentY = 25;
-  }
-
-  doc.text("____________________", 40, currentY);
-  doc.text("Presidenta", 40, currentY + 5, { align: "center" });
-
-  doc.text("____________________", 140, currentY);
-  doc.text("Secretaria", 140, currentY + 5, { align: "center" });
-
-  doc.text("____________________", 90, currentY + 25);
-  doc.text("Tesorera", 90, currentY + 30, { align: "center" });
-
-  doc.text(`Visto por la Dirección Distrital Educativa ${center?.district || 'Correspondiente'}: ________________________________`, 20, currentY + 50);
 
   doc.save(`Requisicion_${requisition.id}.pdf`);
 };
@@ -625,71 +623,70 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[], c
   const centerCode = center?.codigo_no || "06907";
 
   try {
-    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 85, 7, LOGO_W, LOGO_H);
+    doc.addImage(logoBase64 || MINERD_LOGO, 'PNG', 95, 5, 26, 20);
   } catch (e) {
     console.error("Error adding logo:", e);
   }
 
   doc.setFontSize(9);
-  doc.setFontSize(9);
-  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL", 105, 45, { align: "center" });
-  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL", 105, 50, { align: "center" });
+  doc.text(center?.regional ? `DIRECCIÓN REGIONAL ${center.regional.toUpperCase()}` : "DIRECCIÓN REGIONAL", 105, 30, { align: "center" });
+  doc.text(center?.district ? `DIRECCIÓN DISTRITAL ${center.district.toUpperCase()}` : "DIRECCIÓN DISTRITAL", 105, 35, { align: "center" });
 
-  doc.setFontSize(14);
+  doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text("ORDEN DE COMPRA O SERVICIOS", 105, 62, { align: "center" });
+  doc.text("ORDEN DE COMPRA O SERVICIOS", 105, 43, { align: "center" });
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text("Salvaleón de Higüey, RD.", 20, 82);
+  doc.text("Salvaleón de Higüey, RD.", 20, 50);
 
   doc.setFont("helvetica", "bold");
-  doc.text(`FECHA: ${formatDate(po.created_at)}`, 20, 78);
+  doc.text(`FECHA: ${formatDate(po.created_at)}`, 20, 56);
   
-  doc.text(`PROVEEDOR:`, 20, 85);
+  doc.text(`PROVEEDOR:`, 20, 62);
   doc.setFont("helvetica", "normal");
   const supplierLines = doc.splitTextToSize(supplier.name.toUpperCase(), 140);
-  doc.text(supplierLines, 50, 85);
+  doc.text(supplierLines, 50, 62);
   
-  let currentY = 85 + (supplierLines.length * 6);
+  let currentY = 62 + (supplierLines.length * 5);
 
   doc.setFont("helvetica", "bold");
   doc.text(`RNC :`, 20, currentY);
   doc.setFont("helvetica", "normal");
   doc.text(`${supplier.rnc}`, 50, currentY);
 
-  currentY += 7;
+  currentY += 6;
   doc.setFont("helvetica", "bold");
   doc.text(`DIRECCIÓN:`, 20, currentY);
   doc.setFont("helvetica", "normal");
   const addressLines = doc.splitTextToSize(supplier.address || 'AVE. LIBERTAD NO.100, Higüey, Rep. Dom.', 140);
   doc.text(addressLines, 50, currentY);
 
-  currentY += (addressLines.length * 6);
+  currentY += (addressLines.length * 5);
   doc.setFont("helvetica", "bold");
   doc.text(`TELÉFONO:`, 20, currentY);
   doc.setFont("helvetica", "normal");
   doc.text(`${supplier.phone || '809-554-1863'}`, 50, currentY);
 
-  currentY += 10;
+  currentY += 8;
   doc.setFont("helvetica", "bold");
   doc.text(`Junta de Centro Educativo: ${centerName}`, 20, currentY);
-  doc.text(`Código: ${centerCode}`, 180, currentY + 6, { align: "right" });
+  doc.text(`Código: ${centerCode}`, 196, currentY, { align: "right" });
 
-  currentY += 12;
+  currentY += 7;
   doc.setFont("helvetica", "normal");
   const subText = "Solicitamos despachar por nuestra cuenta, los artículos y/o servicios que se detallan a continuación, según los precios convenidos y pactados entre usted/es y la Junta de este Centro Educativo.";
   const subLines = doc.splitTextToSize(subText, 170);
   doc.text(subLines, 20, currentY);
 
-  currentY += (subLines.length * 6) + 5;
+  currentY += (subLines.length * 5) + 3;
   doc.setFont("helvetica", "bold");
   const conceptoText = `Concepto: ${po.description || 'Materiales didácticos nivel inicial, primaria y secundaria'}`;
   const conceptoLines = doc.splitTextToSize(conceptoText, 170);
   doc.text(conceptoLines, 20, currentY);
 
-  currentY += (conceptoLines.length * 6) + 10;
-  doc.text("Valor en RD$", 160, currentY - 5);
+  currentY += (conceptoLines.length * 5) + 5;
+  doc.text("Valor en RD$", 160, currentY - 2);
 
   const tableBody = (items && items.length > 0)
     ? items.map(item => [
@@ -707,26 +704,32 @@ export const generatePurchaseOrderPDF = (po: any, supplier: any, items: any[], c
     foot: [['', 'TOTAL', formatCurrency(po.total_amount)]],
     theme: 'grid',
     headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-    footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold' }
+    footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold' },
+    margin: { bottom: 40 },
+    didDrawPage: function (data) {
+      const pageHeight = doc.internal.pageSize.height;
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      
+      let sigY = pageHeight - 25;
+      doc.text("____________________", 40, sigY);
+      doc.text("Presidenta", 40, sigY + 5, { align: "center" });
+
+      doc.text("____________________", 140, sigY);
+      doc.text("Secretaria", 140, sigY + 5, { align: "center" });
+    }
   });
 
-  const lastTableFinalY = (doc as any).lastAutoTable.finalY;
+  let lastTableFinalY = (doc as any).lastAutoTable.finalY;
+  if (lastTableFinalY > doc.internal.pageSize.height - 45) {
+    doc.addPage();
+    lastTableFinalY = 20; // reset to top of page
+  }
+
   const amountInWords = numberToWordsSpanish(po.total_amount);
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text(`VALOR EN LETRAS: ${amountInWords}`, 20, lastTableFinalY + 10, { maxWidth: 170 });
-
-  let finalY = lastTableFinalY + 25;
-  if (finalY + 40 > doc.internal.pageSize.height - 10) {
-    doc.addPage();
-    finalY = 35;
-  }
-
-  doc.text("____________________", 40, finalY);
-  doc.text("Presidenta", 40, finalY + 5, { align: "center" });
-
-  doc.text("____________________", 140, finalY);
-  doc.text("Secretaria", 140, finalY + 5, { align: "center" });
 
   doc.save(`Orden_Compra_${po.id}.pdf`);
 };
