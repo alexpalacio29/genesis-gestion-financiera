@@ -2521,7 +2521,7 @@ El JSON debe tener esta estructura exacta:
         await client.query(`
           INSERT INTO cash_book (center_id, date, reference_no, beneficiary, concept, income, expense, balance, retention_isr, retention_itbis, related_id, related_type) 
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        `, [centerId, checkTax.date, checkTax.check_number, checkTax.beneficiary, checkTax.description || 'Retención Impuestos', 0, checkTax.amount_net, currentBalance, 0, 0, checkTaxId, 'check']);
+        `, [centerId, checkTax.date, checkTax.check_number, checkTax.beneficiary, checkTax.description || 'Retención Impuestos', 0, checkTax.amount_net, currentBalance, checkTax.retention_isr, checkTax.retention_itbis, checkTaxId, 'check']);
       }
 
       // 8. Items & Inventory
