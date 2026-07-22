@@ -2059,7 +2059,7 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
               </tr>
             </thead>
           <tbody>
-            {quotes.map((q: any) => (
+            {(quotes || []).map((q: any) => (
               <tr key={q.id} className="data-grid-row">
                 <td className="data-grid-cell text-xs font-medium text-slate-500">{formatDate(q.created_at)}</td>
                 <td className="data-grid-cell text-xs font-mono font-bold text-indigo-600">{q.quote_number || `#${q.id}`}</td>
