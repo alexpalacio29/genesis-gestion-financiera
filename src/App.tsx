@@ -1990,7 +1990,7 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
 
     // Cálculo dinámico para cotizaciones pendientes o sin cheque en base de datos
     const isFormal = quote.supplier_type === 'formal';
-    const is_exempt_isr = quote.is_exempt_isr === true || quote.is_exempt_isr === 'true' || quote.isExemptISR === true || isFormal;
+    const is_exempt_isr = quote.is_exempt_isr === true || quote.is_exempt_isr === 'true' || quote.isExemptISR === true;
     const isr = is_exempt_isr ? 0 : (subtotal * 0.05);
 
     const is_exempt_itbis = quote.is_exempt_itbis === true || quote.is_exempt_itbis === 'true' || quote.isExemptITBIS === true;
@@ -2292,7 +2292,7 @@ const Checks = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter?: an
     if (!supplier) return { isr: 0, itbis: 0, net: amount };
 
     const isFormal = supplier.type === 'formal';
-    let isr = (newCheck.isExemptISR || isFormal) ? 0 : (amount * 0.05); // Standard 5% ISR or exempt
+    let isr = newCheck.isExemptISR ? 0 : (amount * 0.05); // Standard 5% ISR or exempt
     let itbis = 0;
 
     if (newCheck.isExemptITBIS) {
@@ -3117,7 +3117,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
 
       // Calculations based on subtotal for ISR
       const isFormal = metadata.supplierType === 'formal';
-      const retention_isr = (metadata.isExemptISR || isFormal) ? 0 : (subtotal * 0.05);
+      const retention_isr = metadata.isExemptISR ? 0 : (subtotal * 0.05);
 
       // Formal: No ITBIS retention. Informal: 100% ITBIS retention.
       let retention_itbis = metadata.supplierType === 'informal' ? itbis : 0;
