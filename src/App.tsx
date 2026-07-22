@@ -3134,7 +3134,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
         name: item.name || item.description || 'Producto/Servicio'
       }));
 
-      const hasTaxWithholding = metadata.quoteType === 'labor' && (retention_isr > 0 || retention_itbis > 0);
+      const hasTaxWithholding = metadata.quoteType === 'labor' && metadata.supplierType === 'informal' && (retention_isr > 0 || retention_itbis > 0);
 
       const payload = {
         supplier: previewData.supplier,
@@ -3182,7 +3182,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
           retention_isr: 0,
           retention_itbis: 0,
           amount_net: retention_isr + retention_itbis,
-          beneficiary: previewData.supplier.name,
+          beneficiary: 'Colector de Impuestos Internos',
           description: `Retención Impuestos (5% ISR / 18% ITBIS) - Cotización N. ${metadata.quote_number || ''}`
         } : null,
         bank_transaction: {
@@ -3210,7 +3210,8 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
             quoteId: resData.quoteId,
             requisitionId: resData.requisitionId,
             poId: resData.poId,
-            checkId: resData.checkId
+            checkId: resData.checkId,
+            checkTaxId: resData.checkTaxId
           }
         };
         setResult(finalResult);
@@ -3253,6 +3254,11 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
     }
     if (selectedDocs.includes('check')) {
       generateCheckPDF(check, currentCenter);
+      if (result.checkTax && result.ids.checkTaxId) {
+        await delay(500);
+        const checkTax = { ...result.checkTax, id: result.ids.checkTaxId };
+        generateCheckPDF(checkTax, currentCenter);
+      }
       await delay(300);
     }
     if (selectedDocs.includes('calc')) {
@@ -3297,7 +3303,14 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
       case 'quote': generateQuotePDF(quote, supplier, items, currentCenter); break;
       case 'requisition': generateRequisitionPDF(requisition, quote, items, currentCenter); break;
       case 'po': generatePurchaseOrderPDF(po, supplier, items, currentCenter); break;
-      case 'check': generateCheckPDF(check, currentCenter); break;
+      case 'check': 
+        generateCheckPDF(check, currentCenter); 
+        if (result.checkTax && result.ids.checkTaxId) {
+          setTimeout(() => {
+            generateCheckPDF({ ...result.checkTax, id: result.ids.checkTaxId }, currentCenter);
+          }, 500);
+        }
+        break;
       case 'calc': generateCheckCalculationSheetPDF(check, supplier, currentCenter); break;
       case 'retention': generateRetentionCertPDF(check, supplier, currentCenter); break;
       case 'retention_itbis': generateITBISRetentionCertPDF(check, supplier, currentCenter); break;
