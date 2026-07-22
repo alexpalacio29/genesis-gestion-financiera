@@ -1863,8 +1863,10 @@ const Inventory = ({ apiFetch, minerdCodes }: { apiFetch: any, minerdCodes: any[
 
 const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
   const [quotes, setQuotes] = useState([]);
-  const [showEvidencesFor, setShowEvidencesFor] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showEvidences, setShowEvidences] = useState<number | null>(null);
   const [evidences, setEvidences] = useState<any[]>([]);
+  const [uploadingEvidence, setUploadingEvidence] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scrollTable = (direction: 'left' | 'right') => {
