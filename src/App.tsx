@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import LandingPage from './LandingPage';
 import {
   LayoutDashboard,
@@ -13,6 +13,7 @@ import {
   Wallet,
   PieChart,
   ChevronRight,
+  ChevronLeft,
   Plus,
   Search,
   Download,
@@ -1862,10 +1863,19 @@ const Inventory = ({ apiFetch, minerdCodes }: { apiFetch: any, minerdCodes: any[
 
 const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
   const [quotes, setQuotes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showEvidences, setShowEvidences] = useState<number | null>(null);
+  const [showEvidencesFor, setShowEvidencesFor] = useState<string | null>(null);
   const [evidences, setEvidences] = useState<any[]>([]);
-  const [uploadingEvidence, setUploadingEvidence] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollTable = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = 300;
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   const fetchEvidences = async (id: number) => {
     try {
@@ -2009,19 +2019,30 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-serif font-bold">Cotizaciones</h2>
-          <p className="text-slate-500">Gestión de propuestas de materiales y mano de obra</p>
+          <p className="text-slate-500 hidden sm:block">Gestión de propuestas de materiales y mano de obra</p>
         </div>
-        <button
-          onClick={() => onNavigate('auto-processor')}
-          className="bg-slate-900 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-800 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Nueva Cotización
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1 md:hidden">
+            <button onClick={() => scrollTable('left')} className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors shadow-sm" title="Desplazar izquierda">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button onClick={() => scrollTable('right')} className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors shadow-sm" title="Desplazar derecha">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          <button
+            onClick={() => onNavigate('auto-processor')}
+            className="bg-slate-900 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Nueva Cotización</span>
+            <span className="sm:hidden">Nueva</span>
+          </button>
+        </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto custom-scrollbar">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden relative">
+        <div ref={scrollRef} className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50">
