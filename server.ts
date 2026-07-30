@@ -1732,6 +1732,9 @@ El JSON debe tener esta estructura exacta:
       res.json({ id: result.rows[0].id });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
+    }
+  });
+
   app.put("/api/bank/reconciliations/:id", async (req: any, res: any) => {
     const centerId = (req as any).centerId;
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
