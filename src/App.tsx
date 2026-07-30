@@ -436,6 +436,7 @@ const CenterForm = ({ userId, onCancel, onSuccess }: { userId: number, onCancel:
 const BankReconciliation = ({ apiFetch, currentCenter }: { apiFetch: any, currentCenter: any }) => {
   const [reconciliations, setReconciliations] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     period_date: '',
@@ -452,6 +453,24 @@ const BankReconciliation = ({ apiFetch, currentCenter }: { apiFetch: any, curren
     authorized_by: ''
   });
 
+  const resetForm = () => {
+    setFormData({
+      period_date: '',
+      bank_balance: '',
+      book_balance: '',
+      deposits_in_transit: '0',
+      checks_in_transit: '0',
+      deposits_month: '0',
+      notes_credit: '0',
+      notes_debit: '0',
+      bank_commissions: '0',
+      prepared_by: '',
+      reviewed_by: '',
+      authorized_by: ''
+    });
+    setEditingId(null);
+  };
+
   const fetchReconciliations = useCallback(async () => {
     const res = await apiFetch('/api/bank/reconciliations');
     if (res && res.ok) setReconciliations(await res.json());
@@ -465,20 +484,42 @@ const BankReconciliation = ({ apiFetch, currentCenter }: { apiFetch: any, curren
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await apiFetch('/api/bank/reconciliations', {
-        method: 'POST',
+      const url = editingId ? `/api/bank/reconciliations/${editingId}` : '/api/bank/reconciliations';
+      const method = editingId ? 'PUT' : 'POST';
+      const res = await apiFetch(url, {
+        method,
         body: JSON.stringify(formData)
       });
       if (res.ok) {
         setShowForm(false);
+        resetForm();
         fetchReconciliations();
-        alert('Conciliación guardada correctamente');
+        alert(editingId ? 'Conciliación actualizada correctamente' : 'Conciliación guardada correctamente');
       }
     } catch (e) {
       alert('Error al guardar la conciliación');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEdit = (rec: any) => {
+    setEditingId(rec.id);
+    setFormData({
+      period_date: rec.period_date || '',
+      bank_balance: rec.bank_balance ? String(rec.bank_balance) : '',
+      book_balance: rec.book_balance ? String(rec.book_balance) : '',
+      deposits_in_transit: rec.deposits_in_transit ? String(rec.deposits_in_transit) : '0',
+      checks_in_transit: rec.checks_in_transit ? String(rec.checks_in_transit) : '0',
+      deposits_month: rec.deposits_month ? String(rec.deposits_month) : '0',
+      notes_credit: rec.notes_credit ? String(rec.notes_credit) : '0',
+      notes_debit: rec.notes_debit ? String(rec.notes_debit) : '0',
+      bank_commissions: rec.bank_commissions ? String(rec.bank_commissions) : '0',
+      prepared_by: rec.prepared_by || '',
+      reviewed_by: rec.reviewed_by || '',
+      authorized_by: rec.authorized_by || ''
+    });
+    setShowForm(true);
   };
 
   const handleGeneratePDF = (rec: any) => {
@@ -493,7 +534,7 @@ const BankReconciliation = ({ apiFetch, currentCenter }: { apiFetch: any, curren
           <p className="text-slate-500">Gestión de estados bancarios y conciliación trimestral</p>
         </div>
         <button
-          onClick={() => setShowForm(true)}
+          onClick={() => { resetForm(); setShowForm(true); }}
           className="bg-slate-900 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-800"
         >
           <Plus className="w-4 h-4" />
@@ -503,7 +544,7 @@ const BankReconciliation = ({ apiFetch, currentCenter }: { apiFetch: any, curren
 
       {showForm && (
         <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6 animate-in zoom-in-95">
-          <h3 className="text-lg font-bold">Registrar Estado del Mes / Trimestre</h3>
+          <h3 className="text-lg font-bold">{editingId ? 'Editar Conciliación Bancaria' : 'Registrar Estado del Mes / Trimestre'}</h3>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-1">
@@ -558,9 +599,9 @@ const BankReconciliation = ({ apiFetch, currentCenter }: { apiFetch: any, curren
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
-              <button type="button" onClick={() => setShowForm(false)} className="px-6 py-2 text-slate-400 text-xs font-black uppercase tracking-widest hover:text-slate-900 transition-colors">Cancelar</button>
+              <button type="button" onClick={() => { setShowForm(false); resetForm(); }} className="px-6 py-2 text-slate-400 text-xs font-black uppercase tracking-widest hover:text-slate-900 transition-colors">Cancelar</button>
               <button type="submit" disabled={loading} className="px-10 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg">
-                {loading ? 'Guardando...' : 'Guardar y Finalizar'}
+                {loading ? 'Guardando...' : (editingId ? 'Actualizar' : 'Guardar y Finalizar')}
               </button>
             </div>
           </form>
@@ -589,7 +630,14 @@ const BankReconciliation = ({ apiFetch, currentCenter }: { apiFetch: any, curren
                 <td className="p-4 text-slate-600 font-medium">{formatCurrency(rec.bank_balance)}</td>
                 <td className="p-4 text-slate-600 font-medium">{formatCurrency(rec.book_balance)}</td>
                 <td className="p-4 text-[10px] text-slate-400 font-mono tracking-tighter">{new Date(rec.created_at).toLocaleString("en-US")}</td>
-                <td className="p-4 text-right">
+                <td className="p-4 text-right flex items-center justify-end gap-2">
+                  <button
+                    onClick={() => handleEdit(rec)}
+                    className="bg-slate-100 text-slate-700 px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-tight hover:bg-slate-200 inline-flex items-center gap-1.5 transition-all"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    Editar
+                  </button>
                   <button
                     onClick={() => handleGeneratePDF(rec)}
                     className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-tight hover:bg-emerald-100 inline-flex items-center gap-2 transition-all"

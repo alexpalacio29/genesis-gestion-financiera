@@ -1415,21 +1415,21 @@ export const generateBankReconciliationPDF = (reconciliation: any, center?: any,
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text("MINISTERIO DE EDUCACIÓN", 105, 30, { align: "center" });
-  doc.text("Dirección General de Gestión Financiera", 105, 35, { align: "center" });
+  doc.text("MINISTERIO DE EDUCACIÓN", 105, 36, { align: "center" });
+  doc.text("Dirección General de Gestión Financiera", 105, 41, { align: "center" });
 
   doc.setFontSize(14);
-  doc.text("CONCILIACIÓN BANCARIA", 105, 48, { align: "center" });
+  doc.text("CONCILIACIÓN BANCARIA", 105, 52, { align: "center" });
   
   doc.setFontSize(12);
-  doc.text(centerName.toUpperCase(), 105, 55, { align: "center" });
+  doc.text(centerName.toUpperCase(), 105, 59, { align: "center" });
   
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Período: ${reconciliation.period_date}`, 105, 62, { align: "center" });
-  doc.text(`Cuenta Bancaria No.: ${accountNo}`, 105, 67, { align: "center" });
+  doc.text(`Período: ${reconciliation.period_date}`, 105, 66, { align: "center" });
+  doc.text(`Cuenta Bancaria No.: ${accountNo}`, 105, 71, { align: "center" });
 
-  let currentY = 80;
+  let currentY = 82;
 
   // BANK SECTION
   doc.setFont("helvetica", "bold");
@@ -1549,10 +1549,26 @@ export const generatePurchaseVoucherPDF = (voucher: any, center?: any) => {
   doc.setFont("helvetica", "bold");
   doc.text("CONCEPTO DEL GASTO:", 20, 130);
   doc.setFont("helvetica", "normal");
-  doc.text(voucher.concept || "Sin concepto", 20, 136, { maxWidth: 170 });
+  const conceptText = voucher.concept || "Sin concepto";
+  const conceptLines = doc.splitTextToSize(conceptText, 170);
+
+  let currentY = 136;
+  for (let i = 0; i < conceptLines.length; i++) {
+    if (currentY > doc.internal.pageSize.height - 25) {
+      doc.addPage();
+      currentY = 20;
+    }
+    doc.text(conceptLines[i], 20, currentY);
+    currentY += 5.5;
+  }
 
   // Financial Breakdown Table
-  const tableY = 150;
+  let tableY = Math.max(150, currentY + 6);
+  if (tableY + 40 > doc.internal.pageSize.height - 20) {
+    doc.addPage();
+    tableY = 20;
+  }
+
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   
@@ -1583,10 +1599,10 @@ export const generatePurchaseVoucherPDF = (voucher: any, center?: any) => {
   doc.text(`Modo de Pago: ${voucher.payment_method || 'N/A'}`, 120, tableY + 34);
 
   // Signatures
-  let signY = 220;
-  if (tableY + 60 > doc.internal.pageSize.height - 10) {
+  let signY = Math.max(220, tableY + 50);
+  if (signY + 20 > doc.internal.pageSize.height - 15) {
     doc.addPage();
-    signY = 40;
+    signY = 30;
   }
 
   doc.line(20, signY, 80, signY);

@@ -1732,8 +1732,35 @@ El JSON debe tener esta estructura exacta:
       res.json({ id: result.rows[0].id });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
+  app.put("/api/bank/reconciliations/:id", async (req: any, res: any) => {
+    const centerId = (req as any).centerId;
+    if (!centerId) return res.status(400).json({ error: "Center ID required" });
+    const { id } = req.params;
+    const { 
+      period_date, bank_balance, book_balance, deposits_in_transit, 
+      checks_in_transit, deposits_month, notes_credit, notes_debit, 
+      bank_commissions, prepared_by, reviewed_by, authorized_by 
+    } = req.body;
+    try {
+      await pool.query(
+        `UPDATE bank_reconciliations SET
+          period_date = $1, bank_balance = $2, book_balance = $3, deposits_in_transit = $4, 
+          checks_in_transit = $5, deposits_month = $6, notes_credit = $7, notes_debit = $8, 
+          bank_commissions = $9, prepared_by = $10, reviewed_by = $11, authorized_by = $12
+        WHERE id = $13 AND center_id = $14`,
+        [
+          period_date, bank_balance, book_balance, deposits_in_transit, 
+          checks_in_transit, deposits_month, notes_credit, notes_debit, 
+          bank_commissions, prepared_by, reviewed_by, authorized_by,
+          id, centerId
+        ]
+      );
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
     }
   });
+
 
   // NCF Sequences
   app.get("/api/ncf/sequences", async (req: any, res: any) => {
