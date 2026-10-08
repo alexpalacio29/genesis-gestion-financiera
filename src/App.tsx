@@ -156,6 +156,9 @@ const Auth = ({ onLogin }: { onLogin: (user: any, centers: any[]) => void }) => 
         setIsRegister(false);
         alert('Registro exitoso. Por favor inicia sesión.');
       } else {
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+        }
         onLogin(data.user, data.centers);
       }
     } catch (err: any) {
@@ -332,11 +335,20 @@ const CenterForm = ({ userId, onCancel, onSuccess }: { userId: number, onCancel:
     e.preventDefault();
     setLoading(true);
     try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'x-user-id': userId ? userId.toString() : ''
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await fetch('/api/centers', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
-          name, rnc, address, phone, email, userId, registrationCode,
+          name, rnc, address, phone, email, userId, registrationCode: registrationCode.trim(),
           junta_name: juntaName,
           codigo_no: codigoNo,
           codigo_dependencia: codigoDep,
@@ -1909,7 +1921,7 @@ const Inventory = ({ apiFetch, minerdCodes }: { apiFetch: any, minerdCodes: any[
   );
 };
 
-const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
+const Quotes = ({ apiFetch, currentCenter, user, onNavigate, onEditQuote }: any) => {
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEvidences, setShowEvidences] = useState<number | null>(null);
@@ -1950,9 +1962,16 @@ const Quotes = ({ apiFetch, currentCenter, onNavigate, onEditQuote }: any) => {
     formData.append('file', e.target.files[0]);
 
     try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {
+        'x-center-id': currentCenter?.id?.toString() || '',
+        'x-user-id': user?.id?.toString() || ''
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch(`/api/quotes/${showEvidences}/evidence`, {
         method: 'POST',
-        headers: { 'x-center-id': currentCenter?.id?.toString() || '' },
+        headers,
         body: formData
       });
       if (res.ok) fetchEvidences(showEvidences);
@@ -2686,7 +2705,8 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
     concept: '',
     inputMode: 'excel', // 'manual', 'excel', 'pdf'
     isExemptISR: false,
-    isExemptITBIS: false
+    isExemptITBIS: false,
+    splitLaborChecks: false
   });
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [processing, setProcessing] = useState(false);
@@ -2734,6 +2754,7 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
             ncf: data.purchase_order ? data.purchase_order.ncf : '',
             checkNumber: data.check ? data.check.check_number : '',
             checkNumberTax: data.checkTax ? data.checkTax.check_number : '',
+            splitLaborChecks: Boolean(data.checkTax),
             quote_number: data.quote.quote_number || '',
             concept: data.check ? data.check.description : data.quote.description,
             inputMode: 'manual'
@@ -3182,7 +3203,12 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
         name: item.name || item.description || 'Producto/Servicio'
       }));
 
-      const hasTaxWithholding = metadata.quoteType === 'labor' && metadata.supplierType === 'informal' && (retention_isr > 0 || retention_itbis > 0);
+      const hasTaxWithholding = Boolean(
+        metadata.splitLaborChecks &&
+        metadata.quoteType === 'labor' &&
+        metadata.supplierType === 'informal' &&
+        (retention_isr > 0 || retention_itbis > 0)
+      );
 
       const payload = {
         supplier: previewData.supplier,
@@ -3620,9 +3646,46 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
                   onChange={e => setMetadata({ ...metadata, ncf: e.target.value })}
                 />
               </div>
+              {metadata.quoteType === 'labor' && (
+                <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-900">Modalidad de Cheque:</span>
+                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      {metadata.splitLaborChecks ? '2 Cheques (50% / 50%)' : '1 Cheque (Consolidado)'}
+                    </span>
+                  </div>
+                  <label className="flex items-start gap-2.5 text-xs text-slate-700 font-medium cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 w-4 h-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+                      checked={Boolean(metadata.splitLaborChecks)}
+                      onChange={e => {
+                        const checked = e.target.checked;
+                        let nextCheck = metadata.checkNumberTax;
+                        if (checked && !nextCheck && metadata.checkNumber && !isNaN(Number(metadata.checkNumber))) {
+                          nextCheck = (Number(metadata.checkNumber) + 1).toString();
+                        }
+                        setMetadata({
+                          ...metadata,
+                          splitLaborChecks: checked,
+                          checkNumberTax: nextCheck
+                        });
+                      }}
+                    />
+                    <span>
+                      <strong className="text-slate-900">Dividir pago en dos (2) cheques</strong>
+                      <span className="block text-[11px] text-slate-500 font-normal mt-0.5">
+                        {metadata.splitLaborChecks
+                          ? 'Se emitirán 2 cheques: Cheque 1 (50% neto con retención ITBIS) y Cheque 2 (50% con retención ISR).'
+                          : 'Se emitirá un único cheque consolidado por el monto neto total.'}
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              )}
               <div>
                 <label className="text-xs font-bold uppercase text-slate-400">
-                  {metadata.quoteType === 'labor' && metadata.supplierType === 'informal' && (!metadata.isExemptISR || !metadata.isExemptITBIS) ? 'N. Cheque (Neto)' : 'Número de Cheque'}
+                  {metadata.quoteType === 'labor' && metadata.splitLaborChecks ? 'N. Cheque 1 (Neto)' : 'Número de Cheque'}
                 </label>
                 <input
                   type="text"
@@ -3643,9 +3706,9 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
                   }}
                 />
               </div>
-              {metadata.quoteType === 'labor' && metadata.supplierType === 'informal' && (!metadata.isExemptISR || !metadata.isExemptITBIS) && (
+              {metadata.quoteType === 'labor' && metadata.splitLaborChecks && (
                 <div>
-                  <label className="text-xs font-bold uppercase text-slate-400">N. Cheque (Retenciones)</label>
+                  <label className="text-xs font-bold uppercase text-slate-400">N. Cheque 2 (Retenciones)</label>
                   <input
                     type="text"
                     placeholder="0002"
@@ -3904,6 +3967,49 @@ const AutoProcessor = ({ apiFetch, currentCenter, user, onNavigate, quoteToEdit,
                       readOnly
                     />
                   </div>
+                  {(() => {
+                    const sub = previewData.quote.subtotal || 0;
+                    const itbisVal = previewData.quote.itbis || 0;
+                    const tot = previewData.quote.total_amount || 0;
+                    const isr = metadata.isExemptISR ? 0 : (sub * 0.05);
+                    const itbisRet = (metadata.supplierType === 'informal' && !metadata.isExemptITBIS) ? itbisVal : 0;
+                    const isSplit = Boolean(metadata.splitLaborChecks && metadata.quoteType === 'labor' && metadata.supplierType === 'informal' && (isr > 0 || itbisRet > 0));
+                    
+                    return (
+                      <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs space-y-1.5">
+                        <div className="flex justify-between items-center text-slate-500 text-[11px]">
+                          <span>Retención ISR (5%):</span>
+                          <span className="font-semibold text-rose-600">-{formatCurrency(isr)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-slate-500 text-[11px]">
+                          <span>Retención ITBIS:</span>
+                          <span className="font-semibold text-rose-600">-{formatCurrency(itbisRet)}</span>
+                        </div>
+                        <div className="pt-2 border-t border-slate-200">
+                          {isSplit ? (
+                            <div className="space-y-1">
+                              <div className="flex justify-between items-center font-bold text-slate-800">
+                                <span className="text-[11px]">Cheque 1 (Neto 50% - ITBIS):</span>
+                                <span className="text-emerald-600">{formatCurrency((tot / 2) - itbisRet)}</span>
+                              </div>
+                              <div className="flex justify-between items-center font-bold text-slate-800">
+                                <span className="text-[11px]">Cheque 2 (50% - ISR):</span>
+                                <span className="text-emerald-600">{formatCurrency((tot / 2) - isr)}</span>
+                              </div>
+                              <span className="text-[10px] text-amber-700 font-medium block mt-1">
+                                Modalidad activa: 2 cheques fraccionados
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex justify-between items-center font-bold text-slate-900">
+                              <span>Monto Neto (Cheque Único):</span>
+                              <span className="text-emerald-600 font-black text-sm">{formatCurrency(tot - isr - itbisRet)}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -6045,10 +6151,14 @@ export default function App() {
     const isSaasRoute = url.startsWith('/api/saas');
     if (!currentCenter && !isSaasRoute) return null;
 
+    const token = localStorage.getItem('token');
     const headers: any = {
       ...options.headers,
       'x-user-id': user.id.toString()
     };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     if (!(options.body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
     }
@@ -6088,9 +6198,14 @@ export default function App() {
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser);
       setUser(parsedUser);
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {
+        'x-user-id': parsedUser.id.toString()
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
       // Fetch centers for this user
       fetch('/api/centers', {
-        headers: { 'x-user-id': parsedUser.id.toString() }
+        headers
       })
         .then(res => res.json())
         .then(data => {
@@ -6121,6 +6236,7 @@ export default function App() {
     setCurrentCenter(null);
     localStorage.removeItem('user');
     localStorage.removeItem('currentCenter');
+    localStorage.removeItem('token');
   };
 
   const handleSelectCenter = (center: any) => {
@@ -6130,8 +6246,13 @@ export default function App() {
 
   const refreshCenters = async () => {
     if (!user) return;
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = {
+      'x-user-id': user.id.toString()
+    };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     const res = await fetch('/api/centers', {
-      headers: { 'x-user-id': user.id.toString() }
+      headers
     });
     const data = await res.json();
     if (Array.isArray(data)) {

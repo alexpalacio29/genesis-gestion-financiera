@@ -389,7 +389,7 @@ async function startServer() {
 
   // SaaS Admin Middleware
   const isSuperAdminCheck = async (req: any, res: any, next: any) => {
-    const userId = req.headers['x-user-id'];
+    const userId = (req as any).userId || req.headers['x-user-id'];
     if (!userId) return res.status(401).json({ error: "No autorizado" });
     try {
       const result = await pool.query("SELECT email FROM users WHERE id = $1", [userId]);
@@ -640,21 +640,26 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
         return res.status(401).json({ error: "Sesión inválida o expirada. Por favor inicie sesión de nuevo." });
       }
     } else {
-      // Fallback temporal si el cliente envía x-user-id (permitido en producción para evitar romper el frontend actual)
+      // Fallback si el cliente envía x-user-id o userId en el cuerpo / query
       const userIdHeader = req.headers['x-user-id'];
       if (userIdHeader) {
         userId = parseInt(userIdHeader as string);
+      } else if (req.body && req.body.userId) {
+        userId = parseInt(req.body.userId);
+      } else if (req.query && req.query.userId) {
+        userId = parseInt(req.query.userId as string);
       } else {
         return res.status(401).json({ error: "No autorizado. Token de sesión ausente." });
       }
     }
+
+    (req as any).userId = userId;
 
     if (centerIdHeader) {
       const centerId = parseInt(centerIdHeader as string);
       const userIdHeaderVal = userId;
       
       (req as any).centerId = centerId;
-      (req as any).userId = userId;
 
       // Special case for centerId 0 (initial state/template)
       if (centerId === 0) return next();
@@ -946,20 +951,30 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
   });
 
   app.post("/api/centers", async (req: any, res: any) => {
-    const { name, rnc, address, phone, email, userId, registrationCode, junta_name, codigo_no, codigo_dependencia, cuenta_no, director_name, president_name, treasurer_name, district, regional, secretary_name } = req.body;
+    const { name, rnc, address, phone, email, registrationCode, junta_name, codigo_no, codigo_dependencia, cuenta_no, director_name, president_name, treasurer_name, district, regional, secretary_name } = req.body;
+    const targetUserId = (req as any).userId || req.body.userId;
+
+    if (!targetUserId) {
+      return res.status(401).json({ error: "No autorizado. Identificación de usuario ausente." });
+    }
+
+    const cleanCode = (registrationCode || '').trim();
+    if (!cleanCode) {
+      return res.status(400).json({ error: "Código de Gestor requerido." });
+    }
     
     const client = await pool.connect();
     try {
-      const codeRes = await client.query("SELECT * FROM registration_codes WHERE code = $1 AND is_used = 0", [registrationCode]);
+      const codeRes = await client.query("SELECT * FROM registration_codes WHERE UPPER(TRIM(code)) = UPPER(TRIM($1)) AND is_used = 0", [cleanCode]);
       const codeRecord = codeRes.rows[0];
       if (!codeRecord) {
         return res.status(400).json({ error: "Código de Gestor inválido o ya utilizado." });
       }
 
-      const existingRes = await client.query("SELECT count(*) as count FROM user_centers WHERE user_id = $1 AND role = 'admin'", [userId]);
+      const existingRes = await client.query("SELECT count(*) as count FROM user_centers WHERE user_id = $1 AND role = 'admin'", [targetUserId]);
       const existingCount = parseInt(existingRes.rows[0].count);
       if (existingCount > 0) {
-        const userRes = await client.query("SELECT email FROM users WHERE id = $1", [userId]);
+        const userRes = await client.query("SELECT email FROM users WHERE id = $1", [targetUserId]);
         const user = userRes.rows[0];
         if (user && user.email.toLowerCase() !== 'alexpalacio29@gmail.com') {
           return res.status(400).json({ error: "Solo puedes gestionar un centro educativo." });
@@ -973,8 +988,8 @@ app.post("/api/saas/centers/:id/subscription", isSuperAdminCheck, async (req: an
       );
       const centerId = centerIns.rows[0].id;
       
-      await client.query("INSERT INTO user_centers (user_id, center_id, role) VALUES ($1, $2, $3)", [userId, centerId, 'admin']);
-      await client.query("UPDATE registration_codes SET is_used = 1, used_by_user_id = $1 WHERE id = $2", [userId, codeRecord.id]);
+      await client.query("INSERT INTO user_centers (user_id, center_id, role) VALUES ($1, $2, $3)", [targetUserId, centerId, 'admin']);
+      await client.query("UPDATE registration_codes SET is_used = 1, used_by_user_id = $1 WHERE id = $2", [targetUserId, codeRecord.id]);
       
       await client.query('COMMIT');
       res.json({ id: centerId });
@@ -2589,22 +2604,25 @@ El JSON debe tener esta estructura exacta:
     const centerId = (req as any).centerId;
     if (!centerId) return res.status(400).json({ error: "Center ID required" });
 
+    const client = await pool.connect();
     try {
-      await pool.query("BEGIN");
-      await pool.query("DELETE FROM bank_transactions WHERE center_id = $1", [centerId]);
-      await pool.query("DELETE FROM cash_book WHERE center_id = $1", [centerId]);
-      await pool.query("DELETE FROM checks WHERE center_id = $1", [centerId]);
-      await pool.query("DELETE FROM purchase_orders WHERE center_id = $1", [centerId]);
-      await pool.query("DELETE FROM requisitions WHERE center_id = $1", [centerId]);
-      await pool.query("DELETE FROM quote_items WHERE center_id = $1", [centerId]);
-      await pool.query("DELETE FROM quotes WHERE center_id = $1", [centerId]);
-      await pool.query("DELETE FROM inventory WHERE center_id = $1", [centerId]);
-      await pool.query("DELETE FROM petty_cash WHERE center_id = $1", [centerId]);
-      await pool.query("COMMIT");
+      await client.query("BEGIN");
+      await client.query("DELETE FROM bank_transactions WHERE center_id = $1", [centerId]);
+      await client.query("DELETE FROM cash_book WHERE center_id = $1", [centerId]);
+      await client.query("DELETE FROM checks WHERE center_id = $1", [centerId]);
+      await client.query("DELETE FROM purchase_orders WHERE center_id = $1", [centerId]);
+      await client.query("DELETE FROM requisitions WHERE center_id = $1", [centerId]);
+      await client.query("DELETE FROM quote_items WHERE center_id = $1", [centerId]);
+      await client.query("DELETE FROM quotes WHERE center_id = $1", [centerId]);
+      await client.query("DELETE FROM inventory WHERE center_id = $1", [centerId]);
+      await client.query("DELETE FROM petty_cash WHERE center_id = $1", [centerId]);
+      await client.query("COMMIT");
       res.json({ success: true, message: "Datos de transacciones borrados exitosamente" });
     } catch (error: any) {
-      await pool.query("ROLLBACK");
+      await client.query("ROLLBACK");
       res.status(500).json({ error: error.message });
+    } finally {
+      client.release();
     }
   });
 
